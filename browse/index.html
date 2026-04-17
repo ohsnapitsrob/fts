@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Browse Titles</title>
+  <title>All Titles</title>
 
   <link rel="stylesheet" href="../styles.css" />
 
@@ -37,23 +37,16 @@
       line-height: 1.1;
     }
 
-    .browse-sub {
-      margin: 0;
-      font-size: 14px;
-      opacity: 0.75;
-    }
-
     .browse-tools {
-      display: flex;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 180px 42px;
       gap: 10px;
       align-items: center;
-      flex-wrap: wrap;
       margin-top: 8px;
     }
 
     .browse-search {
-      flex: 1;
-      min-width: 220px;
+      min-width: 0;
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 12px;
@@ -61,12 +54,16 @@
     }
 
     .browse-sort {
-      min-width: 180px;
+      min-width: 0;
       padding: 10px 12px;
       border: 1px solid var(--border);
       border-radius: 12px;
       font-size: 16px;
       background: #fff;
+    }
+
+    .browse-map-btn {
+      justify-self: end;
     }
 
     .browse-count {
@@ -134,14 +131,6 @@
       opacity: 0.75;
     }
 
-    .browse-nav {
-      margin-bottom: 16px;
-    }
-
-    .browse-back {
-      text-decoration: none;
-    }
-
     @media (max-width: 700px) {
       .browse-row {
         grid-template-columns: 8px 1fr;
@@ -167,30 +156,40 @@
         font-size: 26px;
       }
 
-      .browse-sort {
+      .browse-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .browse-sort,
+      .browse-map-btn {
         width: 100%;
+      }
+
+      .browse-map-btn {
+        justify-self: stretch;
       }
     }
   </style>
 </head>
 <body>
   <div class="browse-wrap">
-    <div class="browse-nav">
-      <a class="browse-back btn" href="../">Back to map</a>
-    </div>
-
     <div class="browse-head">
-      <h1>Browse titles</h1>
-      <p class="browse-sub">Index of all titles in the database.</p>
+      <h1>All titles</h1>
 
       <div class="browse-tools">
         <input id="browseSearch" class="browse-search" type="search" placeholder="Filter titles…" autocomplete="off" />
 
         <select id="browseSort" class="browse-sort" aria-label="Sort titles">
-          <option value="most">Most locations</option>
+          <option value="most">Most scenes</option>
           <option value="az">A–Z</option>
           <option value="za">Z–A</option>
         </select>
+
+        <a href="../" class="icon-btn browse-map-btn" aria-label="Back to map" title="Back to map">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15 5l-1.4 2H9.9L8.5 5H6.4A2.4 2.4 0 0 0 4 7.4v9.2A2.4 2.4 0 0 0 6.4 19h11.2A2.4 2.4 0 0 0 20 16.6V7.4A2.4 2.4 0 0 0 17.6 5H15zm-3 3.5A4.5 4.5 0 1 1 7.5 13A4.5 4.5 0 0 1 12 8.5zm0 2A2.5 2.5 0 1 0 14.5 13A2.5 2.5 0 0 0 12 10.5z"></path>
+          </svg>
+        </a>
 
         <div id="browseCount" class="browse-count"></div>
       </div>
