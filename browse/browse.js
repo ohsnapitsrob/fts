@@ -1,7 +1,10 @@
 (function () {
   const listEl = document.getElementById("browseList");
   const searchEl = document.getElementById("browseSearch");
+  const sortEl = document.getElementById("browseSort");
   const countEl = document.getElementById("browseCount");
+
+  let ALL_ENTRIES = [];
 
   function norm(s) {
     return (s || "").toString().trim();
@@ -16,12 +19,29 @@
   function normalizeType(t) {
     const x = norm(t).toLowerCase();
     if (!x) return "Misc";
-    if (x === "film" || x === "movie" || x === "movies") return "Movie";
-    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV Show";
+    if (x === "film" || x === "movie" || x === "movies") return "Film";
+    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
     if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
-    if (x === "game" || x === "games") return "Game";
+    if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
     if (x === "misc" || x === "other") return "Misc";
     return norm(t);
+  }
+
+  function typeColor(type) {
+    const colors = {
+      Film: "#2563eb",
+      TV: "#16a34a",
+      "Music Video": "#db2777",
+      Misc: "#6b7280",
+      "Video Game": "#FFA500"
+    };
+    return colors[type] || colors.Misc;
+  }
+
+  function displayType(type) {
+    if (type === "Film") return "Movie";
+    if (type === "TV") return "TV Show";
+    return type;
   }
 
   function coerceNumber(x) {
@@ -137,15 +157,43 @@
     };
   }
 
-  function sortEntries(a, b) {
-    const titleCmp = a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
-    if (titleCmp !== 0) return titleCmp;
+  function compareTitleAsc(a, b) {
+    return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+  }
+
+  function compareTypeAsc(a, b) {
     return a.type.localeCompare(b.type, undefined, { sensitivity: "base" });
+  }
+
+  function sortMost(a, b) {
+    if (b.count !== a.count) return b.count - a.count;
+    const titleCmp = compareTitleAsc(a, b);
+    if (titleCmp !== 0) return titleCmp;
+    return compareTypeAsc(a, b);
+  }
+
+  function sortAZ(a, b) {
+    const titleCmp = compareTitleAsc(a, b);
+    if (titleCmp !== 0) return titleCmp;
+    return compareTypeAsc(a, b);
+  }
+
+  function sortZA(a, b) {
+    const titleCmp = compareTitleAsc(b, a);
+    if (titleCmp !== 0) return titleCmp;
+    return compareTypeAsc(a, b);
+  }
+
+  function getSorted(entries, sortMode) {
+    const copy = [...entries];
+
+    if (sortMode === "az") return copy.sort(sortAZ);
+    if (sortMode === "za") return copy.sort(sortZA);
+    return copy.sort(sortMost);
   }
 
   function render(entries) {
     listEl.innerHTML = "";
-
     countEl.textContent = `${entries.length.toLocaleString()} title${entries.length === 1 ? "" : "s"}`;
 
     if (!entries.length) {
@@ -159,8 +207,11 @@
       a.href = buildMapUrl(entry.title);
 
       a.innerHTML = `
-        <div class="browse-title">${escapeHtml(entry.title)}</div>
-        <div class="browse-type">${escapeHtml(entry.type)}</div>
+        <div class="browse-marker" style="background:${escapeHtml(typeColor(entry.type))};"></div>
+        <div class="browse-main">
+          <div class="browse-title">${escapeHtml(entry.title)}</div>
+        </div>
+        <div class="browse-type">${escapeHtml(displayType(entry.type))}</div>
         <div class="browse-scenes">${sceneLabel(entry.count)}</div>
       `;
 
@@ -168,15 +219,33 @@
     });
   }
 
+  function applyControls() {
+    const q = norm(searchEl.value).toLowerCase();
+    const sortMode = sortEl.value || "most";
+
+    let filtered = ALL_ENTRIES;
+
+    if (q) {
+      filtered = filtered.filter((entry) => {
+        return (
+          entry.title.toLowerCase().includes(q) ||
+          displayType(entry.type).toLowerCase().includes(q)
+        );
+      });
+    }
+
+    render(getSorted(filtered, sortMode));
+  }
+
   async function loadAll() {
     const cfg = window.APP_CONFIG || {};
     const sheets = cfg.SHEETS || {};
 
     const sources = [
-      ["Movie", sheets.movies],
-      ["TV Show", sheets.tv],
+      ["Film", sheets.movies],
+      ["TV", sheets.tv],
       ["Music Video", sheets.music_videos],
-      ["Game", sheets.games],
+      ["Video Game", sheets.games],
       ["Misc", sheets.misc]
     ].filter(([, url]) => !!url);
 
@@ -198,7 +267,7 @@
       });
     }
 
-    // Group by TITLE + TYPE for browse rows
+    // Group by TITLE + TYPE
     const grouped = new Map();
 
     rows.forEach((loc) => {
@@ -213,37 +282,18 @@
       grouped.get(key).count += 1;
     });
 
-    return Array.from(grouped.values()).sort(sortEntries);
-  }
-
-  function initFilter(allEntries) {
-    function applyFilter() {
-      const q = norm(searchEl.value).toLowerCase();
-
-      if (!q) {
-        render(allEntries);
-        return;
-      }
-
-      const filtered = allEntries.filter((entry) => {
-        return (
-          entry.title.toLowerCase().includes(q) ||
-          entry.type.toLowerCase().includes(q)
-        );
-      });
-
-      render(filtered);
-    }
-
-    searchEl.addEventListener("input", applyFilter);
-    applyFilter();
+    return Array.from(grouped.values());
   }
 
   async function init() {
     try {
       listEl.innerHTML = `<div class="browse-empty">Loading…</div>`;
-      const entries = await loadAll();
-      initFilter(entries);
+      ALL_ENTRIES = await loadAll();
+
+      searchEl.addEventListener("input", applyControls);
+      sortEl.addEventListener("change", applyControls);
+
+      applyControls();
     } catch (err) {
       console.error(err);
       listEl.innerHTML = `<div class="browse-empty">Could not load browse index.</div>`;
