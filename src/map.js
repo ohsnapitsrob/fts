@@ -33,10 +33,24 @@ App.Map = (function () {
     return map;
   }
 
+  function formatCountText(markers) {
+    const sceneCount = markers.length;
+
+    const titleSet = new Set();
+    markers.forEach((marker) => {
+      const title = marker?.__loc?.title;
+      if (title) titleSet.add(title);
+    });
+
+    const titleCount = titleSet.size;
+
+    return `${titleCount.toLocaleString()} title${titleCount === 1 ? "" : "s"}, ${sceneCount.toLocaleString()} scene${sceneCount === 1 ? "" : "s"} shown`;
+  }
+
   function rebuildCluster(markers) {
     cluster.clearLayers();
     cluster.addLayers(markers);
-    App.UI.setCount(`${markers.length.toLocaleString()} locations shown`);
+    App.UI.setCount(formatCountText(markers));
   }
 
   return { init, getMap, rebuildCluster };
