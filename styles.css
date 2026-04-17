@@ -75,6 +75,35 @@ body {
   text-overflow: ellipsis;
 }
 
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: #fafafa;
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: #111827;
+}
+
+.topbar-browse-btn {
+  align-self: stretch;
+}
+
 @media (max-width: 520px) {
   .topbar-inner {
     flex-direction: column;
@@ -96,6 +125,12 @@ body {
 
   .filter-label {
     width: 100%;
+  }
+
+  .icon-btn.topbar-browse-btn {
+    width: 100%;
+    flex: 0 0 auto;
+    height: 44px;
   }
 }
 
