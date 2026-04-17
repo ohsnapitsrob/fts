@@ -1,1 +1,162 @@
-hello world
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Browse Titles</title>
+
+  <link rel="stylesheet" href="../styles.css" />
+
+  <style>
+    html, body {
+      overflow: auto;
+      height: auto;
+      min-height: 100%;
+      background: #fff;
+    }
+
+    body {
+      display: block;
+    }
+
+    .browse-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    .browse-head {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .browse-head h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+
+    .browse-sub {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.75;
+    }
+
+    .browse-tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .browse-search {
+      flex: 1;
+      min-width: 220px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 16px;
+    }
+
+    .browse-count {
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    .browse-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .browse-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 140px 140px;
+      gap: 12px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      text-decoration: none;
+      color: inherit;
+      background: #fff;
+    }
+
+    .browse-row:hover {
+      background: #fafafa;
+    }
+
+    .browse-title {
+      font-weight: 650;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .browse-type,
+    .browse-scenes {
+      font-size: 13px;
+      opacity: 0.8;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .browse-empty {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+      opacity: 0.75;
+    }
+
+    .browse-nav {
+      margin-bottom: 16px;
+    }
+
+    .browse-back {
+      text-decoration: none;
+    }
+
+    @media (max-width: 700px) {
+      .browse-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+
+      .browse-type,
+      .browse-scenes {
+        text-align: left;
+      }
+
+      .browse-head h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="browse-wrap">
+    <div class="browse-nav">
+      <a class="browse-back btn" href="../">Back to map</a>
+    </div>
+
+    <div class="browse-head">
+      <h1>Browse titles</h1>
+      <p class="browse-sub">Alphabetical index of all titles in the database.</p>
+
+      <div class="browse-tools">
+        <input id="browseSearch" class="browse-search" type="search" placeholder="Filter titles…" autocomplete="off" />
+        <div id="browseCount" class="browse-count"></div>
+      </div>
+    </div>
+
+    <div id="browseList" class="browse-list"></div>
+  </div>
+
+  <script src="../config.js"></script>
+  <script src="./browse.js"></script>
+</body>
+</html>
