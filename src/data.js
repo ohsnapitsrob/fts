@@ -129,7 +129,8 @@ App.Data = (function () {
       Film: "#2563eb",
       TV: "#16a34a",
       "Music Video": "#db2777",
-      Misc: "#6b7280"
+      Misc: "#6b7280",
+      "Video Game": "#FFA500"
     };
     const badge = getBadgeText(t);
     const color = colors[t] || colors.Misc;
