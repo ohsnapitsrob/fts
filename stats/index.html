@@ -22,6 +22,12 @@
       --orange: #f59e0b;
       --green: #10b981;
       --shadow: 0 20px 50px rgba(76, 29, 149, 0.10);
+      --badge-bg: rgba(255,255,255,0.22);
+      --badge-border: rgba(255,255,255,0.28);
+      --badge-text: #ffffff;
+      --badge-solid-bg: rgba(91,33,182,0.10);
+      --badge-solid-border: rgba(91,33,182,0.16);
+      --badge-solid-text: #4c1d95;
     }
 
     * { box-sizing: border-box; }
@@ -197,6 +203,7 @@
       border: 1px solid rgba(255,255,255,0.18);
       font-size: 13px;
       backdrop-filter: blur(8px);
+      color: #fff;
     }
 
     .spotlight-stack {
@@ -249,17 +256,17 @@
 
     .delta.up {
       color: #065f46;
-      background: rgba(16,185,129,0.12);
+      background: rgba(16,185,129,0.14);
     }
 
     .delta.down {
       color: #9f1239;
-      background: rgba(236,72,153,0.12);
+      background: rgba(236,72,153,0.14);
     }
 
     .delta.flat {
       color: #374151;
-      background: rgba(107,114,128,0.10);
+      background: rgba(107,114,128,0.12);
     }
 
     .stats-grid {
@@ -313,7 +320,7 @@
     }
 
     .panel.gradient .panel-kicker {
-      color: rgba(255,255,255,0.76);
+      color: rgba(255,255,255,0.78);
     }
 
     .panel-value {
@@ -332,7 +339,7 @@
     }
 
     .panel.gradient .panel-sub {
-      color: rgba(255,255,255,0.82);
+      color: rgba(255,255,255,0.86);
     }
 
     .mini-grid {
@@ -447,9 +454,17 @@
       padding: 7px 10px;
       border-radius: 999px;
       font-size: 12px;
-      background: rgba(109,40,217,0.08);
-      color: #5b21b6;
       font-weight: 700;
+      background: var(--badge-solid-bg);
+      border: 1px solid var(--badge-solid-border);
+      color: var(--badge-solid-text);
+    }
+
+    .panel.gradient .badge {
+      background: var(--badge-bg);
+      border-color: var(--badge-border);
+      color: var(--badge-text);
+      text-shadow: 0 1px 0 rgba(0,0,0,0.08);
     }
 
     .section-title {
@@ -527,7 +542,7 @@
         <div class="stats-head-top">
           <div class="stats-title-wrap">
             <h1 class="stats-title">Stats</h1>
-            <p class="stats-sub">All your scene-hunting chaos, glamorized properly.</p>
+            <p class="stats-sub">Project mode starts July 2025. Earlier dates stay counted, but legacy shots don’t get to steal the spotlight.</p>
           </div>
 
           <div class="stats-nav">
