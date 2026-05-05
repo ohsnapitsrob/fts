@@ -13,6 +13,12 @@ App.Data = (function () {
     return t.split("|").map(x => norm(x)).filter(Boolean);
   }
 
+  function splitComma(s) {
+  const t = norm(s);
+  if (!t) return [];
+  return t.split(",").map(x => norm(x).toLowerCase()).filter(Boolean);
+}
+
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -117,6 +123,7 @@ App.Data = (function () {
       keywords: splitPipe(row.keywords),
       aliases: splitPipe(row.aliases),
       images: splitPipe(row.images),
+      rating: splitComma(row.rating),
 
       exportFileName: norm(row["export-file-name"]),
       imdb: norm(row["imdb"]),
