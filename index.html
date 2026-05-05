@@ -55,7 +55,16 @@
     <div class="modal-card modal-card-location">
       <button id="closeBtn" class="btn close">Close</button>
 
-      <h2 id="mTitle" class="loc-title"></h2>
+      <div class="loc-title-row">
+        <button id="modalBackBtn" class="modal-back-btn" type="button" aria-label="Back to scenes at this location" style="display:none;">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M15.5 5.5L9 12l6.5 6.5l-1.4 1.4L6.2 12l7.9-7.9l1.4 1.4z"></path>
+          </svg>
+        </button>
+
+        <h2 id="mTitle" class="loc-title"></h2>
+      </div>
+
       <div id="mInfo" class="loc-info"></div>
       <p id="mDesc" class="loc-desc"></p>
       <div id="mGallery" class="gallery"></div>
