@@ -8,6 +8,7 @@ App.Map = (function () {
   let locById = new Map();
 
   let chooserEl = null;
+  let lastChooserSceneIds = [];
 
   const SOURCE_ID = "scene-points";
   const CLUSTERS_ID = "scene-clusters";
@@ -49,8 +50,6 @@ App.Map = (function () {
       center: [-2.5, 54.5],
       zoom: 6
     });
-
-    // Left-hand SDK controls intentionally removed.
 
     map.setView = function (latLng, zoom, options = {}) {
       const lat = latLng[0];
@@ -260,8 +259,6 @@ App.Map = (function () {
       });
     };
 
-    // MapLibre/MapTiler SDK versions differ here:
-    // some support callback style, newer ones return a Promise.
     try {
       const result = source.getClusterExpansionZoom(clusterId, (err, zoom) => {
         if (err) return;
@@ -316,6 +313,12 @@ App.Map = (function () {
       });
   }
 
+  function getScenesByIds(ids) {
+    return (ids || [])
+      .map((id) => locById.get(id))
+      .filter(Boolean);
+  }
+
   function setupChooser() {
     chooserEl = document.createElement("div");
     chooserEl.id = "sceneChooser";
@@ -350,8 +353,12 @@ App.Map = (function () {
       const loc = locById.get(id);
       if (!loc) return;
 
+      const context = {
+        sceneIds: [...lastChooserSceneIds]
+      };
+
       closeChooser();
-      App.Modal.open(loc);
+      App.Modal.open(loc, { fromStackedChooser: context });
     });
   }
 
@@ -360,6 +367,8 @@ App.Map = (function () {
 
     const metaEl = chooserEl.querySelector("#sceneChooserMeta");
     const listEl = chooserEl.querySelector("#sceneChooserList");
+
+    lastChooserSceneIds = locs.map((loc) => loc.id).filter(Boolean);
 
     const first = locs[0];
     const place = [first.place, first.country].filter(Boolean).join(", ");
@@ -370,6 +379,12 @@ App.Map = (function () {
 
     chooserEl.classList.add("open");
     chooserEl.setAttribute("aria-hidden", "false");
+  }
+
+  function reopenStackedChooser(context) {
+    const locs = getScenesByIds(context?.sceneIds || []);
+    if (!locs.length) return;
+    openChooser(locs);
   }
 
   function closeChooser() {
@@ -502,5 +517,5 @@ App.Map = (function () {
     setSourceData(currentMarkers);
   }
 
-  return { init, getMap, rebuildCluster };
+  return { init, getMap, rebuildCluster, reopenStackedChooser };
 })();
