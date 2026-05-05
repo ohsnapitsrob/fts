@@ -305,6 +305,44 @@ body {
   opacity: 0.85;
 }
 
+.rating-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -2px 0 12px;
+}
+
+.rating-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.rating-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.rating-orange {
+  background: #ffedd5;
+  color: #9a3412;
+}
+
+.rating-green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.rating-blue {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 /* ======================
    RESULTS + CARDS
 ====================== */
