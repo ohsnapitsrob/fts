@@ -51,8 +51,6 @@ App.Map = (function () {
     });
 
     // Left-hand SDK controls intentionally removed.
-    // If you later want SDK controls back, add:
-    // map.addControl(new maptilersdk.NavigationControl(), "top-right");
 
     map.setView = function (latLng, zoom, options = {}) {
       const lat = latLng[0];
@@ -176,8 +174,18 @@ App.Map = (function () {
       source: SOURCE_ID,
       filter: ["!", ["has", "point_count"]],
       paint: {
-        "circle-radius": 20,
-        "circle-color": ["get", "color"],
+        "circle-radius": [
+          "case",
+          [">", ["get", "stackCount"], 1],
+          22,
+          20
+        ],
+        "circle-color": [
+          "case",
+          [">", ["get", "stackCount"], 1],
+          "#111111",
+          ["get", "color"]
+        ],
         "circle-stroke-color": "#ffffff",
         "circle-stroke-width": 4
       }
@@ -189,8 +197,18 @@ App.Map = (function () {
       source: SOURCE_ID,
       filter: ["!", ["has", "point_count"]],
       layout: {
-        "text-field": ["get", "badge"],
-        "text-size": 13,
+        "text-field": [
+          "case",
+          [">", ["get", "stackCount"], 1],
+          ["to-string", ["get", "stackCount"]],
+          ["get", "badge"]
+        ],
+        "text-size": [
+          "case",
+          [">", ["get", "stackCount"], 1],
+          14,
+          13
+        ],
         "text-font": ["Noto Sans Bold"],
         "text-offset": [0, 0.05]
       },
@@ -199,41 +217,65 @@ App.Map = (function () {
       }
     });
 
-    map.on("click", CLUSTERS_ID, (e) => {
-      closeChooser();
-
-      const features = map.queryRenderedFeatures(e.point, { layers: [CLUSTERS_ID] });
-      const clusterId = features[0]?.properties?.cluster_id;
-      const source = map.getSource(SOURCE_ID);
-
-      if (!source || clusterId === undefined) return;
-
-      source.getClusterExpansionZoom(clusterId, (err, zoom) => {
-        if (err) return;
-
-        map.easeTo({
-          center: features[0].geometry.coordinates,
-          zoom
-        });
-      });
-    });
+    map.on("click", CLUSTERS_ID, zoomIntoCluster);
+    map.on("click", CLUSTER_COUNT_ID, zoomIntoCluster);
 
     map.on("click", POINT_CIRCLES_ID, openPointOrChooser);
     map.on("click", POINT_LABELS_ID, openPointOrChooser);
 
     map.on("click", (e) => {
       const hits = map.queryRenderedFeatures(e.point, {
-        layers: [CLUSTERS_ID, POINT_CIRCLES_ID, POINT_LABELS_ID]
+        layers: [CLUSTERS_ID, CLUSTER_COUNT_ID, POINT_CIRCLES_ID, POINT_LABELS_ID]
       });
       if (!hits.length) closeChooser();
     });
 
-    map.on("mouseenter", CLUSTERS_ID, () => { map.getCanvas().style.cursor = "pointer"; });
-    map.on("mouseleave", CLUSTERS_ID, () => { map.getCanvas().style.cursor = ""; });
-    map.on("mouseenter", POINT_CIRCLES_ID, () => { map.getCanvas().style.cursor = "pointer"; });
-    map.on("mouseleave", POINT_CIRCLES_ID, () => { map.getCanvas().style.cursor = ""; });
-    map.on("mouseenter", POINT_LABELS_ID, () => { map.getCanvas().style.cursor = "pointer"; });
-    map.on("mouseleave", POINT_LABELS_ID, () => { map.getCanvas().style.cursor = ""; });
+    [CLUSTERS_ID, CLUSTER_COUNT_ID, POINT_CIRCLES_ID, POINT_LABELS_ID].forEach((layerId) => {
+      map.on("mouseenter", layerId, () => { map.getCanvas().style.cursor = "pointer"; });
+      map.on("mouseleave", layerId, () => { map.getCanvas().style.cursor = ""; });
+    });
+  }
+
+  function zoomIntoCluster(e) {
+    closeChooser();
+
+    const features = map.queryRenderedFeatures(e.point, {
+      layers: [CLUSTERS_ID, CLUSTER_COUNT_ID]
+    });
+
+    const feature = features.find((f) => f.properties && f.properties.cluster);
+    if (!feature) return;
+
+    const clusterId = feature.properties.cluster_id;
+    const source = map.getSource(SOURCE_ID);
+    if (!source || clusterId === undefined) return;
+
+    const flyToZoom = (zoom) => {
+      if (!Number.isFinite(zoom)) return;
+
+      map.easeTo({
+        center: feature.geometry.coordinates,
+        zoom,
+        duration: 500
+      });
+    };
+
+    // MapLibre/MapTiler SDK versions differ here:
+    // some support callback style, newer ones return a Promise.
+    try {
+      const result = source.getClusterExpansionZoom(clusterId, (err, zoom) => {
+        if (err) return;
+        flyToZoom(zoom);
+      });
+
+      if (result && typeof result.then === "function") {
+        result.then(flyToZoom).catch(() => {});
+      } else if (typeof result === "number") {
+        flyToZoom(result);
+      }
+    } catch (err) {
+      console.error("Could not expand cluster", err);
+    }
   }
 
   function openPointOrChooser(e) {
@@ -376,26 +418,47 @@ App.Map = (function () {
     };
   }
 
+  function buildCoordCountMap(markers) {
+    const counts = new Map();
+
+    markers.forEach((marker) => {
+      const loc = marker.__loc;
+      if (!loc) return;
+
+      const key = coordKeyFromLoc(loc);
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+
+    return counts;
+  }
+
   function markersToGeoJson(markers) {
+    const coordCounts = buildCoordCountMap(markers);
+
     return {
       type: "FeatureCollection",
       features: markers
         .map((marker) => marker.__loc)
         .filter(Boolean)
-        .map((loc) => ({
-          type: "Feature",
-          geometry: {
-            type: "Point",
-            coordinates: [loc.lng, loc.lat]
-          },
-          properties: {
-            id: loc.id,
-            title: loc.title,
-            type: loc.type,
-            color: colorForType(loc.type),
-            badge: badgeForType(loc.type)
-          }
-        }))
+        .map((loc) => {
+          const stackCount = coordCounts.get(coordKeyFromLoc(loc)) || 1;
+
+          return {
+            type: "Feature",
+            geometry: {
+              type: "Point",
+              coordinates: [loc.lng, loc.lat]
+            },
+            properties: {
+              id: loc.id,
+              title: loc.title,
+              type: loc.type,
+              color: colorForType(loc.type),
+              badge: badgeForType(loc.type),
+              stackCount
+            }
+          };
+        })
     };
   }
 
