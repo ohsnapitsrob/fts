@@ -228,10 +228,41 @@ body {
   padding-top: 18px;
 }
 
+.loc-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  clear: both;
+}
+
+.modal-back-btn {
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 0;
+}
+
+.modal-back-btn:hover {
+  background: #fafafa;
+}
+
+.modal-back-btn svg {
+  width: 22px;
+  height: 22px;
+  fill: #111827;
+}
+
 .loc-title {
   margin: 6px 0 10px;
   font-size: 28px;
   line-height: 1.1;
+  min-width: 0;
 }
 
 @media (max-width: 520px) {
