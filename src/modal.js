@@ -1,7 +1,7 @@
 window.App = window.App || {};
 
 App.Modal = (function () {
-  let modal, mTitle, mInfo, mDesc, mGallery, mTags, closeBtn, backBtn;
+  let modal, mTitle, mInfo, mRatingTags, mDesc, mGallery, mTags, closeBtn, backBtn;
   let currentLocId = "";
   let stackedChooserContext = null;
 
@@ -29,6 +29,30 @@ App.Modal = (function () {
     `;
   }
 
+  function renderRatingTags(ratings) {
+  const labels = {
+    red: "Needs reshooting",
+    orange: "Average match",
+    green: "Good match",
+    blue: "Inspiration location"
+  };
+
+  const valid = (ratings || [])
+    .map(r => r.toLowerCase())
+    .filter(r => labels[r]);
+
+  if (!valid.length) {
+    mRatingTags.innerHTML = "";
+    mRatingTags.style.display = "none";
+    return;
+  }
+
+  mRatingTags.style.display = "flex";
+  mRatingTags.innerHTML = valid.map((rating) => {
+    return `<span class="rating-tag rating-${rating}">${labels[rating]}</span>`;
+  }).join("");
+}
+  
   function cameraIconSvg() {
     return `
       <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -46,6 +70,7 @@ App.Modal = (function () {
     mTags = document.getElementById("mTags");
     closeBtn = document.getElementById("closeBtn");
     backBtn = document.getElementById("modalBackBtn");
+    mRatingTags = document.getElementById("mRatingTags");
 
     closeBtn.onclick = close;
 
@@ -108,6 +133,8 @@ App.Modal = (function () {
       ` : ""}
     `;
 
+    renderRatingTags(loc.rating || []);
+    
     mDesc.textContent = loc.description || "";
     mDesc.style.display = mDesc.textContent ? "block" : "none";
 
