@@ -1,8 +1,9 @@
 window.App = window.App || {};
 
 App.Modal = (function () {
-  let modal, mTitle, mInfo, mDesc, mGallery, mTags, closeBtn;
+  let modal, mTitle, mInfo, mDesc, mGallery, mTags, closeBtn, backBtn;
   let currentLocId = "";
+  let stackedChooserContext = null;
 
   function escapeHtml(s) {
     return (s || "").toString()
@@ -44,8 +45,19 @@ App.Modal = (function () {
     mGallery = document.getElementById("mGallery");
     mTags = document.getElementById("mTags");
     closeBtn = document.getElementById("closeBtn");
+    backBtn = document.getElementById("modalBackBtn");
 
     closeBtn.onclick = close;
+
+    if (backBtn) {
+      backBtn.onclick = () => {
+        if (!stackedChooserContext || !App.Map || typeof App.Map.reopenStackedChooser !== "function") return;
+
+        close({ skipUrl: true, preserveChooserContext: true });
+        App.Map.reopenStackedChooser(stackedChooserContext);
+      };
+    }
+
     modal.onclick = (e) => { if (e.target === modal) close(); };
 
     mTags.addEventListener("click", (e) => {
@@ -65,6 +77,11 @@ App.Modal = (function () {
 
   function open(loc, opts = {}) {
     currentLocId = loc?.id || "";
+    stackedChooserContext = opts.fromStackedChooser || null;
+
+    if (backBtn) {
+      backBtn.style.display = stackedChooserContext ? "inline-flex" : "none";
+    }
 
     mTitle.textContent = loc.title || "";
 
@@ -116,7 +133,9 @@ App.Modal = (function () {
     if (loc.title) chips.push(chipHtml("Title", loc.title));
     if (loc.series && loc.series !== loc.title) chips.push(chipHtml("Series", loc.series));
     if (loc.type) chips.push(chipHtml("Type", loc.type));
-    (Array.isArray(loc.collections) ? loc.collections : []).forEach((c) => { if (c) chips.push(chipHtml("Collection", c)); });
+    (Array.isArray(loc.collections) ? loc.collections : []).forEach((c) => {
+      if (c) chips.push(chipHtml("Collection", c));
+    });
 
     mTags.innerHTML = chips.length ? chips.join("") : `<span class="loc-tags-empty">No tags yet.</span>`;
 
@@ -126,13 +145,18 @@ App.Modal = (function () {
     if (!opts.skipUrl) App.Router.onLocationOpened(currentLocId);
   }
 
-  function close() {
+  function close(opts = {}) {
     modal.classList.remove("open");
     modal.setAttribute("aria-hidden", "true");
 
+    if (!opts.preserveChooserContext) {
+      stackedChooserContext = null;
+      if (backBtn) backBtn.style.display = "none";
+    }
+
     if (currentLocId) {
       currentLocId = "";
-      App.Router.onLocationClosed();
+      if (!opts.skipUrl) App.Router.onLocationClosed();
     }
   }
 
