@@ -7,6 +7,8 @@ App.Map = (function () {
   let currentMarkers = [];
   let locById = new Map();
 
+  let chooserEl = null;
+
   const SOURCE_ID = "scene-points";
   const CLUSTERS_ID = "scene-clusters";
   const CLUSTER_COUNT_ID = "scene-cluster-count";
@@ -48,9 +50,10 @@ App.Map = (function () {
       zoom: 6
     });
 
-    map.addControl(new maptilersdk.NavigationControl(), "top-left");
+    // Left-hand SDK controls intentionally removed.
+    // If you later want SDK controls back, add:
+    // map.addControl(new maptilersdk.NavigationControl(), "top-right");
 
-    // Compatibility shim so existing UI/router code can still call setView([lat,lng], zoom)
     map.setView = function (latLng, zoom, options = {}) {
       const lat = latLng[0];
       const lng = latLng[1];
@@ -62,6 +65,8 @@ App.Map = (function () {
       });
     };
 
+    setupChooser();
+
     map.on("load", () => {
       setupSceneLayers();
       sourceReady = true;
@@ -70,6 +75,10 @@ App.Map = (function () {
         setSourceData(pendingMarkers);
         pendingMarkers = [];
       }
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") closeChooser();
     });
   }
 
@@ -191,6 +200,8 @@ App.Map = (function () {
     });
 
     map.on("click", CLUSTERS_ID, (e) => {
+      closeChooser();
+
       const features = map.queryRenderedFeatures(e.point, { layers: [CLUSTERS_ID] });
       const clusterId = features[0]?.properties?.cluster_id;
       const source = map.getSource(SOURCE_ID);
@@ -207,8 +218,15 @@ App.Map = (function () {
       });
     });
 
-    map.on("click", POINT_CIRCLES_ID, openFeatureModal);
-    map.on("click", POINT_LABELS_ID, openFeatureModal);
+    map.on("click", POINT_CIRCLES_ID, openPointOrChooser);
+    map.on("click", POINT_LABELS_ID, openPointOrChooser);
+
+    map.on("click", (e) => {
+      const hits = map.queryRenderedFeatures(e.point, {
+        layers: [CLUSTERS_ID, POINT_CIRCLES_ID, POINT_LABELS_ID]
+      });
+      if (!hits.length) closeChooser();
+    });
 
     map.on("mouseenter", CLUSTERS_ID, () => { map.getCanvas().style.cursor = "pointer"; });
     map.on("mouseleave", CLUSTERS_ID, () => { map.getCanvas().style.cursor = ""; });
@@ -218,7 +236,7 @@ App.Map = (function () {
     map.on("mouseleave", POINT_LABELS_ID, () => { map.getCanvas().style.cursor = ""; });
   }
 
-  function openFeatureModal(e) {
+  function openPointOrChooser(e) {
     const feature = e.features && e.features[0];
     const id = feature?.properties?.id;
     if (!id) return;
@@ -226,7 +244,129 @@ App.Map = (function () {
     const loc = locById.get(id);
     if (!loc) return;
 
-    App.Modal.open(loc);
+    const scenesAtLocation = getScenesAtSameCoordinates(loc);
+
+    if (scenesAtLocation.length <= 1) {
+      closeChooser();
+      App.Modal.open(loc);
+      return;
+    }
+
+    openChooser(scenesAtLocation);
+  }
+
+  function coordKeyFromLoc(loc) {
+    if (!loc) return "";
+    return `${Number(loc.lat).toFixed(6)},${Number(loc.lng).toFixed(6)}`;
+  }
+
+  function getScenesAtSameCoordinates(loc) {
+    const key = coordKeyFromLoc(loc);
+
+    return currentMarkers
+      .map((marker) => marker.__loc)
+      .filter(Boolean)
+      .filter((item) => coordKeyFromLoc(item) === key)
+      .sort((a, b) => {
+        const titleCmp = (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
+        if (titleCmp !== 0) return titleCmp;
+        return (a.dateFormatted || a.rawDate || "").localeCompare(b.dateFormatted || b.rawDate || "");
+      });
+  }
+
+  function setupChooser() {
+    chooserEl = document.createElement("div");
+    chooserEl.id = "sceneChooser";
+    chooserEl.className = "scene-chooser";
+    chooserEl.setAttribute("aria-hidden", "true");
+
+    chooserEl.innerHTML = `
+      <div class="scene-chooser-panel" role="dialog" aria-modal="true" aria-label="Scenes at this location">
+        <div class="scene-chooser-head">
+          <div>
+            <div class="scene-chooser-title">Scenes at this location</div>
+            <div id="sceneChooserMeta" class="scene-chooser-meta"></div>
+          </div>
+          <button id="sceneChooserClose" class="btn scene-chooser-close" type="button">Close</button>
+        </div>
+        <div id="sceneChooserList" class="scene-chooser-list"></div>
+      </div>
+    `;
+
+    document.body.appendChild(chooserEl);
+
+    chooserEl.addEventListener("click", (e) => {
+      if (e.target === chooserEl) closeChooser();
+
+      const closeBtn = e.target.closest("#sceneChooserClose");
+      if (closeBtn) closeChooser();
+
+      const item = e.target.closest("[data-scene-id]");
+      if (!item) return;
+
+      const id = item.getAttribute("data-scene-id");
+      const loc = locById.get(id);
+      if (!loc) return;
+
+      closeChooser();
+      App.Modal.open(loc);
+    });
+  }
+
+  function openChooser(locs) {
+    if (!chooserEl) setupChooser();
+
+    const metaEl = chooserEl.querySelector("#sceneChooserMeta");
+    const listEl = chooserEl.querySelector("#sceneChooserList");
+
+    const first = locs[0];
+    const place = [first.place, first.country].filter(Boolean).join(", ");
+
+    metaEl.textContent = `${locs.length.toLocaleString()} scene${locs.length === 1 ? "" : "s"}${place ? " • " + place : ""}`;
+
+    listEl.innerHTML = locs.map((loc) => sceneChooserItemHtml(loc)).join("");
+
+    chooserEl.classList.add("open");
+    chooserEl.setAttribute("aria-hidden", "false");
+  }
+
+  function closeChooser() {
+    if (!chooserEl) return;
+    chooserEl.classList.remove("open");
+    chooserEl.setAttribute("aria-hidden", "true");
+  }
+
+  function sceneChooserItemHtml(loc) {
+    const img = Array.isArray(loc.images) && loc.images.length ? loc.images[0] : "";
+    const when = loc.monthShort || loc.dateFormatted || loc.rawDate || "";
+    const type = normalizeType(loc.type);
+    const color = colorForType(type);
+    const badge = badgeForType(type);
+
+    return `
+      <button class="scene-choice" type="button" data-scene-id="${escapeHtml(loc.id)}">
+        <span class="scene-choice-thumb">
+          ${
+            img
+              ? `<img src="${escapeHtml(img)}" alt="" loading="lazy">`
+              : `<span class="scene-choice-fallback" style="background:${escapeHtml(color)}">${escapeHtml(badge)}</span>`
+          }
+        </span>
+        <span class="scene-choice-body">
+          <span class="scene-choice-title">${escapeHtml(loc.title || "Untitled")}</span>
+          <span class="scene-choice-meta">${escapeHtml([type, when].filter(Boolean).join(" • "))}</span>
+        </span>
+      </button>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return (s || "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
   function emptyGeoJson() {
@@ -289,6 +429,7 @@ App.Map = (function () {
   function rebuildCluster(markers) {
     currentMarkers = markers || [];
     App.UI.setCount(formatCountText(currentMarkers));
+    closeChooser();
 
     if (!sourceReady) {
       pendingMarkers = currentMarkers;
