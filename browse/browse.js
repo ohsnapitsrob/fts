@@ -165,6 +165,7 @@
       title,
       type,
       place: norm(row.place),
+      city: norm(row.city || row.town || row.place),
       country: norm(row.country),
       collections: splitPipe(row.collections),
       visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
@@ -280,7 +281,9 @@
       filtered = filtered.filter((entry) => {
         return (
           entry.title.toLowerCase().includes(q) ||
-          displayType(entry.type).toLowerCase().includes(q)
+          displayType(entry.type).toLowerCase().includes(q) ||
+          entry.cities.some((city) => city.toLowerCase().includes(q)) ||
+          entry.countries.some((country) => country.toLowerCase().includes(q))
         );
       });
     }
@@ -309,9 +312,11 @@
     );
 
     const rows = [];
+
     for (let i = 0; i < sources.length; i++) {
       const [fallbackType] = sources[i];
       const parsed = rowsToObjects(parseCSV(texts[i]));
+
       parsed.forEach((r) => {
         const loc = postProcessRow(r, fallbackType);
         if (loc) rows.push(loc);
@@ -322,17 +327,23 @@
 
     rows.forEach((loc) => {
       const key = `${loc.title}|||${loc.type}`;
+
       if (!grouped.has(key)) {
         grouped.set(key, {
           title: loc.title,
           type: loc.type,
           count: 0,
-          latestVisitedTs: null
+          latestVisitedTs: null,
+          cities: new Set(),
+          countries: new Set()
         });
       }
 
       const entry = grouped.get(key);
       entry.count += 1;
+
+      if (loc.city) entry.cities.add(loc.city);
+      if (loc.country) entry.countries.add(loc.country);
 
       if (Number.isFinite(loc.visitedTs)) {
         if (!Number.isFinite(entry.latestVisitedTs) || loc.visitedTs > entry.latestVisitedTs) {
@@ -341,7 +352,11 @@
       }
     });
 
-    return Array.from(grouped.values());
+    return Array.from(grouped.values()).map((entry) => ({
+      ...entry,
+      cities: Array.from(entry.cities),
+      countries: Array.from(entry.countries)
+    }));
   }
 
   async function init() {
