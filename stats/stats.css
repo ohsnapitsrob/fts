@@ -57,6 +57,11 @@ body {
   align-items: center;
 }
 
+.logo-link {
+  display: block;
+}
+
+
 .stats-logo {
   display: block;
   width: 100%;
