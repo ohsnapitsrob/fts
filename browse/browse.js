@@ -140,7 +140,7 @@
     const params = new URLSearchParams();
     params.set("fk", "Title");
     params.set("fl", title);
-    return `../?${params.toString()}`;
+    return `../explore/?${params.toString()}`;
   }
 
   function parseVisitedDate(value) {
