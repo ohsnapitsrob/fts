@@ -2,7 +2,7 @@
   const loadingEl = document.getElementById("statsLoading");
   const rootEl = document.getElementById("statsRoot");
 
-  const PROJECT_START = new Date(2025, 6, 1); // July 1 2025
+  const PROJECT_START = new Date(2025, 6, 1);
 
   function norm(s) {
     return (s || "").toString().trim();
@@ -92,9 +92,7 @@
       if (!r || r.every(cell => norm(cell) === "")) continue;
 
       const obj = {};
-      for (let j = 0; j < header.length; j++) {
-        obj[header[j]] = (r[j] ?? "");
-      }
+      for (let j = 0; j < header.length; j++) obj[header[j]] = (r[j] ?? "");
       out.push(obj);
     }
 
@@ -150,9 +148,7 @@
   }
 
   function monthKey(d) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    return `${y}-${m}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
   }
 
   function yearKey(d) {
@@ -200,20 +196,20 @@
 
   function panel({ kicker, value, sub = "", cls = "", delta = null, badges = [] }) {
     return `
-      <div class="panel ${cls}">
+      <article class="panel ${cls}">
         <div class="panel-kicker">${escapeHtml(kicker)}</div>
         <div class="panel-value">${value}</div>
         ${delta ? `<div class="delta ${delta.cls}">${escapeHtml(delta.text)}</div>` : ""}
         ${sub ? `<div class="panel-sub">${sub}</div>` : ""}
-        ${badges.length ? `<div class="badge-row">${badges.map(x => `<div class="badge">${escapeHtml(x)}</div>`).join("")}</div>` : ""}
-      </div>
+        ${badges.length ? `<div class="badge-row">${badges.map(x => `<span class="badge">${escapeHtml(x)}</span>`).join("")}</div>` : ""}
+      </article>
     `;
   }
 
   function listPanel({ title, rows, cls = "" }) {
     return `
-      <div class="panel ${cls}">
-        <h3 class="section-title">${escapeHtml(title)}</h3>
+      <article class="panel ${cls}">
+        <h2 class="section-title">${escapeHtml(title)}</h2>
         <div class="stat-list">
           ${rows.map((row) => `
             <div class="stat-list-row">
@@ -222,15 +218,16 @@
             </div>
           `).join("")}
         </div>
-      </div>
+      </article>
     `;
   }
 
   function meterPanel({ title, subtitle = "", items, cls = "" }) {
     const max = Math.max(...items.map(x => x.value), 1);
+
     return `
-      <div class="panel ${cls}">
-        <h3 class="section-title">${escapeHtml(title)}</h3>
+      <article class="panel ${cls}">
+        <h2 class="section-title">${escapeHtml(title)}</h2>
         ${subtitle ? `<div class="section-copy">${escapeHtml(subtitle)}</div>` : ""}
         <div class="meter-list">
           ${items.map((item) => `
@@ -245,27 +242,26 @@
             </div>
           `).join("")}
         </div>
-      </div>
+      </article>
     `;
   }
 
   function barChartPanel({ title, subtitle = "", data, cls = "" }) {
     const max = Math.max(...data.map(x => x.value), 1);
+
     return `
-      <div class="panel ${cls}">
-        <h3 class="section-title">${escapeHtml(title)}</h3>
+      <article class="panel ${cls}">
+        <h2 class="section-title">${escapeHtml(title)}</h2>
         ${subtitle ? `<div class="section-copy">${escapeHtml(subtitle)}</div>` : ""}
-        <div class="spark-wrap">
-          <div class="spark-chart">
-            ${data.map((item) => `
-              <div class="spark-col">
-                <div class="spark-bar" style="height:${Math.max(8, (item.value / max) * 150)}px"></div>
-                <div class="spark-label">${escapeHtml(item.label)}</div>
-              </div>
-            `).join("")}
-          </div>
+        <div class="spark-chart">
+          ${data.map((item) => `
+            <div class="spark-col">
+              <div class="spark-bar" style="height:${Math.max(8, (item.value / max) * 150)}px"></div>
+              <div class="spark-label">${escapeHtml(item.label)}</div>
+            </div>
+          `).join("")}
         </div>
-      </div>
+      </article>
     `;
   }
 
@@ -283,19 +279,20 @@
 
     if (!sources.length) throw new Error("No sheet URLs configured.");
 
-    const texts = await Promise.all(
-      sources.map(([, url]) => fetchSheetCSV(url))
-    );
+    const texts = await Promise.all(sources.map(([, url]) => fetchSheetCSV(url)));
 
     const rows = [];
+
     for (let i = 0; i < sources.length; i++) {
       const [fallbackType] = sources[i];
       const parsed = rowsToObjects(parseCSV(texts[i]));
+
       parsed.forEach((r) => {
         const title = norm(r.title);
         const type = normalizeType(r.type || fallbackType);
         const lat = coerceNumber(r.lat);
         const lng = coerceNumber(r.lng);
+
         if (!title || typeof lat !== "number" || typeof lng !== "number") return;
 
         rows.push({
@@ -303,6 +300,7 @@
           title,
           type,
           place: norm(r.place),
+          city: norm(r.city || r.town || r.place),
           country: norm(r.country),
           collections: splitPipe(r.collections),
           visited: parseVisitedDate(r["date-formatted"] || r["raw-date"] || r["visited"] || r["visit-date"])
@@ -358,12 +356,16 @@
     const projectRows = rows.filter((row) => row.visited instanceof Date && row.visited >= PROJECT_START);
 
     const countriesAll = new Set();
+    const citiesAll = new Set();
+    const citiesThisMonth = new Set();
+    const citiesPrevMonth = new Set();
+    const citiesThisYear = new Set();
+    const citiesPrevYear = new Set();
     const countriesThisMonth = new Set();
     const countriesPrevMonth = new Set();
     const countriesThisYear = new Set();
     const countriesPrevYear = new Set();
 
-    const titleTypeMap = new Map();
     const titleMap = new Map();
     const typeTitleSets = new Map();
     const collectionCounts = new Map();
@@ -372,6 +374,7 @@
     const scenesByMonth = new Map();
     const scenesByYear = new Map();
     const scenesByCountry = new Map();
+    const scenesByCity = new Map();
     const scenesByWeekday = new Map();
     const scenesByType = new Map();
     const scenesByTitleType = new Map();
@@ -390,24 +393,31 @@
         scenesByCountry.set(row.country, (scenesByCountry.get(row.country) || 0) + 1);
       }
 
+      if (row.city) {
+        citiesAll.add(row.city);
+        scenesByCity.set(row.city, (scenesByCity.get(row.city) || 0) + 1);
+      }
+
       scenesByType.set(row.type, (scenesByType.get(row.type) || 0) + 1);
 
       const sceneKey = titleTypeKey(row.title, row.type);
       scenesByTitleType.set(sceneKey, (scenesByTitleType.get(sceneKey) || 0) + 1);
 
-      const ttKey = titleTypeKey(row.title, row.type);
-      titleTypeMap.set(ttKey, { title: row.title, type: row.type });
-
       if (!titleMap.has(row.title)) {
         titleMap.set(row.title, {
           title: row.title,
           count: 0,
-          types: new Set()
+          types: new Set(),
+          cities: new Set(),
+          countries: new Set()
         });
       }
+
       const titleEntry = titleMap.get(row.title);
       titleEntry.count += 1;
       titleEntry.types.add(row.type);
+      if (row.city) titleEntry.cities.add(row.city);
+      if (row.country) titleEntry.countries.add(row.country);
 
       if (!typeTitleSets.has(row.type)) typeTitleSets.set(row.type, new Set());
       typeTitleSets.get(row.type).add(row.title);
@@ -421,37 +431,35 @@
       if (!firstVisit || d < firstVisit) firstVisit = d;
       if (!latestVisit || d > latestVisit) latestVisit = d;
 
-      const dKey = dayKey(d);
-      const mKey = monthKey(d);
-      const yKey = yearKey(d);
-      const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
+      scenesByDay.set(dayKey(d), (scenesByDay.get(dayKey(d)) || 0) + 1);
+      scenesByMonth.set(monthKey(d), (scenesByMonth.get(monthKey(d)) || 0) + 1);
+      scenesByYear.set(yearKey(d), (scenesByYear.get(yearKey(d)) || 0) + 1);
 
-      scenesByDay.set(dKey, (scenesByDay.get(dKey) || 0) + 1);
-      scenesByMonth.set(mKey, (scenesByMonth.get(mKey) || 0) + 1);
-      scenesByYear.set(yKey, (scenesByYear.get(yKey) || 0) + 1);
+      const weekday = d.toLocaleDateString(undefined, { weekday: "long" });
       scenesByWeekday.set(weekday, (scenesByWeekday.get(weekday) || 0) + 1);
 
       if (d.getFullYear() === nowYear) {
         scenesThisYear += 1;
         if (row.country) countriesThisYear.add(row.country);
+        if (row.city) citiesThisYear.add(row.city);
       }
 
       if (d.getFullYear() === prevYear) {
         scenesPrevYear += 1;
         if (row.country) countriesPrevYear.add(row.country);
+        if (row.city) citiesPrevYear.add(row.city);
       }
 
       if (d.getFullYear() === nowYear && d.getMonth() === nowMonth) {
         scenesThisMonth += 1;
         if (row.country) countriesThisMonth.add(row.country);
+        if (row.city) citiesThisMonth.add(row.city);
       }
 
-      if (
-        d.getFullYear() === prevMonthDate.getFullYear() &&
-        d.getMonth() === prevMonthDate.getMonth()
-      ) {
+      if (d.getFullYear() === prevMonthDate.getFullYear() && d.getMonth() === prevMonthDate.getMonth()) {
         scenesPrevMonth += 1;
         if (row.country) countriesPrevMonth.add(row.country);
+        if (row.city) citiesPrevMonth.add(row.city);
       }
     });
 
@@ -461,15 +469,11 @@
     const mostScenesEntry = [...titleEntries]
       .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))[0] || null;
 
-    const leastScenesEntry = [...titleEntries]
-      .sort((a, b) => a.count - b.count || a.title.localeCompare(b.title))[0] || null;
-
     const repeatedTitles = titleEntries.filter(x => x.count > 1).length;
     const singleSceneTitles = titleEntries.filter(x => x.count === 1).length;
 
     const totalTitles = titleEntries.length;
     const totalScenes = projectRows.length;
-    const totalCountries = countriesAll.size;
 
     const mostScenesDay = [...scenesByDay.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] || null;
@@ -480,7 +484,7 @@
     const avgScenesPerMonth = scenesByMonth.size ? totalScenes / scenesByMonth.size : 0;
     const avgScenesPerYear = scenesByYear.size ? totalScenes / scenesByYear.size : 0;
     const avgScenesPerTitle = totalTitles ? totalScenes / totalTitles : 0;
-    const medianScenesPerTitle = median(titleSceneCounts);
+    const avgScenesPerCity = citiesAll.size ? totalScenes / citiesAll.size : 0;
 
     const sortedVisitDates = projectRows
       .map(x => x.visited)
@@ -490,10 +494,12 @@
     let longestGapDays = 0;
     let longestGapFrom = null;
     let longestGapTo = null;
+
     for (let i = 1; i < sortedVisitDates.length; i++) {
       const prev = sortedVisitDates[i - 1];
       const curr = sortedVisitDates[i];
       const gapDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+
       if (gapDays > longestGapDays) {
         longestGapDays = gapDays;
         longestGapFrom = prev;
@@ -504,6 +510,11 @@
     const topCountries = [...scenesByCountry.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, 6)
+      .map(([label, value]) => ({ label, value }));
+
+    const topCities = [...scenesByCity.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .slice(0, 8)
       .map(([label, value]) => ({ label, value }));
 
     const topCollections = [...collectionCounts.entries()]
@@ -526,15 +537,14 @@
     const bestYear = [...scenesByYear.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] || null;
 
+    const bestCity = [...scenesByCity.entries()]
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] || null;
+
     const typeLeader = [...scenesByType.entries()]
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0] || null;
 
-    const multiCountryTitles = new Map();
-    projectRows.forEach((row) => {
-      if (!multiCountryTitles.has(row.title)) multiCountryTitles.set(row.title, new Set());
-      if (row.country) multiCountryTitles.get(row.title).add(row.country);
-    });
-    const multiCountryCount = [...multiCountryTitles.values()].filter(set => set.size > 1).length;
+    const multiCountryCount = titleEntries.filter((entry) => entry.countries.size > 1).length;
+    const multiCityCount = titleEntries.filter((entry) => entry.cities.size > 1).length;
 
     const titleRevisitLeader = [...scenesByTitleType.entries()]
       .map(([key, value]) => {
@@ -548,15 +558,23 @@
     return {
       totalScenes,
       totalTitles,
-      totalCountries,
+      totalCountries: countriesAll.size,
+      totalCities: citiesAll.size,
+
       scenesThisMonth,
       scenesPrevMonth,
       scenesThisYear,
       scenesPrevYear,
+
       countriesThisMonth: countriesThisMonth.size,
       countriesPrevMonth: countriesPrevMonth.size,
       countriesThisYear: countriesThisYear.size,
       countriesPrevYear: countriesPrevYear.size,
+
+      citiesThisMonth: citiesThisMonth.size,
+      citiesPrevMonth: citiesPrevMonth.size,
+      citiesThisYear: citiesThisYear.size,
+      citiesPrevYear: citiesPrevYear.size,
 
       movieTitleCount: (typeTitleSets.get("Film") || new Set()).size,
       tvTitleCount: (typeTitleSets.get("TV") || new Set()).size,
@@ -571,13 +589,13 @@
       miscScenes: scenesByType.get("Misc") || 0,
 
       mostScenesEntry,
-      leastScenesEntry,
       mostScenesDay,
       mostScenesMonth,
       avgScenesPerMonth,
       avgScenesPerYear,
       avgScenesPerTitle,
-      medianScenesPerTitle,
+      avgScenesPerCity,
+      medianScenesPerTitle: median(titleSceneCounts),
       repeatedTitles,
       singleSceneTitles,
       firstVisit,
@@ -587,12 +605,15 @@
       longestGapTo,
       weekdayChamp,
       topCountries,
+      topCities,
       topCollections,
       recentMonths,
       yearlyBreakdown,
       bestYear,
+      bestCity,
       typeLeader,
       multiCountryCount,
+      multiCityCount,
       titleRevisitLeader,
       streaks
     };
@@ -601,57 +622,73 @@
   function render(stats) {
     const monthDelta = trendMeta(stats.scenesThisMonth, stats.scenesPrevMonth);
     const yearDelta = trendMeta(stats.scenesThisYear, stats.scenesPrevYear);
+    const cityMonthDelta = trendMeta(stats.citiesThisMonth, stats.citiesPrevMonth);
+    const cityYearDelta = trendMeta(stats.citiesThisYear, stats.citiesPrevYear);
     const countryMonthDelta = trendMeta(stats.countriesThisMonth, stats.countriesPrevMonth);
-    const countryYearDelta = trendMeta(stats.countriesThisYear, stats.countriesPrevYear);
 
-    const hero = `
-      <div class="hero-band">
-        <div class="hero-card">
+    rootEl.innerHTML = `
+      <section class="hero-band">
+        <article class="hero-total">
           <div class="hero-kicker">Project total since July 2025</div>
           <div class="hero-value">${formatNumber(stats.totalScenes)}</div>
-          <div class="hero-sub">Scenes visited across ${plural(stats.totalTitles, "title", "titles")} and ${plural(stats.totalCountries, "country", "countries")}. Legacy photo archaeology doesn’t count toward the main flex.</div>
-          <div class="hero-metrics">
-            <div class="hero-pill">${plural(stats.movieTitleCount, "movie", "movies")}</div>
-            <div class="hero-pill">${plural(stats.tvTitleCount, "TV title", "TV titles")}</div>
-            <div class="hero-pill">${plural(stats.musicVideoTitleCount, "music video", "music videos")}</div>
-            <div class="hero-pill">${plural(stats.videoGameTitleCount, "video game", "video games")}</div>
+          <div class="hero-sub">
+            Scenes visited across ${plural(stats.totalTitles, "title", "titles")},
+            ${plural(stats.totalCities, "city", "cities")} and
+            ${plural(stats.totalCountries, "country", "countries")}.
           </div>
-        </div>
+
+          <div class="hero-pills">
+            <span class="hero-pill">${plural(stats.movieTitleCount, "movie", "movies")}</span>
+            <span class="hero-pill">${plural(stats.tvTitleCount, "TV title", "TV titles")}</span>
+            <span class="hero-pill">${plural(stats.musicVideoTitleCount, "music video", "music videos")}</span>
+            <span class="hero-pill">${plural(stats.videoGameTitleCount, "video game", "video games")}</span>
+          </div>
+        </article>
 
         <div class="spotlight-stack">
-          <div class="spotlight-card">
-            <div class="spotlight-label">Scenes visited this month</div>
+          <article class="spotlight-card">
+            <div class="spotlight-label">Scenes this month</div>
             <div class="spotlight-main">
               <div class="spotlight-value">${formatNumber(stats.scenesThisMonth)}</div>
               <div class="delta ${monthDelta.cls}">${monthDelta.text}</div>
             </div>
-          </div>
+          </article>
 
-          <div class="spotlight-card">
-            <div class="spotlight-label">Scenes visited this year</div>
+          <article class="spotlight-card">
+            <div class="spotlight-label">Cities this year</div>
             <div class="spotlight-main">
-              <div class="spotlight-value">${formatNumber(stats.scenesThisYear)}</div>
-              <div class="delta ${yearDelta.cls}">${yearDelta.text}</div>
+              <div class="spotlight-value">${formatNumber(stats.citiesThisYear)}</div>
+              <div class="delta ${cityYearDelta.cls}">${cityYearDelta.text}</div>
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-    `;
+      </section>
 
-    const topStats = `
-      <div class="stats-grid">
+      <section class="stats-grid">
         ${panel({
-          kicker: "Countries visited this month",
-          value: formatNumber(stats.countriesThisMonth),
-          delta: countryMonthDelta,
-          cls: "gradient blue"
+          kicker: "Total cities",
+          value: formatNumber(stats.totalCities),
+          sub: "Unique cities in the project era",
+          cls: "purple"
         })}
 
         ${panel({
-          kicker: "Countries visited this year",
-          value: formatNumber(stats.countriesThisYear),
-          delta: countryYearDelta,
-          cls: "gradient purple"
+          kicker: "Cities this month",
+          value: formatNumber(stats.citiesThisMonth),
+          delta: cityMonthDelta,
+          cls: "blue"
+        })}
+
+        ${panel({
+          kicker: "Countries this month",
+          value: formatNumber(stats.countriesThisMonth),
+          delta: countryMonthDelta
+        })}
+
+        ${panel({
+          kicker: "Scenes this year",
+          value: formatNumber(stats.scenesThisYear),
+          delta: yearDelta
         })}
 
         ${panel({
@@ -670,15 +707,16 @@
           kicker: "Most scenes",
           value: stats.mostScenesEntry ? escapeHtml(stats.mostScenesEntry.title) : "—",
           sub: stats.mostScenesEntry ? plural(stats.mostScenesEntry.count, "scene", "scenes") : "",
-          cls: "wide gradient dark",
+          cls: "wide dark",
           badges: stats.mostScenesEntry ? ["Main character energy"] : []
         })}
 
         ${panel({
-          kicker: "Least scenes",
-          value: stats.leastScenesEntry ? escapeHtml(stats.leastScenesEntry.title) : "—",
-          sub: stats.leastScenesEntry ? plural(stats.leastScenesEntry.count, "scene", "scenes") : "",
-          cls: "wide"
+          kicker: "Best city",
+          value: stats.bestCity ? escapeHtml(stats.bestCity[0]) : "—",
+          sub: stats.bestCity ? plural(stats.bestCity[1], "scene", "scenes") : "",
+          cls: "wide purple",
+          badges: stats.bestCity ? ["Location MVP"] : []
         })}
 
         ${panel({
@@ -712,21 +750,39 @@
         })}
 
         ${panel({
+          kicker: "Average scenes per city",
+          value: stats.avgScenesPerCity.toFixed(1),
+          sub: "How dense your city coverage is"
+        })}
+
+        ${panel({
           kicker: "Repeatable titles",
           value: formatNumber(stats.repeatedTitles),
           sub: `${plural(stats.singleSceneTitles, "single-scene title", "single-scene titles")}`
         })}
 
         ${panel({
+          kicker: "Multi-city titles",
+          value: formatNumber(stats.multiCityCount),
+          sub: "Titles found across more than one city"
+        })}
+
+        ${panel({
+          kicker: "Cross-country titles",
+          value: formatNumber(stats.multiCountryCount),
+          sub: "Titles found in more than one country"
+        })}
+
+        ${panel({
           kicker: "Latest visit",
           value: stats.latestVisit ? formatDate(stats.latestVisit) : "—",
-          sub: stats.latestVisit ? "Most recent scene-hunting outing" : ""
+          sub: "Most recent scene-hunting outing"
         })}
 
         ${panel({
           kicker: "First project visit",
           value: stats.firstVisit ? formatDate(stats.firstVisit) : "—",
-          sub: stats.firstVisit ? "Where the current era started" : ""
+          sub: "Where the current era started"
         })}
 
         ${panel({
@@ -739,12 +795,6 @@
           kicker: "Most scene-heavy format",
           value: stats.typeLeader ? escapeHtml(displayType(stats.typeLeader[0], stats.typeLeader[1])) : "—",
           sub: stats.typeLeader ? plural(stats.typeLeader[1], "scene", "scenes") : ""
-        })}
-
-        ${panel({
-          kicker: "Cross-country titles",
-          value: formatNumber(stats.multiCountryCount),
-          sub: "Titles found in more than one country"
         })}
 
         ${panel({
@@ -781,21 +831,23 @@
 
         ${barChartPanel({
           title: "Recent month momentum",
-          subtitle: "Last 8 active months. Because yes, we absolutely needed the chart.",
-          data: stats.recentMonths.map(x => ({
-            label: x.short.slice(5),
-            value: x.value
-          })),
+          subtitle: "Last 8 active months.",
+          data: stats.recentMonths.map(x => ({ label: x.short.slice(5), value: x.value })),
+          cls: "wide"
+        })}
+
+        ${listPanel({
+          title: "Top cities",
+          rows: stats.topCities.length
+            ? stats.topCities.map(item => ({ label: item.label, value: plural(item.value, "scene", "scenes") }))
+            : [{ label: "No cities yet", value: "—" }],
           cls: "wide"
         })}
 
         ${listPanel({
           title: "Top countries",
           rows: stats.topCountries.length
-            ? stats.topCountries.map(item => ({
-                label: item.label,
-                value: plural(item.value, "scene", "scenes")
-              }))
+            ? stats.topCountries.map(item => ({ label: item.label, value: plural(item.value, "scene", "scenes") }))
             : [{ label: "No countries yet", value: "—" }],
           cls: "wide"
         })}
@@ -803,10 +855,7 @@
         ${listPanel({
           title: "Top collections",
           rows: stats.topCollections.length
-            ? stats.topCollections.map(item => ({
-                label: item.label,
-                value: plural(item.value, "scene", "scenes")
-              }))
+            ? stats.topCollections.map(item => ({ label: item.label, value: plural(item.value, "scene", "scenes") }))
             : [{ label: "No collections yet", value: "—" }],
           cls: "wide"
         })}
@@ -814,10 +863,7 @@
         ${listPanel({
           title: "Yearly breakdown",
           rows: stats.yearlyBreakdown.length
-            ? stats.yearlyBreakdown.map(item => ({
-                label: item.label,
-                value: plural(item.value, "scene", "scenes")
-              }))
+            ? stats.yearlyBreakdown.map(item => ({ label: item.label, value: plural(item.value, "scene", "scenes") }))
             : [{ label: "No dated visits yet", value: "—" }],
           cls: "wide"
         })}
@@ -833,10 +879,9 @@
           value: stats.avgScenesPerYear.toFixed(1),
           sub: "Across all active years since project start"
         })}
-      </div>
+      </section>
     `;
 
-    rootEl.innerHTML = hero + topStats;
     loadingEl.style.display = "none";
     rootEl.style.display = "block";
   }
