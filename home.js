@@ -94,22 +94,25 @@
 
   function render({ scenes, titles, cities, countries }) {
     statsEl.innerHTML = `
-      <div class="stat-card">
+      <article class="stat-card">
         <div class="stat-value">${formatNumber(scenes)}</div>
         <div class="stat-label">Scenes</div>
-      </div>
-      <div class="stat-card">
+      </article>
+
+      <article class="stat-card">
         <div class="stat-value">${formatNumber(titles)}</div>
         <div class="stat-label">Titles</div>
-      </div>
-      <div class="stat-card">
+      </article>
+
+      <article class="stat-card">
         <div class="stat-value">${formatNumber(cities)}</div>
         <div class="stat-label">Cities</div>
-      </div>
-      <div class="stat-card">
+      </article>
+
+      <article class="stat-card">
         <div class="stat-value">${formatNumber(countries)}</div>
         <div class="stat-label">Countries</div>
-      </div>
+      </article>
     `;
   }
 
@@ -153,7 +156,6 @@
         const country = norm(row.country);
         if (country) countries.add(country);
 
-        // keep type normalized for future home-page stat expansion
         void type;
       });
     }
