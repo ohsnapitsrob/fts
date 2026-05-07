@@ -3,202 +3,65 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>On The Map</title>
+  <title>Find That Scene</title>
 
-  <style>
-    :root {
-      --border: #e7e7e7;
-      --text: #111827;
-      --muted: #6b7280;
-      --bg: #f7f7fb;
-      --card: #ffffff;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color: var(--text);
-      background:
-        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.12), transparent 30%),
-        radial-gradient(circle at 85% 20%, rgba(219, 39, 119, 0.10), transparent 28%),
-        radial-gradient(circle at 70% 90%, rgba(22, 163, 74, 0.10), transparent 30%),
-        var(--bg);
-      display: grid;
-      place-items: center;
-      padding: 24px;
-    }
-
-    .home {
-      width: min(960px, 100%);
-      display: grid;
-      gap: 22px;
-    }
-
-    .hero {
-      background: rgba(255,255,255,0.82);
-      border: 1px solid rgba(255,255,255,0.8);
-      border-radius: 28px;
-      padding: 32px;
-      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.10);
-      backdrop-filter: blur(16px);
-      display: grid;
-      gap: 24px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(44px, 9vw, 92px);
-      line-height: 0.95;
-      letter-spacing: -0.06em;
-    }
-
-    .intro {
-      margin: 0;
-      max-width: 680px;
-      color: var(--muted);
-      font-size: 17px;
-      line-height: 1.5;
-    }
-
-    .home-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .home-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 46px;
-      padding: 0 18px;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      background: #fff;
-      color: inherit;
-      text-decoration: none;
-      font-weight: 750;
-      box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
-    }
-
-    .home-link.primary {
-      background: #111827;
-      color: #fff;
-      border-color: #111827;
-    }
-
-    .home-link:hover {
-      transform: translateY(-1px);
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .stat-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 18px;
-      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.05);
-    }
-
-    .stat-value {
-      font-size: 34px;
-      font-weight: 850;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
-
-    .stat-label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .more-stats {
-      justify-self: start;
-      color: #374151;
-      font-size: 14px;
-      font-weight: 700;
-      text-decoration: none;
-    }
-
-    .more-stats:hover {
-      text-decoration: underline;
-    }
-
-    .loading {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    @media (max-width: 720px) {
-      body {
-        padding: 16px;
-        place-items: stretch;
-      }
-
-      .hero {
-        padding: 24px;
-      }
-
-      .stats-row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .home-link {
-        flex: 1;
-      }
-    }
-  </style>
+  <link rel="preconnect" href="https://images.pixieset.com">
+  <link rel="stylesheet" href="./home.css" />
 </head>
 <body>
-  <main class="home">
-    <section class="hero">
-      <div>
-        <h1>On The Map</h1>
-        <p class="intro">Browse filming, music video, TV, game and inspiration locations — without loading the map until you actually want to explore.</p>
+  <main class="home-shell">
+    <section class="hero-card">
+      <div class="hero-logo-wrap">
+        <img
+          class="hero-logo"
+          src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
+          alt="Find That Scene"
+        />
       </div>
 
-      <nav class="home-links" aria-label="Main navigation">
-        <a class="home-link" href="./browse/">Browse</a>
-        <a class="home-link primary" href="./explore/">Map</a>
+      <p class="hero-copy">
+        Helping people discover real filming, music video, TV, game and inspiration locations on a map.
+      </p>
+
+      <nav class="home-actions" aria-label="Main navigation">
+        <a class="btn btn-secondary" href="./browse/">
+          <span class="btn-icon" aria-hidden="true">⌕</span>
+          Browse
+        </a>
+
+        <a class="btn btn-primary" href="./explore/">
+          <span class="btn-icon" aria-hidden="true">⌖</span>
+          Map
+        </a>
       </nav>
 
-      <div id="homeStats" class="stats-row" aria-live="polite">
-        <div class="stat-card">
+      <section id="homeStats" class="stats-grid" aria-live="polite">
+        <article class="stat-card">
           <div class="stat-value">—</div>
           <div class="stat-label">Scenes</div>
-        </div>
-        <div class="stat-card">
+        </article>
+
+        <article class="stat-card">
           <div class="stat-value">—</div>
           <div class="stat-label">Titles</div>
-        </div>
-        <div class="stat-card">
+        </article>
+
+        <article class="stat-card">
           <div class="stat-value">—</div>
           <div class="stat-label">Cities</div>
-        </div>
-        <div class="stat-card">
+        </article>
+
+        <article class="stat-card">
           <div class="stat-value">—</div>
           <div class="stat-label">Countries</div>
-        </div>
-      </div>
+        </article>
+      </section>
 
       <a class="more-stats" href="./stats/">View more stats</a>
     </section>
   </main>
 
   <script>
-    // Preserve old shared map URLs like /?fk=Title&fl=...
     (function () {
       const params = new URLSearchParams(window.location.search);
       const mapParams = ["q", "tab", "fk", "fl", "loc", "rm", "mlat", "mlng", "mz"];
