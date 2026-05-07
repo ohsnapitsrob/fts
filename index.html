@@ -3,93 +3,214 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>On the Map</title>
+  <title>On The Map</title>
 
-  <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.8.0/maptiler-sdk.css" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <style>
+    :root {
+      --border: #e7e7e7;
+      --text: #111827;
+      --muted: #6b7280;
+      --bg: #f7f7fb;
+      --card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.12), transparent 30%),
+        radial-gradient(circle at 85% 20%, rgba(219, 39, 119, 0.10), transparent 28%),
+        radial-gradient(circle at 70% 90%, rgba(22, 163, 74, 0.10), transparent 30%),
+        var(--bg);
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .home {
+      width: min(960px, 100%);
+      display: grid;
+      gap: 22px;
+    }
+
+    .hero {
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 28px;
+      padding: 32px;
+      box-shadow: 0 24px 70px rgba(17, 24, 39, 0.10);
+      backdrop-filter: blur(16px);
+      display: grid;
+      gap: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(44px, 9vw, 92px);
+      line-height: 0.95;
+      letter-spacing: -0.06em;
+    }
+
+    .intro {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.5;
+    }
+
+    .home-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .home-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 0 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: inherit;
+      text-decoration: none;
+      font-weight: 750;
+      box-shadow: 0 8px 24px rgba(17, 24, 39, 0.06);
+    }
+
+    .home-link.primary {
+      background: #111827;
+      color: #fff;
+      border-color: #111827;
+    }
+
+    .home-link:hover {
+      transform: translateY(-1px);
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: 0 10px 30px rgba(17, 24, 39, 0.05);
+    }
+
+    .stat-value {
+      font-size: 34px;
+      font-weight: 850;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .more-stats {
+      justify-self: start;
+      color: #374151;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .more-stats:hover {
+      text-decoration: underline;
+    }
+
+    .loading {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px;
+        place-items: stretch;
+      }
+
+      .hero {
+        padding: 24px;
+      }
+
+      .stats-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .home-link {
+        flex: 1;
+      }
+    }
+  </style>
 </head>
 <body>
-
-  <header class="topbar">
-    <div class="topbar-inner">
-      <a href="./browse/" class="icon-btn topbar-browse-btn" aria-label="Browse titles" title="Browse titles">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h2A1.5 1.5 0 0 1 9 6.5v2A1.5 1.5 0 0 1 7.5 10h-2A1.5 1.5 0 0 1 4 8.5v-2zm0 9A1.5 1.5 0 0 1 5.5 14h2A1.5 1.5 0 0 1 9 15.5v2A1.5 1.5 0 0 1 7.5 19h-2A1.5 1.5 0 0 1 4 17.5v-2zM11 7h9v2h-9V7zm0 8h9v2h-9v-2z"></path>
-        </svg>
-      </a>
-
-      <input
-        id="search"
-        type="search"
-        placeholder="Search title, place, collection, keyword…"
-        autocomplete="off"
-      />
-
-      <div class="topbar-actions">
-        <button id="resetFilter" class="btn btn-secondary" style="display:none;">Reset</button>
-      </div>
-    </div>
-
-    <div class="topbar-meta">
-      <span id="count" class="count"></span>
-      <span id="filterLabel" class="filter-label" style="display:none;"></span>
-    </div>
-  </header>
-
-  <div id="map"></div>
-
-  <div id="resultsModal" class="modal" aria-hidden="true">
-    <div class="modal-card">
-      <button id="resultsCloseBtn" class="btn close">Close</button>
-
-      <div class="tabs">
-        <button id="tabGroups" class="tab active">Groups</button>
-        <button id="tabPlaces" class="tab">Places</button>
+  <main class="home">
+    <section class="hero">
+      <div>
+        <h1>On The Map</h1>
+        <p class="intro">Browse filming, music video, TV, game and inspiration locations — without loading the map until you actually want to explore.</p>
       </div>
 
-      <div id="results" class="results"></div>
-    </div>
-  </div>
+      <nav class="home-links" aria-label="Main navigation">
+        <a class="home-link" href="./browse/">Browse</a>
+        <a class="home-link primary" href="./explore/">Map</a>
+      </nav>
 
-  <div id="modal" class="modal location-modal" aria-hidden="true">
-    <div class="modal-card modal-card-location">
-      <button id="closeBtn" class="btn close">Close</button>
-
-      <div class="loc-title-row">
-        <button id="modalBackBtn" class="modal-back-btn" type="button" aria-label="Back to scenes at this location" style="display:none;">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M15.5 5.5L9 12l6.5 6.5l-1.4 1.4L6.2 12l7.9-7.9l1.4 1.4z"></path>
-          </svg>
-        </button>
-
-        <h2 id="mTitle" class="loc-title"></h2>
+      <div id="homeStats" class="stats-row" aria-live="polite">
+        <div class="stat-card">
+          <div class="stat-value">—</div>
+          <div class="stat-label">Scenes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">—</div>
+          <div class="stat-label">Titles</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">—</div>
+          <div class="stat-label">Cities</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">—</div>
+          <div class="stat-label">Countries</div>
+        </div>
       </div>
 
-      <div id="mInfo" class="loc-info"></div>
-      <div id="mRatingTags" class="rating-tags"></div>
-      <p id="mDesc" class="loc-desc"></p>
-      <div id="mGallery" class="gallery"></div>
+      <a class="more-stats" href="./stats/">View more stats</a>
+    </section>
+  </main>
 
-      <div class="loc-tags-wrap">
-        <div class="loc-tags-label">See more like this:</div>
-        <div id="mTags" class="loc-tags"></div>
-      </div>
-    </div>
-  </div>
+  <script>
+    // Preserve old shared map URLs like /?fk=Title&fl=...
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      const mapParams = ["q", "tab", "fk", "fl", "loc", "rm", "mlat", "mlng", "mz"];
+      const shouldRedirect = mapParams.some((key) => params.has(key));
 
-  <script src="https://cdn.maptiler.com/maptiler-sdk-js/v3.8.0/maptiler-sdk.umd.min.js"></script>
-  <script src="https://unpkg.com/fuse.js@7.0.0/dist/fuse.min.js"></script>
+      if (shouldRedirect) {
+        window.location.replace("./explore/" + window.location.search);
+      }
+    })();
+  </script>
 
-  <script src="config.js"></script>
-
-  <script src="src/state.js"></script>
-  <script src="src/router.js"></script>
-  <script src="src/map.js"></script>
-  <script src="src/modal.js"></script>
-  <script src="src/ui.js"></script>
-  <script src="src/search.js"></script>
-  <script src="src/data.js"></script>
-
-  <script src="app.js"></script>
+  <script src="./config.js"></script>
+  <script src="./home.js"></script>
 </body>
 </html>
