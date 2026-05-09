@@ -136,11 +136,10 @@
     return `${titleCount.toLocaleString()} title${titleCount === 1 ? "" : "s"}, ${sceneCount.toLocaleString()} scene${sceneCount === 1 ? "" : "s"}`;
   }
 
-  function buildMapUrl(title) {
+  function buildTitleUrl(title) {
     const params = new URLSearchParams();
-    params.set("fk", "Title");
     params.set("fl", title);
-    return `../explore/?${params.toString()}`;
+    return `../title/?${params.toString()}`;
   }
 
   function parseVisitedDate(value) {
@@ -256,7 +255,7 @@
     entries.forEach((entry) => {
       const a = document.createElement("a");
       a.className = "browse-row";
-      a.href = buildMapUrl(entry.title);
+      a.href = buildTitleUrl(entry.title);
 
       a.innerHTML = `
         <div class="browse-marker" style="background:${escapeHtml(typeColor(entry.type))};"></div>
