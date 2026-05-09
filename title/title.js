@@ -155,6 +155,10 @@
     return `${formatNumber(n)} ${n === 1 ? one : many}`;
   }
 
+  function labelForCount(n, one, many) {
+    return n === 1 ? one : many;
+  }
+
   function escapeHtml(s) {
     return (s || "").toString()
       .replaceAll("&", "&amp;")
@@ -312,6 +316,8 @@
       if (row.type) types.add(row.type);
     });
 
+    const cityCount = cities.size;
+    const countryCount = countries.size;
     const typeLabel = Array.from(types).map(displayType).join(", ");
 
     document.title = `${title} | Find That Scene`;
@@ -322,25 +328,25 @@
         <h1>${escapeHtml(title)}</h1>
         <p class="meta">
           ${plural(scenes, "scene", "scenes")} found across
-          ${plural(cities.size, "city", "cities")} and
-          ${plural(countries.size, "country", "countries")}.
+          ${plural(cityCount, "city", "cities")} and
+          ${plural(countryCount, "country", "countries")}.
         </p>
       </section>
 
       <section class="stats-grid">
         <article class="stat-card">
           <div class="stat-value">${formatNumber(scenes)}</div>
-          <div class="stat-label">Scenes</div>
+          <div class="stat-label">${labelForCount(scenes, "Scene", "Scenes")}</div>
         </article>
 
         <article class="stat-card">
-          <div class="stat-value">${formatNumber(cities.size)}</div>
-          <div class="stat-label">Cities</div>
+          <div class="stat-value">${formatNumber(cityCount)}</div>
+          <div class="stat-label">${labelForCount(cityCount, "City", "Cities")}</div>
         </article>
 
         <article class="stat-card">
-          <div class="stat-value">${formatNumber(countries.size)}</div>
-          <div class="stat-label">Countries</div>
+          <div class="stat-value">${formatNumber(countryCount)}</div>
+          <div class="stat-label">${labelForCount(countryCount, "Country", "Countries")}</div>
         </article>
       </section>
 
@@ -351,7 +357,7 @@
 
       <section class="scene-section">
         <div class="scene-section-head">
-          <h2 class="scene-section-title">Scenes</h2>
+          <h2 class="scene-section-title">${labelForCount(scenes, "Scene", "Scenes")}</h2>
           <p class="scene-section-copy">Newest visited first. Jump straight into a specific scene on the map.</p>
         </div>
 
