@@ -151,6 +151,15 @@
     return `../explore/?${params.toString()}`;
   }
 
+  function parseVisitedDate(value) {
+    const raw = norm(value);
+    if (!raw) return null;
+
+    const cleaned = raw.replace(/(\d{1,2})(st|nd|rd|th)/gi, "$1");
+    const ts = Date.parse(cleaned);
+    return Number.isFinite(ts) ? ts : null;
+  }
+
   function sceneImage(row) {
     return Array.isArray(row.images) && row.images.length ? row.images[0] : "";
   }
@@ -210,6 +219,24 @@
     `;
   }
 
+  function sortScenesNewestFirst(rows) {
+    return [...rows].sort((a, b) => {
+      const aHas = Number.isFinite(a.visitedTs);
+      const bHas = Number.isFinite(b.visitedTs);
+
+      if (aHas && bHas && b.visitedTs !== a.visitedTs) {
+        return b.visitedTs - a.visitedTs;
+      }
+
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+
+      const aLocation = sceneLocation(a);
+      const bLocation = sceneLocation(b);
+      return aLocation.localeCompare(bLocation, undefined, { sensitivity: "base" });
+    });
+  }
+
   function renderNotFound(requestedTitle) {
     document.title = `Title not found | Find That Scene`;
 
@@ -230,13 +257,14 @@
   }
 
   function renderTitlePage(title, rows) {
-    const scenes = rows.length;
+    const sortedRows = sortScenesNewestFirst(rows);
+    const scenes = sortedRows.length;
 
     const cities = new Set();
     const countries = new Set();
     const types = new Set();
 
-    rows.forEach((row) => {
+    sortedRows.forEach((row) => {
       if (row.city) cities.add(row.city);
       if (row.country) countries.add(row.country);
       if (row.type) types.add(row.type);
@@ -282,11 +310,11 @@
       <section class="scene-section">
         <div class="scene-section-head">
           <h2 class="scene-section-title">Scenes</h2>
-          <p class="scene-section-copy">Jump straight into a specific scene on the map.</p>
+          <p class="scene-section-copy">Newest visited first. Jump straight into a specific scene on the map.</p>
         </div>
 
         <div class="scene-grid">
-          ${rows.map(sceneCardHtml).join("")}
+          ${sortedRows.map(sceneCardHtml).join("")}
         </div>
       </section>
     `;
@@ -338,6 +366,7 @@
           rawDate: norm(row["raw-date"]),
           dateFormatted: norm(row["date-formatted"]),
           monthShort: norm(row["month-short"]),
+          visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"]),
           lat,
           lng
         });
