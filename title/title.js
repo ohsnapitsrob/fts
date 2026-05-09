@@ -15,6 +15,12 @@
     return t.split("|").map(x => norm(x)).filter(Boolean);
   }
 
+  function splitComma(s) {
+    const t = norm(s);
+    if (!t) return [];
+    return t.split(",").map(x => norm(x)).filter(Boolean);
+  }
+
   function normalizeType(t) {
     const x = norm(t).toLowerCase();
     if (!x) return "Misc";
@@ -30,6 +36,41 @@
     if (type === "Film") return "Movie";
     if (type === "TV") return "TV Show";
     return type;
+  }
+
+  function normalizeRating(value) {
+    const v = norm(value).toLowerCase();
+
+    const aliases = {
+      red: "red",
+      bad: "red",
+
+      orange: "orange",
+      average: "orange",
+
+      green: "green",
+      good: "green",
+
+      blue: "blue",
+      inspo: "blue",
+      inspiration: "blue",
+      "inspiration location": "blue"
+    };
+
+    return aliases[v] || "";
+  }
+
+  function ratingDotsHtml(row) {
+    const ratings = (row.rating || [])
+      .map(normalizeRating)
+      .filter(Boolean)
+      .filter((rating, index, arr) => arr.indexOf(rating) === index);
+
+    if (!ratings.length) return "";
+
+    return ratings.map((rating) => {
+      return `<span class="scene-status-dot scene-status-${rating}" aria-hidden="true"></span>`;
+    }).join("");
   }
 
   function coerceNumber(x) {
@@ -183,6 +224,7 @@
     return `
       <article class="scene-card">
         <div class="scene-thumb">
+          ${ratingDotsHtml(row)}
           ${
             img
               ? `<img src="${escapeHtml(img)}" alt="" loading="lazy">`
@@ -363,6 +405,7 @@
           country: norm(row.country),
           description: norm(row.description),
           images: splitPipe(row.images),
+          rating: splitComma(row.rating),
           rawDate: norm(row["raw-date"]),
           dateFormatted: norm(row["date-formatted"]),
           monthShort: norm(row["month-short"]),
