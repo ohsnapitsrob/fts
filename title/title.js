@@ -9,6 +9,12 @@
     return norm(s).toLowerCase();
   }
 
+  function splitPipe(s) {
+    const t = norm(s);
+    if (!t) return [];
+    return t.split("|").map(x => norm(x)).filter(Boolean);
+  }
+
   function normalizeType(t) {
     const x = norm(t).toLowerCase();
     if (!x) return "Misc";
@@ -129,6 +135,81 @@
     return `../explore/?${params.toString()}`;
   }
 
+  function buildSceneMapUrl(row) {
+    const params = new URLSearchParams();
+    params.set("fk", "Title");
+    params.set("fl", row.title);
+
+    if (row.id) params.set("loc", row.id);
+
+    if (Number.isFinite(row.lat) && Number.isFinite(row.lng)) {
+      params.set("mlat", row.lat.toFixed(5));
+      params.set("mlng", row.lng.toFixed(5));
+      params.set("mz", "16");
+    }
+
+    return `../explore/?${params.toString()}`;
+  }
+
+  function sceneImage(row) {
+    return Array.isArray(row.images) && row.images.length ? row.images[0] : "";
+  }
+
+  function sceneLocation(row) {
+    return [row.place, row.city, row.country]
+      .filter(Boolean)
+      .filter((value, index, arr) => arr.indexOf(value) === index)
+      .join(", ");
+  }
+
+  function sceneDate(row) {
+    return row.monthShort || row.dateFormatted || row.rawDate || "";
+  }
+
+  function sceneCardHtml(row) {
+    const img = sceneImage(row);
+    const location = sceneLocation(row);
+    const date = sceneDate(row);
+
+    return `
+      <article class="scene-card">
+        <div class="scene-thumb">
+          ${
+            img
+              ? `<img src="${escapeHtml(img)}" alt="" loading="lazy">`
+              : `<div class="scene-thumb-fallback">No image</div>`
+          }
+        </div>
+
+        <div class="scene-body">
+          <h3 class="scene-title">${escapeHtml(row.title)}</h3>
+
+          ${
+            row.description
+              ? `<p class="scene-desc">${escapeHtml(row.description)}</p>`
+              : `<p class="scene-desc">No description yet.</p>`
+          }
+
+          <div class="scene-meta">
+            ${
+              location
+                ? `<div class="scene-meta-row"><span class="scene-meta-icon">⌖</span><span>${escapeHtml(location)}</span></div>`
+                : ""
+            }
+
+            ${
+              date
+                ? `<div class="scene-meta-row"><span class="scene-meta-icon">◷</span><span>${escapeHtml(date)}</span></div>`
+                : ""
+            }
+          </div>
+
+          <a class="btn btn-primary" href="${buildSceneMapUrl(row)}">View</a>
+        </div>
+      </article>
+    `;
+  }
+
   function renderNotFound(requestedTitle) {
     document.title = `Title not found | Find That Scene`;
 
@@ -197,6 +278,17 @@
         <a class="btn btn-primary" href="${buildMapUrl(title)}">See scenes on the map</a>
         <a class="btn btn-secondary" href="../browse/">Browse all titles</a>
       </div>
+
+      <section class="scene-section">
+        <div class="scene-section-head">
+          <h2 class="scene-section-title">Scenes</h2>
+          <p class="scene-section-copy">Jump straight into a specific scene on the map.</p>
+        </div>
+
+        <div class="scene-grid">
+          ${rows.map(sceneCardHtml).join("")}
+        </div>
+      </section>
     `;
   }
 
@@ -235,11 +327,19 @@
         if (!title || typeof lat !== "number" || typeof lng !== "number") return;
 
         rows.push({
+          id: norm(row.id),
           title,
           type,
           place: norm(row.place),
           city: norm(row.city || row.town || row.place),
-          country: norm(row.country)
+          country: norm(row.country),
+          description: norm(row.description),
+          images: splitPipe(row.images),
+          rawDate: norm(row["raw-date"]),
+          dateFormatted: norm(row["date-formatted"]),
+          monthShort: norm(row["month-short"]),
+          lat,
+          lng
         });
       });
     }
