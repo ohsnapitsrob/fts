@@ -99,7 +99,7 @@ h1 {
   box-shadow: var(--shadow-card);
   padding: clamp(16px, 3vw, 24px);
   display: grid;
-  gap: 22px;
+  gap: 20px;
 }
 
 .title-summary-top {
@@ -126,6 +126,7 @@ h1 {
 .title-summary-body {
   display: grid;
   gap: 16px;
+  align-content: start;
 }
 
 .title-description {
@@ -418,6 +419,29 @@ h1 {
   }
 
   .scene-card .btn {
+    width: 100%;
+  }
+
+  .title-summary-top {
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+
+  .title-poster {
+    max-width: 110px;
+  }
+
+  .title-description {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .title-links {
+    flex-direction: column;
+  }
+
+  .title-links .btn {
     width: 100%;
   }
 }
