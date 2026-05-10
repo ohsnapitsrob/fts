@@ -44,13 +44,10 @@
     const aliases = {
       red: "red",
       bad: "red",
-
       orange: "orange",
       average: "orange",
-
       green: "green",
       good: "green",
-
       blue: "blue",
       inspo: "blue",
       inspiration: "blue",
@@ -168,6 +165,52 @@
       .replaceAll("'", "&#039;");
   }
 
+  function safeUrl(url) {
+    const value = norm(url);
+    if (!value) return "";
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.href;
+    } catch (err) {
+      return "";
+    }
+
+    return "";
+  }
+
+  function getYouTubeEmbedUrl(value) {
+    const raw = norm(value);
+    if (!raw) return "";
+
+    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) {
+      return `https://www.youtube.com/embed/${raw}`;
+    }
+
+    try {
+      const url = new URL(raw);
+      const host = url.hostname.replace(/^www\./, "");
+
+      if (host === "youtube.com" || host === "m.youtube.com") {
+        const id = url.searchParams.get("v");
+        if (id) return `https://www.youtube.com/embed/${id}`;
+      }
+
+      if (host === "youtu.be") {
+        const id = url.pathname.split("/").filter(Boolean)[0];
+        if (id) return `https://www.youtube.com/embed/${id}`;
+      }
+
+      if (host === "youtube.com" && url.pathname.startsWith("/embed/")) {
+        return raw;
+      }
+    } catch (err) {
+      return "";
+    }
+
+    return "";
+  }
+
   function getRequestedTitle() {
     const params = new URLSearchParams(window.location.search);
     return norm(params.get("fl") || params.get("title") || params.get("q"));
@@ -283,6 +326,66 @@
     });
   }
 
+  function metadataHasContent(meta) {
+    if (!meta) return false;
+    return Boolean(
+      norm(meta.description) ||
+      norm(meta.imdb) ||
+      norm(meta.justwatch) ||
+      norm(meta.poster) ||
+      norm(meta.trailer)
+    );
+  }
+
+  function titleSummaryHtml(meta) {
+    if (!metadataHasContent(meta)) return "";
+
+    const poster = safeUrl(meta.poster);
+    const imdb = safeUrl(meta.imdb);
+    const justwatch = safeUrl(meta.justwatch);
+    const trailer = getYouTubeEmbedUrl(meta.trailer);
+
+    const hasLinks = imdb || justwatch;
+    const hasBody = norm(meta.description) || hasLinks || trailer;
+
+    return `
+      <section class="title-summary">
+        ${
+          poster
+            ? `<div class="title-poster"><img src="${escapeHtml(poster)}" alt="" loading="lazy"></div>`
+            : ""
+        }
+
+        ${
+          hasBody
+            ? `
+              <div class="title-summary-body">
+                ${meta.description ? `<p class="title-description">${escapeHtml(meta.description)}</p>` : ""}
+
+                ${
+                  hasLinks
+                    ? `
+                      <div class="title-links">
+                        ${imdb ? `<a class="btn btn-secondary" href="${escapeHtml(imdb)}" target="_blank" rel="noopener noreferrer">IMDb</a>` : ""}
+                        ${justwatch ? `<a class="btn btn-secondary" href="${escapeHtml(justwatch)}" target="_blank" rel="noopener noreferrer">JustWatch</a>` : ""}
+                      </div>
+                    `
+                    : ""
+                }
+
+                ${
+                  trailer
+                    ? `<iframe class="title-trailer" src="${escapeHtml(trailer)}" title="Trailer" allowfullscreen loading="lazy"></iframe>`
+                    : ""
+                }
+              </div>
+            `
+            : ""
+        }
+      </section>
+    `;
+  }
+
   function renderNotFound(requestedTitle) {
     document.title = `Title not found | Find That Scene`;
 
@@ -302,7 +405,7 @@
     `;
   }
 
-  function renderTitlePage(title, rows) {
+  function renderTitlePage(title, rows, metadata) {
     const sortedRows = sortScenesNewestFirst(rows);
     const scenes = sortedRows.length;
 
@@ -318,7 +421,7 @@
 
     const cityCount = cities.size;
     const countryCount = countries.size;
-    const typeLabel = Array.from(types).map(displayType).join(", ");
+    const typeLabel = metadata?.type || Array.from(types).map(displayType).join(", ");
 
     document.title = `${title} | Find That Scene`;
 
@@ -332,6 +435,8 @@
           ${plural(countryCount, "country", "countries")}.
         </p>
       </section>
+
+      ${titleSummaryHtml(metadata)}
 
       <section class="stats-grid">
         <article class="stat-card">
@@ -366,6 +471,29 @@
         </div>
       </section>
     `;
+  }
+
+  async function loadTitleMetadata() {
+    const cfg = window.APP_CONFIG || {};
+    const url = cfg.TITLE_METADATA_CSV || cfg.TITLE_METADATA || cfg.TITLES_METADATA_CSV;
+
+    if (!url) return [];
+
+    try {
+      const text = await fetchSheetCSV(url);
+      return rowsToObjects(parseCSV(text)).map((row) => ({
+        title: norm(row.title),
+        type: norm(row.type),
+        description: norm(row.description),
+        imdb: norm(row.imdb),
+        justwatch: norm(row.justwatch),
+        poster: norm(row.poster),
+        trailer: norm(row.trailer)
+      })).filter((row) => row.title);
+    } catch (err) {
+      console.warn("Could not load title metadata CSV", err);
+      return [];
+    }
   }
 
   async function loadAllRows() {
@@ -434,7 +562,11 @@
     }
 
     try {
-      const allRows = await loadAllRows();
+      const [allRows, metadataRows] = await Promise.all([
+        loadAllRows(),
+        loadTitleMetadata()
+      ]);
+
       const matches = allRows.filter((row) => {
         return normalizeComparable(row.title) === normalizeComparable(requestedTitle);
       });
@@ -444,7 +576,11 @@
         return;
       }
 
-      renderTitlePage(matches[0].title, matches);
+      const metadata = metadataRows.find((row) => {
+        return normalizeComparable(row.title) === normalizeComparable(matches[0].title);
+      });
+
+      renderTitlePage(matches[0].title, matches, metadata);
     } catch (err) {
       console.error(err);
       contentEl.innerHTML = `<div class="loading-card">Could not load this title.</div>`;
