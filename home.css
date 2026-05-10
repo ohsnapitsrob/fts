@@ -67,11 +67,12 @@ body {
 .hero-copy {
   margin: 0;
   max-width: 820px;
-  color: var(--text);
-  font-size: clamp(22px, 3.2vw, 38px);
-  line-height: 1.45;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  color: rgb(85, 85, 85);
+  font-family: Poppins, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 .hero-actions {
@@ -139,17 +140,34 @@ body {
 .poster-row {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: minmax(150px, 190px);
+  grid-auto-columns: 140px;
   gap: 16px;
   overflow-x: auto;
   overflow-y: hidden;
   padding: 2px 2px 12px;
   scroll-snap-type: x proximity;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.poster-row::-webkit-scrollbar {
+  display: none;
+}
+
+.poster-row.is-dragging {
+  cursor: grabbing;
+  scroll-snap-type: none;
+}
+
+.poster-row.is-dragging .poster-link {
+  pointer-events: none;
 }
 
 .poster-link {
   display: block;
+  width: 140px;
   color: inherit;
   text-decoration: none;
   scroll-snap-align: start;
@@ -163,6 +181,7 @@ body {
 
 .poster-card {
   position: relative;
+  width: 140px;
   border-radius: 18px;
   overflow: hidden;
   background: #eeeeee;
@@ -172,15 +191,18 @@ body {
 
 .poster-card img {
   display: block;
-  width: 100%;
+  width: 140px;
   height: auto;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .poster-fallback {
-  min-height: 260px;
+  width: 140px;
+  min-height: 210px;
   display: grid;
   place-items: center;
-  padding: 18px;
+  padding: 14px;
   background: linear-gradient(135deg, rgba(90, 0, 230, 0.16), rgba(90, 0, 230, 0.05));
   color: var(--purple);
   font-weight: 850;
@@ -267,10 +289,6 @@ body {
     padding: 24px 18px;
   }
 
-  .hero-copy {
-    font-size: clamp(24px, 7vw, 34px);
-  }
-
   .hero-actions {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -288,8 +306,7 @@ body {
   }
 
   .poster-row {
-    grid-auto-columns: minmax(138px, 44vw);
-    gap: 14px;
+    grid-auto-columns: 140px;
     margin-right: -18px;
     padding-right: 18px;
   }
@@ -302,9 +319,5 @@ body {
 
   .stat-card {
     min-height: 104px;
-  }
-
-  .poster-row {
-    grid-auto-columns: 42vw;
   }
 }
