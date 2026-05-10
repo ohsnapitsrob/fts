@@ -154,7 +154,7 @@
         <div class="poster-card">
           ${
             src
-              ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy">`
+              ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy" draggable="false">`
               : `<div class="poster-fallback">${escapeHtml(title)}</div>`
           }
         </div>
@@ -174,6 +174,62 @@
         </div>
       </section>
     `;
+  }
+
+  function makeRailsDraggable() {
+    document.querySelectorAll(".poster-row").forEach((rail) => {
+      let isDown = false;
+      let startX = 0;
+      let scrollLeft = 0;
+      let moved = false;
+
+      rail.addEventListener("pointerdown", (e) => {
+        isDown = true;
+        moved = false;
+        rail.classList.add("is-dragging");
+        rail.setPointerCapture(e.pointerId);
+        startX = e.clientX;
+        scrollLeft = rail.scrollLeft;
+      });
+
+      rail.addEventListener("pointermove", (e) => {
+        if (!isDown) return;
+
+        const walk = e.clientX - startX;
+
+        if (Math.abs(walk) > 4) moved = true;
+
+        rail.scrollLeft = scrollLeft - walk;
+      });
+
+      function endDrag(e) {
+        if (!isDown) return;
+        isDown = false;
+        rail.classList.remove("is-dragging");
+
+        try {
+          rail.releasePointerCapture(e.pointerId);
+        } catch (err) {}
+
+        if (moved) {
+          rail.dataset.justDragged = "true";
+          window.setTimeout(() => {
+            delete rail.dataset.justDragged;
+          }, 120);
+        }
+      }
+
+      rail.addEventListener("pointerup", endDrag);
+      rail.addEventListener("pointercancel", endDrag);
+      rail.addEventListener("pointerleave", endDrag);
+
+      rail.addEventListener("click", (e) => {
+        if (rail.dataset.justDragged === "true") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
+    });
   }
 
   function renderStats({ scenes, titles, cities, countries }) {
@@ -281,10 +337,10 @@
       ["Top 10 most scenes", topScenes],
       ["James Bond", seriesRail("James Bond")],
       ["Harry Potter", seriesRail("Harry Potter")],
-      ["Movies", typeRail("Film")],
-      ["TV", typeRail("TV")],
+      ["A selection of Movies", typeRail("Film")],
+      ["A selection of TV Shows", typeRail("TV")],
       ["Music Videos", typeRail("Music Video")],
-      ["Games", typeRail("Video Game")]
+      ["A selection of Games", typeRail("Video Game")]
     ];
   }
 
@@ -293,6 +349,7 @@
     const html = rails.map(([title, items]) => railHtml(title, items)).filter(Boolean).join("");
 
     railsEl.innerHTML = html || `<div class="loading-card">No poster rails to show yet.</div>`;
+    makeRailsDraggable();
   }
 
   async function loadTitleMetadata() {
