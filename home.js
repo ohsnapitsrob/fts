@@ -1,8 +1,13 @@
 (function () {
   const statsEl = document.getElementById("homeStats");
+  const railsEl = document.getElementById("railsRoot");
 
   function norm(s) {
     return (s || "").toString().trim();
+  }
+
+  function normalizeComparable(s) {
+    return norm(s).toLowerCase();
   }
 
   function normalizeType(t) {
@@ -92,7 +97,86 @@
     return Number(n || 0).toLocaleString();
   }
 
-  function render({ scenes, titles, cities, countries }) {
+  function escapeHtml(s) {
+    return (s || "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function safeUrl(url) {
+    const value = norm(url);
+    if (!value) return "";
+
+    try {
+      const parsed = new URL(value);
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.href;
+    } catch (err) {
+      return "";
+    }
+
+    return "";
+  }
+
+  function titleUrl(title) {
+    const params = new URLSearchParams();
+    params.set("fl", title);
+    return `./title/?${params.toString()}`;
+  }
+
+  function parseVisitedDate(value) {
+    const raw = norm(value);
+    if (!raw) return null;
+
+    const cleaned = raw.replace(/(\d{1,2})(st|nd|rd|th)/gi, "$1");
+    const ts = Date.parse(cleaned);
+    return Number.isFinite(ts) ? ts : null;
+  }
+
+  function shuffle(items) {
+    const copy = [...items];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+  }
+
+  function posterHtml(title, poster) {
+    const src = safeUrl(poster);
+
+    return `
+      <a class="poster-link" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
+        <div class="poster-card">
+          ${
+            src
+              ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy">`
+              : `<div class="poster-fallback">${escapeHtml(title)}</div>`
+          }
+        </div>
+      </a>
+    `;
+  }
+
+  function railHtml(title, items) {
+    const withPosters = items.filter((item) => safeUrl(item.poster));
+    if (!withPosters.length) return "";
+
+    return `
+      <section class="rail">
+        <h2 class="rail-title">${escapeHtml(title)}</h2>
+        <div class="poster-row">
+          ${withPosters.map((item) => posterHtml(item.title, item.poster)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  function renderStats({ scenes, titles, cities, countries }) {
     statsEl.innerHTML = `
       <article class="stat-card">
         <div class="stat-value">${formatNumber(scenes)}</div>
@@ -116,7 +200,125 @@
     `;
   }
 
-  async function loadStats() {
+  function buildTitleEntries(rows, metadataRows) {
+    const metaByTitle = new Map();
+
+    metadataRows.forEach((meta) => {
+      metaByTitle.set(normalizeComparable(meta.title), meta);
+    });
+
+    const grouped = new Map();
+
+    rows.forEach((row) => {
+      const key = normalizeComparable(row.title);
+
+      if (!grouped.has(key)) {
+        const meta = metaByTitle.get(key) || {};
+        grouped.set(key, {
+          title: row.title,
+          type: row.type,
+          series: row.series,
+          count: 0,
+          latestVisitedTs: null,
+          poster: meta.poster || "",
+          metadata: meta
+        });
+      }
+
+      const entry = grouped.get(key);
+      entry.count += 1;
+
+      if (!entry.poster) {
+        const meta = metaByTitle.get(key);
+        if (meta && meta.poster) entry.poster = meta.poster;
+      }
+
+      if (!entry.series && row.series) entry.series = row.series;
+
+      if (Number.isFinite(row.visitedTs)) {
+        if (!Number.isFinite(entry.latestVisitedTs) || row.visitedTs > entry.latestVisitedTs) {
+          entry.latestVisitedTs = row.visitedTs;
+        }
+      }
+    });
+
+    return Array.from(grouped.values());
+  }
+
+  function buildRails(rows, metadataRows) {
+    const entries = buildTitleEntries(rows, metadataRows);
+    const hasPoster = (entry) => safeUrl(entry.poster);
+
+    const latestScenes = [...entries]
+      .filter(hasPoster)
+      .filter((entry) => Number.isFinite(entry.latestVisitedTs))
+      .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
+      .slice(0, 6);
+
+    const topScenes = [...entries]
+      .filter(hasPoster)
+      .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+      .slice(0, 10);
+
+    const seriesRail = (seriesName) => {
+      return [...entries]
+        .filter(hasPoster)
+        .filter((entry) => normalizeComparable(entry.series) === normalizeComparable(seriesName))
+        .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+        .slice(0, 12);
+    };
+
+    const typeRail = (typeName) => {
+      return shuffle(
+        entries
+          .filter(hasPoster)
+          .filter((entry) => normalizeType(entry.type) === typeName)
+      ).slice(0, 12);
+    };
+
+    return [
+      ["Latest scenes found", latestScenes],
+      ["Top 10 most scenes", topScenes],
+      ["James Bond", seriesRail("James Bond")],
+      ["Harry Potter", seriesRail("Harry Potter")],
+      ["Movies", typeRail("Film")],
+      ["TV", typeRail("TV")],
+      ["Music Videos", typeRail("Music Video")],
+      ["Games", typeRail("Video Game")]
+    ];
+  }
+
+  function renderRails(rows, metadataRows) {
+    const rails = buildRails(rows, metadataRows);
+    const html = rails.map(([title, items]) => railHtml(title, items)).filter(Boolean).join("");
+
+    railsEl.innerHTML = html || `<div class="loading-card">No poster rails to show yet.</div>`;
+  }
+
+  async function loadTitleMetadata() {
+    const cfg = window.APP_CONFIG || {};
+    const url = cfg.TITLE_METADATA_CSV || cfg.TITLE_METADATA || cfg.TITLES_METADATA_CSV;
+
+    if (!url) return [];
+
+    try {
+      const text = await fetchSheetCSV(url);
+      return rowsToObjects(parseCSV(text)).map((row) => ({
+        title: norm(row.title),
+        type: norm(row.type),
+        description: norm(row.description),
+        imdb: norm(row.imdb),
+        justwatch: norm(row.justwatch),
+        poster: norm(row.poster),
+        trailer: norm(row.trailer)
+      })).filter((row) => row.title);
+    } catch (err) {
+      console.warn("Could not load title metadata CSV", err);
+      return [];
+    }
+  }
+
+  async function loadSceneRows() {
     const cfg = window.APP_CONFIG || {};
     const sheets = cfg.SHEETS || {};
 
@@ -130,16 +332,13 @@
 
     const texts = await Promise.all(sources.map(([, url]) => fetchSheetCSV(url)));
 
-    const titles = new Set();
-    const cities = new Set();
-    const countries = new Set();
-    let scenes = 0;
+    const rows = [];
 
     for (let i = 0; i < sources.length; i++) {
       const [fallbackType] = sources[i];
-      const rows = rowsToObjects(parseCSV(texts[i]));
+      const parsed = rowsToObjects(parseCSV(texts[i]));
 
-      rows.forEach((row) => {
+      parsed.forEach((row) => {
         const title = norm(row.title);
         const type = normalizeType(row.type || fallbackType);
         const lat = coerceNumber(row.lat);
@@ -147,29 +346,51 @@
 
         if (!title || typeof lat !== "number" || typeof lng !== "number") return;
 
-        scenes += 1;
-        titles.add(title);
-
-        const city = norm(row.city || row.town || row.place);
-        if (city) cities.add(city);
-
-        const country = norm(row.country);
-        if (country) countries.add(country);
-
-        void type;
+        rows.push({
+          title,
+          type,
+          series: norm(row.series),
+          place: norm(row.place),
+          city: norm(row.city || row.town || row.place),
+          country: norm(row.country),
+          visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
+        });
       });
     }
 
-    render({
-      scenes,
-      titles: titles.size,
-      cities: cities.size,
-      countries: countries.size
-    });
+    return rows;
   }
 
-  loadStats().catch((err) => {
-    console.error(err);
-    statsEl.innerHTML = `<div class="loading">Could not load stats.</div>`;
-  });
+  async function init() {
+    try {
+      const [sceneRows, metadataRows] = await Promise.all([
+        loadSceneRows(),
+        loadTitleMetadata()
+      ]);
+
+      const titles = new Set();
+      const cities = new Set();
+      const countries = new Set();
+
+      sceneRows.forEach((row) => {
+        if (row.title) titles.add(row.title);
+        if (row.city) cities.add(row.city);
+        if (row.country) countries.add(row.country);
+      });
+
+      renderRails(sceneRows, metadataRows);
+      renderStats({
+        scenes: sceneRows.length,
+        titles: titles.size,
+        cities: cities.size,
+        countries: countries.size
+      });
+    } catch (err) {
+      console.error(err);
+      railsEl.innerHTML = `<div class="loading-card">Could not load rails.</div>`;
+      statsEl.innerHTML = `<div class="loading-card">Could not load stats.</div>`;
+    }
+  }
+
+  init();
 })();
