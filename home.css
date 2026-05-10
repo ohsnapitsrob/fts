@@ -161,6 +161,10 @@ body {
   scroll-snap-type: none;
 }
 
+.poster-row.is-dragging .poster-link {
+  pointer-events: none;
+}
+
 .poster-link {
   display: block;
   width: 140px;
