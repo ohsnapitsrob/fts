@@ -10,54 +10,57 @@
 </head>
 <body>
   <main class="home-shell">
-    <section class="hero-card">
-      <div class="hero-logo-wrap">
-        <img
-          class="hero-logo"
-          src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-          alt="Find That Scene"
-        />
-      </div>
+    <section class="hero">
+      <img
+        class="hero-logo"
+        src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
+        alt="Find That Scene"
+      />
 
       <p class="hero-copy">
-Exploring the real world locations behind films, TV, games and music videos. From filming spots to the places that inspired CGI worlds.      </p>
+        Exploring the real world locations behind films, TV, games and music videos. From filming spots to the places that inspired CGI worlds.
+      </p>
 
-      <nav class="home-actions" aria-label="Main navigation">
+      <nav class="hero-actions" aria-label="Main navigation">
         <a class="btn btn-secondary" href="./browse/">
-          <span class="btn-icon" aria-hidden="true">⌕</span>
+          <span aria-hidden="true">⌕</span>
           Browse
         </a>
 
         <a class="btn btn-primary" href="./explore/">
-          <span class="btn-icon" aria-hidden="true">⌖</span>
+          <span aria-hidden="true">✦</span>
           Map
         </a>
       </nav>
-
-      <section id="homeStats" class="stats-grid" aria-live="polite">
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Scenes</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Titles</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Cities</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Countries</div>
-        </article>
-      </section>
-
-      <a class="more-stats" href="./stats/">View more stats</a>
     </section>
+
+    <section id="railsRoot" class="rails-root" aria-live="polite">
+      <div class="loading-card">Loading rails…</div>
+    </section>
+
+    <section id="homeStats" class="stats-grid" aria-live="polite">
+      <article class="stat-card">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Scenes</div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Titles</div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Cities</div>
+      </article>
+
+      <article class="stat-card">
+        <div class="stat-value">—</div>
+        <div class="stat-label">Countries</div>
+      </article>
+    </section>
+
+    <a class="more-stats" href="./stats/">View more stats</a>
   </main>
 
   <script>
