@@ -358,7 +358,7 @@ h1 {
   font-size: 14px;
 }
 
-@media (max-width: 900px) {
+/*@media (max-width: 900px) {
   .scene-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -369,6 +369,24 @@ h1 {
 
   .title-poster {
     max-width: 260px;
+  }
+}*/
+@media (max-width: 900px) {
+  .scene-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .title-summary {
+    grid-template-columns: minmax(92px, 140px) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .title-poster {
+    max-width: 140px;
+  }
+
+  .title-trailer {
+    grid-column: 1 / -1;
   }
 }
 
@@ -382,8 +400,8 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .actions,
-  .title-links {
+  .actions/*,
+  .title-links*/ {
     display: grid;
     grid-template-columns: 1fr;
   }
