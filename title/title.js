@@ -252,12 +252,18 @@
     return Array.isArray(row.images) && row.images.length ? row.images[0] : "";
   }
 
-  function sceneLocation(row) {
+  /*function sceneLocation(row) {
     return [row.place, row.city, row.country]
       .filter(Boolean)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .join(", ");
-  }
+  }*/
+  function sceneLocation(row) {
+  return [row.place, row.country]
+    .filter(Boolean)
+    .filter((value, index, arr) => arr.indexOf(value) === index)
+    .join(", ");
+}
 
   function sceneDate(row) {
     return row.monthShort || row.dateFormatted || row.rawDate || "";
