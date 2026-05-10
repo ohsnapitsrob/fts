@@ -88,12 +88,21 @@ h1 {
   line-height: 1.5;
 }
 
+/* ======================
+   TITLE SUMMARY
+====================== */
+
 .title-summary {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-card);
   padding: clamp(16px, 3vw, 24px);
+  display: grid;
+  gap: 22px;
+}
+
+.title-summary-top {
   display: grid;
   grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
   gap: 22px;
@@ -132,6 +141,10 @@ h1 {
   gap: 10px;
 }
 
+.title-trailer-wrap {
+  width: 100%;
+}
+
 .title-trailer {
   width: 100%;
   aspect-ratio: 16 / 9;
@@ -139,6 +152,10 @@ h1 {
   border-radius: var(--radius-lg);
   background: #000;
 }
+
+/* ======================
+   STATS
+====================== */
 
 .stats-grid {
   display: grid;
@@ -179,6 +196,10 @@ h1 {
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
+
+/* ======================
+   BUTTONS
+====================== */
 
 .actions {
   display: flex;
@@ -224,6 +245,10 @@ h1 {
   padding: 20px;
   color: var(--text-secondary);
 }
+
+/* ======================
+   SCENE GRID
+====================== */
 
 .scene-section {
   display: grid;
@@ -358,35 +383,22 @@ h1 {
   font-size: 14px;
 }
 
-/*@media (max-width: 900px) {
-  .scene-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+/* ======================
+   RESPONSIVE
+====================== */
 
-  .title-summary {
-    grid-template-columns: 1fr;
-  }
-
-  .title-poster {
-    max-width: 260px;
-  }
-}*/
 @media (max-width: 900px) {
   .scene-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .title-summary {
+  .title-summary-top {
     grid-template-columns: minmax(92px, 140px) minmax(0, 1fr);
     gap: 14px;
   }
 
   .title-poster {
     max-width: 140px;
-  }
-
-  .title-trailer {
-    grid-column: 1 / -1;
   }
 }
 
@@ -400,8 +412,7 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .actions/*,
-  .title-links*/ {
+  .actions {
     display: grid;
     grid-template-columns: 1fr;
   }
