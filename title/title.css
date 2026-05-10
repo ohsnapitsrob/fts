@@ -88,6 +88,58 @@ h1 {
   line-height: 1.5;
 }
 
+.title-summary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card);
+  padding: clamp(16px, 3vw, 24px);
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) minmax(0, 1fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.title-poster {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #eeeeee;
+  box-shadow: 0 12px 30px rgba(17, 17, 17, 0.08);
+}
+
+.title-poster img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.title-summary-body {
+  display: grid;
+  gap: 16px;
+}
+
+.title-description {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.title-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.title-trailer {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: #000;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -173,10 +225,6 @@ h1 {
   color: var(--text-secondary);
 }
 
-/* ======================
-   SCENE GRID
-====================== */
-
 .scene-section {
   display: grid;
   gap: 16px;
@@ -233,8 +281,6 @@ h1 {
   display: block;
 }
 
-/* subtle status dot */
-
 .scene-status-dot {
   position: absolute;
   top: 10px;
@@ -247,21 +293,10 @@ h1 {
   z-index: 2;
 }
 
-.scene-status-red {
-  background: #ef4444;
-}
-
-.scene-status-orange {
-  background: #f97316;
-}
-
-.scene-status-green {
-  background: #22c55e;
-}
-
-.scene-status-blue {
-  background: #3b82f6;
-}
+.scene-status-red { background: #ef4444; }
+.scene-status-orange { background: #f97316; }
+.scene-status-green { background: #22c55e; }
+.scene-status-blue { background: #3b82f6; }
 
 .scene-thumb-fallback {
   width: 100%;
@@ -327,6 +362,14 @@ h1 {
   .scene-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .title-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .title-poster {
+    max-width: 260px;
+  }
 }
 
 @media (max-width: 680px) {
@@ -339,7 +382,8 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .actions {
+  .actions,
+  .title-links {
     display: grid;
     grid-template-columns: 1fr;
   }
