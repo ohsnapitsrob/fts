@@ -345,39 +345,44 @@
     const justwatch = safeUrl(meta.justwatch);
     const trailer = getYouTubeEmbedUrl(meta.trailer);
 
-    const hasLinks = imdb || justwatch;
-    const hasBody = norm(meta.description) || hasLinks || trailer;
+    const hasTopRow = poster || norm(meta.description) || imdb || justwatch;
 
     return `
       <section class="title-summary">
         ${
-          poster
-            ? `<div class="title-poster"><img src="${escapeHtml(poster)}" alt="" loading="lazy"></div>`
+          hasTopRow
+            ? `
+              <div class="title-summary-top">
+                ${
+                  poster
+                    ? `<div class="title-poster"><img src="${escapeHtml(poster)}" alt="" loading="lazy"></div>`
+                    : `<div class="title-poster title-poster-empty" aria-hidden="true"></div>`
+                }
+
+                <div class="title-summary-body">
+                  ${meta.description ? `<p class="title-description">${escapeHtml(meta.description)}</p>` : ""}
+
+                  ${
+                    imdb || justwatch
+                      ? `
+                        <div class="title-links">
+                          ${imdb ? `<a class="btn btn-secondary" href="${escapeHtml(imdb)}" target="_blank" rel="noopener noreferrer">IMDb</a>` : ""}
+                          ${justwatch ? `<a class="btn btn-secondary" href="${escapeHtml(justwatch)}" target="_blank" rel="noopener noreferrer">JustWatch</a>` : ""}
+                        </div>
+                      `
+                      : ""
+                  }
+                </div>
+              </div>
+            `
             : ""
         }
 
         ${
-          hasBody
+          trailer
             ? `
-              <div class="title-summary-body">
-                ${meta.description ? `<p class="title-description">${escapeHtml(meta.description)}</p>` : ""}
-
-                ${
-                  hasLinks
-                    ? `
-                      <div class="title-links">
-                        ${imdb ? `<a class="btn btn-secondary" href="${escapeHtml(imdb)}" target="_blank" rel="noopener noreferrer">IMDb</a>` : ""}
-                        ${justwatch ? `<a class="btn btn-secondary" href="${escapeHtml(justwatch)}" target="_blank" rel="noopener noreferrer">JustWatch</a>` : ""}
-                      </div>
-                    `
-                    : ""
-                }
-
-                ${
-                  trailer
-                    ? `<iframe class="title-trailer" src="${escapeHtml(trailer)}" title="Trailer" allowfullscreen loading="lazy"></iframe>`
-                    : ""
-                }
+              <div class="title-trailer-wrap">
+                <iframe class="title-trailer" src="${escapeHtml(trailer)}" title="Trailer" allowfullscreen loading="lazy"></iframe>
               </div>
             `
             : ""
