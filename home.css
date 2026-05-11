@@ -206,6 +206,32 @@ body {
   line-height: 1.1;
 }
 
+/* Music video thumbnail rail */
+
+.poster-row.thumbnail-row {
+  grid-auto-columns: auto;
+}
+
+.poster-link.thumbnail-link {
+  width: auto;
+}
+
+.poster-card.thumbnail-card {
+  width: auto;
+  height: 200px;
+}
+
+.poster-card.thumbnail-card img {
+  width: auto;
+  height: 200px;
+}
+
+.poster-card.thumbnail-card .poster-fallback {
+  width: 280px;
+  height: 200px;
+  min-height: 200px;
+}
+
 .loading-card {
   background: #fff;
   border: 1px solid var(--border);
@@ -302,7 +328,6 @@ body {
   }
 
   .poster-row {
-    grid-auto-columns: 140px;
     margin-right: -18px;
     padding-right: 18px;
   }
