@@ -1,5 +1,6 @@
 (function () {
   const contentEl = document.getElementById("titleContent");
+  const NT_ICON_URL = "https://images.pixieset.com/063553411/d68e9f40e4986e97d60a432895e1fabd-xxlarge.png";
 
   function norm(s) {
     return (s || "").toString().trim();
@@ -252,21 +253,45 @@
     return Array.isArray(row.images) && row.images.length ? row.images[0] : "";
   }
 
-  /*function sceneLocation(row) {
-    return [row.place, row.city, row.country]
+  function sceneLocation(row) {
+    return [row.place, row.country]
       .filter(Boolean)
       .filter((value, index, arr) => arr.indexOf(value) === index)
       .join(", ");
-  }*/
-  function sceneLocation(row) {
-  return [row.place, row.country]
-    .filter(Boolean)
-    .filter((value, index, arr) => arr.indexOf(value) === index)
-    .join(", ");
-}
+  }
 
   function sceneDate(row) {
     return row.monthShort || row.dateFormatted || row.rawDate || "";
+  }
+
+  function ntBadgeHtml(row) {
+    if (!norm(row.NationalTrust)) return "";
+
+    return `
+      <img
+        class="scene-nt-badge"
+        src="${NT_ICON_URL}"
+        alt="National Trust"
+        loading="lazy"
+      >
+    `;
+  }
+
+  function ntButtonHtml(row) {
+    const url = safeUrl(row.NTURL);
+    if (!url) return "";
+
+    return `
+      <a
+        class="btn scene-nt-btn"
+        href="${escapeHtml(url)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="View National Trust page"
+      >
+        <img src="${NT_ICON_URL}" alt="">
+      </a>
+    `;
   }
 
   function sceneCardHtml(row) {
@@ -278,6 +303,7 @@
       <article class="scene-card">
         <div class="scene-thumb">
           ${ratingDotsHtml(row)}
+          ${ntBadgeHtml(row)}
           ${
             img
               ? `<img src="${escapeHtml(img)}" alt="" loading="lazy">`
@@ -308,7 +334,10 @@
             }
           </div>
 
-          <a class="btn btn-primary" href="${buildSceneMapUrl(row)}">View</a>
+          <div class="scene-actions">
+            <a class="btn btn-primary scene-view-btn" href="${buildSceneMapUrl(row)}">View</a>
+            ${ntButtonHtml(row)}
+          </div>
         </div>
       </article>
     `;
@@ -551,6 +580,8 @@
           description: norm(row.description),
           images: splitPipe(row.images),
           rating: splitComma(row.rating),
+          NationalTrust: norm(row.NationalTrust),
+          NTURL: norm(row.NTURL),
           rawDate: norm(row["raw-date"]),
           dateFormatted: norm(row["date-formatted"]),
           monthShort: norm(row["month-short"]),
