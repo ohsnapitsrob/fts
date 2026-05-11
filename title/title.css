@@ -327,6 +327,20 @@ h1 {
 .scene-status-green { background: #22c55e; }
 .scene-status-blue { background: #3b82f6; }
 
+.scene-nt-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  max-width: 32px;
+  height: auto;
+  z-index: 3;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 4px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
 .scene-thumb-fallback {
   width: 100%;
   min-height: 180px;
@@ -380,11 +394,39 @@ h1 {
   line-height: 1.2;
 }
 
+.scene-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.scene-actions .scene-view-btn {
+  flex: 1;
+  justify-self: auto;
+}
+
 .scene-card .btn {
   justify-self: start;
   min-height: 40px;
   padding: 0 16px;
   font-size: 14px;
+}
+
+.scene-nt-btn {
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid var(--purple);
+  box-shadow: none;
+}
+
+.scene-nt-btn img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 
 /* ======================
@@ -416,8 +458,22 @@ h1 {
     grid-template-columns: 1fr;
   }
 
+  .scene-actions {
+    display: flex;
+    grid-template-columns: none;
+  }
+
+  .scene-actions .scene-view-btn {
+    width: auto;
+  }
+
   .scene-card .btn {
     width: 100%;
+  }
+
+  .scene-nt-btn {
+    width: 42px;
+    min-width: 42px;
   }
 
   .title-summary-top {
