@@ -26,6 +26,11 @@
     return Number.isFinite(n) ? n : null;
   }
 
+  function coerceOrder(x) {
+    const n = Number((x ?? "").toString().trim());
+    return Number.isFinite(n) ? n : null;
+  }
+
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -146,12 +151,13 @@
     return copy;
   }
 
-  function posterHtml(title, poster) {
-    const src = safeUrl(poster);
+  function posterHtml(title, imageUrl, variant = "poster") {
+    const src = safeUrl(imageUrl);
+    const isThumbnail = variant === "thumbnail";
 
     return `
-      <a class="poster-link" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
-        <div class="poster-card">
+      <a class="poster-link ${isThumbnail ? "thumbnail-link" : ""}" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
+        <div class="poster-card ${isThumbnail ? "thumbnail-card" : ""}">
           ${
             src
               ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy" draggable="false">`
@@ -162,15 +168,18 @@
     `;
   }
 
-  function railHtml(title, items) {
-    const withPosters = items.filter((item) => safeUrl(item.poster));
-    if (!withPosters.length) return "";
+  function railHtml(title, items, options = {}) {
+    const variant = options.variant || "poster";
+    const imageField = variant === "thumbnail" ? "thumbnail" : "poster";
+
+    const withImages = items.filter((item) => safeUrl(item[imageField]));
+    if (!withImages.length) return "";
 
     return `
       <section class="rail">
         <h2 class="rail-title">${escapeHtml(title)}</h2>
-        <div class="poster-row">
-          ${withPosters.map((item) => posterHtml(item.title, item.poster)).join("")}
+        <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""}">
+          ${withImages.map((item) => posterHtml(item.title, item[imageField], variant)).join("")}
         </div>
       </section>
     `;
@@ -178,85 +187,55 @@
 
   function makeRailsDraggable() {
     document.querySelectorAll(".poster-row").forEach((rail) => {
-      let isPointerDown = false;
-      let hasDragged = false;
+      let isDown = false;
       let startX = 0;
       let startY = 0;
       let startScrollLeft = 0;
-      let activePointerId = null;
+      let moved = false;
 
-      rail.addEventListener("pointerdown", (e) => {
-        if (e.button !== undefined && e.button !== 0) return;
+      rail.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return;
 
-        isPointerDown = true;
-        hasDragged = false;
-        activePointerId = e.pointerId;
-        startX = e.clientX;
-        startY = e.clientY;
+        isDown = true;
+        moved = false;
+        startX = e.pageX;
+        startY = e.pageY;
         startScrollLeft = rail.scrollLeft;
-
         rail.classList.add("is-dragging");
-        rail.dataset.dragging = "false";
-
-        try {
-          rail.setPointerCapture(e.pointerId);
-        } catch (err) {}
       });
 
-      rail.addEventListener("pointermove", (e) => {
-        if (!isPointerDown || e.pointerId !== activePointerId) return;
+      window.addEventListener("mousemove", (e) => {
+        if (!isDown) return;
 
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
+        const dx = e.pageX - startX;
+        const dy = e.pageY - startY;
 
-        if (Math.abs(dx) > 5 && Math.abs(dx) > Math.abs(dy)) {
-          hasDragged = true;
-          rail.dataset.dragging = "true";
-          e.preventDefault();
+        if (Math.abs(dx) > 4 && Math.abs(dx) > Math.abs(dy)) {
+          moved = true;
           rail.scrollLeft = startScrollLeft - dx;
         }
       });
 
-      function endDrag(e) {
-        if (!isPointerDown || e.pointerId !== activePointerId) return;
+      window.addEventListener("mouseup", () => {
+        if (!isDown) return;
 
-        isPointerDown = false;
-        activePointerId = null;
+        isDown = false;
         rail.classList.remove("is-dragging");
 
-        try {
-          rail.releasePointerCapture(e.pointerId);
-        } catch (err) {}
-
-        if (hasDragged) {
+        if (moved) {
           rail.dataset.justDragged = "true";
           window.setTimeout(() => {
             delete rail.dataset.justDragged;
-            rail.dataset.dragging = "false";
-          }, 180);
-        } else {
-          delete rail.dataset.justDragged;
-          rail.dataset.dragging = "false";
+          }, 160);
         }
-      }
-
-      rail.addEventListener("pointerup", endDrag);
-      rail.addEventListener("pointercancel", endDrag);
-      rail.addEventListener("lostpointercapture", (e) => {
-        if (!isPointerDown) return;
-        endDrag(e);
       });
 
-      rail.addEventListener(
-        "click",
-        (e) => {
-          if (rail.dataset.justDragged === "true") {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        },
-        true
-      );
+      rail.addEventListener("click", (e) => {
+        if (rail.dataset.justDragged === "true") {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      }, true);
     });
   }
 
@@ -300,11 +279,13 @@
         const meta = metaByTitle.get(key) || {};
         grouped.set(key, {
           title: row.title,
-          type: row.type,
+          type: row.type || meta.type,
           series: row.series,
           count: 0,
           latestVisitedTs: null,
+          railOrder: row.railOrder,
           poster: meta.poster || "",
+          thumbnail: meta.thumbnail || row.thumbnail || "",
           metadata: meta
         });
       }
@@ -317,7 +298,17 @@
         if (meta && meta.poster) entry.poster = meta.poster;
       }
 
+      if (!entry.thumbnail) {
+        const meta = metaByTitle.get(key);
+        if (meta && meta.thumbnail) entry.thumbnail = meta.thumbnail;
+        else if (row.thumbnail) entry.thumbnail = row.thumbnail;
+      }
+
       if (!entry.series && row.series) entry.series = row.series;
+
+      if (!Number.isFinite(entry.railOrder) && Number.isFinite(row.railOrder)) {
+        entry.railOrder = row.railOrder;
+      }
 
       if (Number.isFinite(row.visitedTs)) {
         if (!Number.isFinite(entry.latestVisitedTs) || row.visitedTs > entry.latestVisitedTs) {
@@ -332,6 +323,7 @@
   function buildRails(rows, metadataRows) {
     const entries = buildTitleEntries(rows, metadataRows);
     const hasPoster = (entry) => safeUrl(entry.poster);
+    const hasThumbnail = (entry) => safeUrl(entry.thumbnail);
 
     const latestScenes = [...entries]
       .filter(hasPoster)
@@ -348,7 +340,16 @@
       return [...entries]
         .filter(hasPoster)
         .filter((entry) => normalizeComparable(entry.series) === normalizeComparable(seriesName))
-        .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+        .sort((a, b) => {
+          const aHas = Number.isFinite(a.railOrder);
+          const bHas = Number.isFinite(b.railOrder);
+
+          if (aHas && bHas && a.railOrder !== b.railOrder) return a.railOrder - b.railOrder;
+          if (aHas && !bHas) return -1;
+          if (!aHas && bHas) return 1;
+
+          return a.title.localeCompare(b.title);
+        })
         .slice(0, 12);
     };
 
@@ -360,21 +361,27 @@
       ).slice(0, 12);
     };
 
+    const musicVideoThumbnailRail = shuffle(
+      entries
+        .filter(hasThumbnail)
+        .filter((entry) => normalizeType(entry.type) === "Music Video")
+    ).slice(0, 12);
+
     return [
-      ["Latest scenes found", latestScenes],
-      ["Top 10 most scenes", topScenes],
-      ["James Bond", seriesRail("James Bond")],
-      ["Harry Potter", seriesRail("Harry Potter")],
-      ["A selection of Movies", typeRail("Film")],
-      ["A selection of TV Shows", typeRail("TV")],
-      ["Music Videos", typeRail("Music Video")],
-      ["A selection of Games", typeRail("Video Game")]
+      { title: "Latest scenes found", items: latestScenes },
+      { title: "Top 10 most scenes", items: topScenes },
+      { title: "James Bond", items: seriesRail("James Bond") },
+      { title: "Harry Potter", items: seriesRail("Harry Potter") },
+      { title: "A selection of Movies", items: typeRail("Film") },
+      { title: "A selection of TV Shows", items: typeRail("TV") },
+      { title: "A selection of Music Videos", items: musicVideoThumbnailRail, variant: "thumbnail" },
+      { title: "A selection of Games", items: typeRail("Video Game") }
     ];
   }
 
   function renderRails(rows, metadataRows) {
     const rails = buildRails(rows, metadataRows);
-    const html = rails.map(([title, items]) => railHtml(title, items)).filter(Boolean).join("");
+    const html = rails.map((rail) => railHtml(rail.title, rail.items, { variant: rail.variant })).filter(Boolean).join("");
 
     railsEl.innerHTML = html || `<div class="loading-card">No poster rails to show yet.</div>`;
     makeRailsDraggable();
@@ -395,7 +402,9 @@
         imdb: norm(row.imdb),
         justwatch: norm(row.justwatch),
         poster: norm(row.poster),
-        trailer: norm(row.trailer)
+        trailer: norm(row.trailer),
+        thumbnail: norm(row.thumbnail),
+        railOrder: coerceOrder(row["set-rail-order"])
       })).filter((row) => row.title);
     } catch (err) {
       console.warn("Could not load title metadata CSV", err);
@@ -438,6 +447,8 @@
           place: norm(row.place),
           city: norm(row.city || row.town || row.place),
           country: norm(row.country),
+          thumbnail: norm(row.thumbnail),
+          railOrder: coerceOrder(row["set-rail-order"]),
           visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
         });
       });
