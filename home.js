@@ -178,57 +178,85 @@
 
   function makeRailsDraggable() {
     document.querySelectorAll(".poster-row").forEach((rail) => {
-      let isDown = false;
+      let isPointerDown = false;
+      let hasDragged = false;
       let startX = 0;
-      let scrollLeft = 0;
-      let moved = false;
+      let startY = 0;
+      let startScrollLeft = 0;
+      let activePointerId = null;
 
       rail.addEventListener("pointerdown", (e) => {
-        isDown = true;
-        moved = false;
-        rail.classList.add("is-dragging");
-        rail.setPointerCapture(e.pointerId);
+        if (e.button !== undefined && e.button !== 0) return;
+
+        isPointerDown = true;
+        hasDragged = false;
+        activePointerId = e.pointerId;
         startX = e.clientX;
-        scrollLeft = rail.scrollLeft;
+        startY = e.clientY;
+        startScrollLeft = rail.scrollLeft;
+
+        rail.classList.add("is-dragging");
+        rail.dataset.dragging = "false";
+
+        try {
+          rail.setPointerCapture(e.pointerId);
+        } catch (err) {}
       });
 
       rail.addEventListener("pointermove", (e) => {
-        if (!isDown) return;
+        if (!isPointerDown || e.pointerId !== activePointerId) return;
 
-        const walk = e.clientX - startX;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
 
-        if (Math.abs(walk) > 4) moved = true;
-
-        rail.scrollLeft = scrollLeft - walk;
+        if (Math.abs(dx) > 5 && Math.abs(dx) > Math.abs(dy)) {
+          hasDragged = true;
+          rail.dataset.dragging = "true";
+          e.preventDefault();
+          rail.scrollLeft = startScrollLeft - dx;
+        }
       });
 
       function endDrag(e) {
-        if (!isDown) return;
-        isDown = false;
+        if (!isPointerDown || e.pointerId !== activePointerId) return;
+
+        isPointerDown = false;
+        activePointerId = null;
         rail.classList.remove("is-dragging");
 
         try {
           rail.releasePointerCapture(e.pointerId);
         } catch (err) {}
 
-        if (moved) {
+        if (hasDragged) {
           rail.dataset.justDragged = "true";
           window.setTimeout(() => {
             delete rail.dataset.justDragged;
-          }, 120);
+            rail.dataset.dragging = "false";
+          }, 180);
+        } else {
+          delete rail.dataset.justDragged;
+          rail.dataset.dragging = "false";
         }
       }
 
       rail.addEventListener("pointerup", endDrag);
       rail.addEventListener("pointercancel", endDrag);
-      rail.addEventListener("pointerleave", endDrag);
+      rail.addEventListener("lostpointercapture", (e) => {
+        if (!isPointerDown) return;
+        endDrag(e);
+      });
 
-      rail.addEventListener("click", (e) => {
-        if (rail.dataset.justDragged === "true") {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }, true);
+      rail.addEventListener(
+        "click",
+        (e) => {
+          if (rail.dataset.justDragged === "true") {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        },
+        true
+      );
     });
   }
 
