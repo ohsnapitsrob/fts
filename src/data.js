@@ -7,6 +7,10 @@ App.Data = (function () {
 
   function norm(s) { return (s || "").toString().trim(); }
 
+  function normalizeComparable(s) {
+    return norm(s).toLowerCase();
+  }
+
   function splitPipe(s) {
     const t = norm(s);
     if (!t) return [];
@@ -14,10 +18,10 @@ App.Data = (function () {
   }
 
   function splitComma(s) {
-  const t = norm(s);
-  if (!t) return [];
-  return t.split(",").map(x => norm(x).toLowerCase()).filter(Boolean);
-}
+    const t = norm(s);
+    if (!t) return [];
+    return t.split(",").map(x => norm(x).toLowerCase()).filter(Boolean);
+  }
 
   function parseCSV(text) {
     const rows = [];
@@ -76,6 +80,7 @@ App.Data = (function () {
       for (let j = 0; j < header.length; j++) obj[header[j]] = (r[j] ?? "");
       out.push(obj);
     }
+
     return out;
   }
 
@@ -126,7 +131,8 @@ App.Data = (function () {
       rating: splitComma(row.rating),
 
       exportFileName: norm(row["export-file-name"]),
-      imdb: norm(row["imdb"]),
+      imdb: norm(row.imdb),
+      justwatch: norm(row.justwatch),
       rawDate: norm(row["raw-date"]),
       dateFormatted: norm(row["date-formatted"]),
       monthShort: norm(row["month-short"])
@@ -139,6 +145,54 @@ App.Data = (function () {
 
     if (!loc.series && loc.type === "TV") loc.series = loc.title;
     return loc;
+  }
+
+  async function loadTitleMetadata() {
+    const cfg = window.APP_CONFIG || {};
+    const url = cfg.TITLE_METADATA_CSV || cfg.TITLE_METADATA || cfg.TITLES_METADATA_CSV;
+
+    if (!url) return new Map();
+
+    try {
+      const text = await fetchSheetCSV(url);
+      const rows = rowsToObjects(parseCSV(text));
+
+      const metaMap = new Map();
+
+      rows.forEach((row) => {
+        const title = norm(row.title);
+        if (!title) return;
+
+        metaMap.set(normalizeComparable(title), {
+          title,
+          type: norm(row.type),
+          description: norm(row.description),
+          imdb: norm(row.imdb),
+          justwatch: norm(row.justwatch),
+          poster: norm(row.poster),
+          trailer: norm(row.trailer)
+        });
+      });
+
+      return metaMap;
+    } catch (err) {
+      console.warn("Could not load title metadata CSV", err);
+      return new Map();
+    }
+  }
+
+  function applyMetadataFallbacks(locs, metadataByTitle) {
+    return locs.map((loc) => {
+      const meta = metadataByTitle.get(normalizeComparable(loc.title));
+
+      if (!meta) return loc;
+
+      return {
+        ...loc,
+        imdb: loc.imdb || meta.imdb || "",
+        justwatch: loc.justwatch || meta.justwatch || ""
+      };
+    });
   }
 
   async function init() {
@@ -165,6 +219,7 @@ App.Data = (function () {
         for (let i = 0; i < sources.length; i++) {
           const [fallbackType] = sources[i];
           const rows = rowsToObjects(parseCSV(texts[i]));
+
           rows.forEach((r) => {
             const loc = postProcessRow(r, fallbackType);
             if (loc) locs.push(loc);
@@ -175,6 +230,9 @@ App.Data = (function () {
         const data = await r.json();
         locs = data.map((r) => postProcessRow(r, r.type)).filter(Boolean);
       }
+
+      const metadataByTitle = await loadTitleMetadata();
+      locs = applyMetadataFallbacks(locs, metadataByTitle);
 
       ALL = locs;
 
