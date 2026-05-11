@@ -1,7 +1,8 @@
 (function () {
   const contentEl = document.getElementById("titleContent");
-  const NT_ICON_URL = "https://images.pixieset.com/063553411/d68e9f40e4986e97d60a432895e1fabd-xxlarge.png";
-
+  // const NT_ICON_URL = "https://images.pixieset.com/063553411/d68e9f40e4986e97d60a432895e1fabd-xxlarge.png";
+  const NT_ICON_URL = "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png";
+  
   function norm(s) {
     return (s || "").toString().trim();
   }
