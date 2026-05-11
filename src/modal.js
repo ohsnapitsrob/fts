@@ -1,7 +1,7 @@
 window.App = window.App || {};
 
 App.Modal = (function () {
-  let modal, mTitle, mInfo, mRatingTags, mDesc, mGallery, mTags, closeBtn, backBtn;
+  let modal, mTitle, mInfo, mRatingTags, mActions, mDesc, mGallery, mTags, closeBtn, backBtn;
   let currentLocId = "";
   let stackedChooserContext = null;
 
@@ -12,6 +12,24 @@ App.Modal = (function () {
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;")
       .replaceAll("'", "&#039;");
+  }
+
+  function safeUrl(url) {
+    const value = (url || "").toString().trim();
+
+    if (!value) return "";
+
+    try {
+      const parsed = new URL(value);
+
+      if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+        return parsed.href;
+      }
+    } catch (err) {
+      return "";
+    }
+
+    return "";
   }
 
   function chipHtml(kind, label) {
@@ -62,9 +80,65 @@ App.Modal = (function () {
     }
 
     mRatingTags.style.display = "flex";
+
     mRatingTags.innerHTML = valid.map((rating) => {
       return `<span class="rating-tag rating-${rating}">${labels[rating]}</span>`;
     }).join("");
+  }
+
+  function renderActionButtons(loc) {
+    const actions = [];
+
+    if (Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+      const directionsUrl =
+        `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}`;
+
+      actions.push(`
+        <a
+          class="location-action-btn"
+          href="${escapeHtml(directionsUrl)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Directions
+        </a>
+      `);
+    }
+
+    if (safeUrl(loc.imdb)) {
+      actions.push(`
+        <a
+          class="location-action-btn"
+          href="${escapeHtml(loc.imdb)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          IMDb
+        </a>
+      `);
+    }
+
+    if (safeUrl(loc.justwatch)) {
+      actions.push(`
+        <a
+          class="location-action-btn"
+          href="${escapeHtml(loc.justwatch)}"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          JustWatch
+        </a>
+      `);
+    }
+
+    if (!actions.length) {
+      mActions.innerHTML = "";
+      mActions.style.display = "none";
+      return;
+    }
+
+    mActions.style.display = "flex";
+    mActions.innerHTML = actions.join("");
   }
 
   function pinIconSvg() {
@@ -89,6 +163,7 @@ App.Modal = (function () {
     mTitle = document.getElementById("mTitle");
     mInfo = document.getElementById("mInfo");
     mRatingTags = document.getElementById("mRatingTags");
+    mActions = document.getElementById("mActions");
     mDesc = document.getElementById("mDesc");
     mGallery = document.getElementById("mGallery");
     mTags = document.getElementById("mTags");
@@ -106,11 +181,14 @@ App.Modal = (function () {
       };
     }
 
-    modal.onclick = (e) => { if (e.target === modal) close(); };
+    modal.onclick = (e) => {
+      if (e.target === modal) close();
+    };
 
     mTags.addEventListener("click", (e) => {
       const el = e.target.closest("[data-kind][data-label]");
       if (!el) return;
+
       const kind = el.getAttribute("data-kind");
       const label = el.getAttribute("data-label");
 
@@ -119,7 +197,9 @@ App.Modal = (function () {
     });
 
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && modal.classList.contains("open")) close();
+      if (e.key === "Escape" && modal.classList.contains("open")) {
+        close();
+      }
     });
   }
 
@@ -134,10 +214,11 @@ App.Modal = (function () {
     mTitle.textContent = loc.title || "";
 
     const placeBits = [];
+
     if (loc.place) placeBits.push(loc.place);
     if (loc.country) placeBits.push(loc.country);
-    const where = placeBits.join(", ");
 
+    const where = placeBits.join(", ");
     const when = loc.monthShort || loc.dateFormatted || loc.rawDate || "";
 
     mInfo.innerHTML = `
@@ -157,6 +238,7 @@ App.Modal = (function () {
     `;
 
     renderRatingTags(loc.rating || []);
+    renderActionButtons(loc);
 
     mDesc.textContent = loc.description || "";
     mDesc.style.display = mDesc.textContent ? "block" : "none";
@@ -171,7 +253,9 @@ App.Modal = (function () {
       p.textContent = "No images yet.";
       mGallery.appendChild(p);
     } else {
-      if (imgs.length === 1) mGallery.classList.add("single");
+      if (imgs.length === 1) {
+        mGallery.classList.add("single");
+      }
 
       imgs.forEach((src) => {
         const img = document.createElement("img");
@@ -191,12 +275,16 @@ App.Modal = (function () {
       if (c) chips.push(chipHtml("Collection", c));
     });
 
-    mTags.innerHTML = chips.length ? chips.join("") : `<span class="loc-tags-empty">No tags yet.</span>`;
+    mTags.innerHTML = chips.length
+      ? chips.join("")
+      : `<span class="loc-tags-empty">No tags yet.</span>`;
 
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
 
-    if (!opts.skipUrl) App.Router.onLocationOpened(currentLocId);
+    if (!opts.skipUrl) {
+      App.Router.onLocationOpened(currentLocId);
+    }
   }
 
   function close(opts = {}) {
@@ -205,14 +293,25 @@ App.Modal = (function () {
 
     if (!opts.preserveChooserContext) {
       stackedChooserContext = null;
-      if (backBtn) backBtn.style.display = "none";
+
+      if (backBtn) {
+        backBtn.style.display = "none";
+      }
     }
 
     if (currentLocId) {
       currentLocId = "";
-      if (!opts.skipUrl) App.Router.onLocationClosed();
+
+      if (!opts.skipUrl) {
+        App.Router.onLocationClosed();
+      }
     }
   }
 
-  return { init, open, close, escapeHtml };
+  return {
+    init,
+    open,
+    close,
+    escapeHtml
+  };
 })();
