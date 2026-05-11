@@ -12,12 +12,14 @@
 
   function normalizeType(t) {
     const x = norm(t).toLowerCase();
+
     if (!x) return "Misc";
     if (x === "film" || x === "movie" || x === "movies") return "Film";
     if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
     if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
     if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
     if (x === "misc" || x === "other") return "Misc";
+
     return norm(t);
   }
 
@@ -55,6 +57,7 @@
 
       if ((c === "\n" || c === "\r") && !inQuotes) {
         if (c === "\r" && next === "\n") i++;
+
         row.push(cur);
         cur = "";
 
@@ -315,7 +318,8 @@
             : row.railOrder,
 
           poster: meta.poster || "",
-          thumbnail: meta.thumbnail || row.thumbnail || ""
+          thumbnail: meta.thumbnail || row.thumbnail || "",
+          nt: norm(meta.nt)
         });
       }
 
@@ -393,8 +397,17 @@
         .filter((entry) => normalizeType(entry.type) === "Music Video")
     ).slice(0, 12);
 
+    const nationalTrustRail = shuffle(
+      entries.filter((entry) => {
+        if (!hasPoster(entry)) return false;
+
+        return norm(entry.nt) !== "";
+      })
+    );
+
     return [
       { title: "Latest scenes found", items: latestScenes },
+
       { title: "Top 10 most scenes", items: topScenes },
 
       {
@@ -421,6 +434,11 @@
         title: "A selection of Music Videos",
         items: musicVideoThumbnailRail,
         variant: "thumbnail"
+      },
+
+      {
+        title: "National Trust On Screen",
+        items: nationalTrustRail
       },
 
       {
@@ -470,6 +488,7 @@
           poster: norm(row.poster),
           trailer: norm(row.trailer),
           thumbnail: norm(row.thumbnail),
+          nt: norm(row.NT),
           railOrder: coerceNumber(row["set-rail-order"])
         }))
         .filter((row) => row.title);
