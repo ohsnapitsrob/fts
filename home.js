@@ -7,18 +7,18 @@
   }
 
   function getAccessValue(row) {
-  return norm(
-    row.access ||
-    row.Access ||
-    row.ACCESS ||
-    row["access "] ||
-    row["Access "] ||
-    row["No Access"] ||
-    row.noaccess ||
-    row.NOACCESS
-  );
-}
-  
+    return norm(
+      row.access ||
+      row.Access ||
+      row.ACCESS ||
+      row["access "] ||
+      row["Access "] ||
+      row["No Access"] ||
+      row.noaccess ||
+      row.NOACCESS
+    );
+  }
+
   function normalizeComparable(s) {
     return norm(s).toLowerCase();
   }
@@ -209,6 +209,8 @@
   function railHtml(title, items, options = {}) {
     const variant = options.variant || "poster";
     const imageField = variant === "thumbnail" ? "thumbnail" : "poster";
+    const link = options.link || "";
+    const linkLabel = options.linkLabel || "View more";
 
     const withImages = items.filter((item) => safeUrl(item[imageField]));
 
@@ -216,7 +218,19 @@
 
     return `
       <section class="rail">
-        <h2 class="rail-title">${escapeHtml(title)}</h2>
+        <div class="rail-title-row">
+          <h2 class="rail-title">${escapeHtml(title)}</h2>
+
+          ${
+            link
+              ? `
+                <a class="rail-title-link" href="${escapeHtml(link)}">
+                  ${escapeHtml(linkLabel)}
+                </a>
+              `
+              : ""
+          }
+        </div>
 
         <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""}">
           ${withImages
@@ -394,7 +408,10 @@
       .sort((a, b) => b.accessibleCount - a.accessibleCount || a.title.localeCompare(b.title))
       .slice(0, 10);
 
-   /* function orderedSeriesRail(seriesName) {
+    function orderedSeriesRail(seriesName) {
+      const isBond =
+        normalizeComparable(seriesName) === "james bond";
+
       return [...entries]
         .filter(hasPoster)
         .filter(
@@ -407,7 +424,9 @@
           const bHas = Number.isFinite(b.railOrder);
 
           if (aHas && bHas) {
-            return a.railOrder - b.railOrder;
+            return isBond
+              ? b.railOrder - a.railOrder
+              : a.railOrder - b.railOrder;
           }
 
           if (aHas && !bHas) return -1;
@@ -416,35 +435,7 @@
           return a.title.localeCompare(b.title);
         })
         .slice(0, 12);
-    }*/
-    function orderedSeriesRail(seriesName) {
-  const isBond =
-    normalizeComparable(seriesName) === "james bond";
-
-  return [...entries]
-    .filter(hasPoster)
-    .filter(
-      (entry) =>
-        normalizeComparable(entry.series) ===
-        normalizeComparable(seriesName)
-    )
-    .sort((a, b) => {
-      const aHas = Number.isFinite(a.railOrder);
-      const bHas = Number.isFinite(b.railOrder);
-
-      if (aHas && bHas) {
-        return isBond
-          ? b.railOrder - a.railOrder
-          : a.railOrder - b.railOrder;
-      }
-
-      if (aHas && !bHas) return -1;
-      if (!aHas && bHas) return 1;
-
-      return a.title.localeCompare(b.title);
-    })
-    .slice(0, 12);
-}
+    }
 
     const typeRail = (typeName) => {
       return shuffle(
@@ -504,7 +495,9 @@
 
       {
         title: "National Trust On Screen",
-        items: nationalTrustRail
+        items: nationalTrustRail,
+        link: "./national-trust/",
+        linkLabel: "Explore all locations"
       },
 
       {
@@ -520,7 +513,9 @@
     const html = rails
       .map((rail) =>
         railHtml(rail.title, rail.items, {
-          variant: rail.variant
+          variant: rail.variant,
+          link: rail.link,
+          linkLabel: rail.linkLabel
         })
       )
       .filter(Boolean)
@@ -603,7 +598,6 @@
           series: norm(row.series),
           country: norm(row.country),
           city: norm(row.city || row.place),
-         // access: norm(row.access),
           access: getAccessValue(row),
           thumbnail: norm(row.thumbnail),
           railOrder: coerceNumber(row["set-rail-order"]),
