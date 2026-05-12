@@ -270,6 +270,25 @@
     `;
   }
 
+  function locationDiscoverButton(group) {
+  const firstWithUrl = group.rows.find(
+    (row) => safeUrl(row.NTURL)
+  );
+
+  if (!firstWithUrl) return "";
+
+  return `
+    <a
+      class="location-discover-btn"
+      href="${escapeHtml(firstWithUrl.NTURL)}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      Discover more about this location
+    </a>
+  `;
+}
+
   function buildSceneMapUrl(row) {
     const params = new URLSearchParams();
     params.set("fk", "Title");
@@ -389,16 +408,16 @@
     return ordered;
   }
 
-  function countText(sceneCount, productionCount) {
-    const sceneLabel = sceneCount === 1 ? "scene" : "scenes";
-    const productionLabel = productionCount === 1 ? "production" : "productions";
+ function countText(sceneCount, productionCount) {
+  const sceneLabel = sceneCount === 1 ? "scene" : "scenes";
+  const titleLabel = productionCount === 1 ? "title" : "titles";
 
-    return `${sceneCount.toLocaleString()} ${sceneLabel} from ${productionCount.toLocaleString()} ${productionLabel}`;
-  }
+  return `${sceneCount.toLocaleString()} ${sceneLabel} from ${productionCount.toLocaleString()} ${titleLabel}`;
+}
 
 function locationSectionHtml(group, index) {
   const allScenes = sortScenes(group.rows);
-  const preview = previewOrder(group.rows).slice(0, 6);
+const preview = previewOrder(group.rows).slice(0, 3);
   const hasMore = allScenes.length > preview.length;
 
   return `
@@ -408,14 +427,16 @@ function locationSectionHtml(group, index) {
           ${escapeHtml(group.name)}
         </h2>
 
-        <div class="nt-location-meta">
-          ${escapeHtml(
-            countText(
-              group.rows.length,
-              group.productionCount
-            )
-          )}
-        </div>
+       <div class="nt-location-meta">
+  ${escapeHtml(
+    countText(
+      group.rows.length,
+      group.productionCount
+    )
+  )}
+</div>
+
+${locationDiscoverButton(group)}
       </div>
 
       <div
