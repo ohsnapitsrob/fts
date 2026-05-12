@@ -603,7 +603,8 @@
           description: norm(row.description),
           images: splitPipe(row.images),
           rating: splitComma(row.rating),
-          access: norm(row.access),
+        //  access: norm(row.access),
+          access: getAccessValue(row),
           NationalTrust: norm(
             row.NationalTrust ||
             row["National Trust"] ||
