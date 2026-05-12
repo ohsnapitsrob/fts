@@ -396,61 +396,10 @@
     return `${sceneCount.toLocaleString()} ${sceneLabel} from ${productionCount.toLocaleString()} ${productionLabel}`;
   }
 
-/*  function locationSectionHtml(group, index) {
-    const orderedAll = sortScenes(group.rows);
-    const preview = previewOrder(group.rows).slice(0, 6);
-    const hidden = orderedAll.filter((row) => !preview.includes(row));
-    const hasMore = hidden.length > 0;
-
-    return `
-      <section class="nt-location" data-location-index="${index}">
-        <div class="nt-location-head">
-          <h2 class="nt-location-title">${escapeHtml(group.name)}</h2>
-          <div class="nt-location-meta">
-            ${escapeHtml(countText(group.rows.length, group.productionCount))}
-          </div>
-        </div>
-
-        <div class="scene-grid nt-preview-grid">
-          ${preview.map(sceneCardHtml).join("")}
-        </div>
-
-        ${
-          hasMore
-            ? `
-              <div class="scene-grid nt-hidden-grid" hidden>
-                ${hidden.map(sceneCardHtml).join("")}
-              </div>
-
-              <button class="btn btn-secondary nt-show-all" type="button" data-show-all="${index}">
-                Show all scenes
-              </button>
-            `
-            : ""
-        }
-      </section>
-    `;
-  }*/
-
 function locationSectionHtml(group, index) {
   const allScenes = sortScenes(group.rows);
-
-  // Diversity-first preview ordering
-  const diversePreview = previewOrder(group.rows);
-
-  // STRICTLY max 6 preview cards
-  const preview = diversePreview.slice(0, 6);
-
-  // Everything else hidden initially
-  const previewIds = new Set(
-    preview.map((row) => row.id)
-  );
-
-  const remaining = allScenes.filter(
-    (row) => !previewIds.has(row.id)
-  );
-
-  const hasMore = remaining.length > 0;
+  const preview = previewOrder(group.rows).slice(0, 6);
+  const hasMore = allScenes.length > preview.length;
 
   return `
     <section class="nt-location" data-location-index="${index}">
@@ -469,20 +418,16 @@ function locationSectionHtml(group, index) {
         </div>
       </div>
 
-      <div class="scene-grid nt-preview-grid">
+      <div
+        class="scene-grid nt-scene-grid"
+        data-scene-grid="${index}"
+      >
         ${preview.map(sceneCardHtml).join("")}
       </div>
 
       ${
         hasMore
           ? `
-            <div
-              class="scene-grid nt-hidden-grid"
-              hidden
-            >
-              ${remaining.map(sceneCardHtml).join("")}
-            </div>
-
             <button
               class="btn btn-secondary nt-show-all"
               type="button"
@@ -632,30 +577,24 @@ function groupLocations(rows) {
     return rows;
   }
 
-/*  function attachShowAllHandlers() {
-    contentEl.addEventListener("click", (event) => {
-      const btn = event.target.closest("[data-show-all]");
-      if (!btn) return;
-
-      const section = btn.closest(".nt-location");
-      const hiddenGrid = section?.querySelector(".nt-hidden-grid");
-      if (!hiddenGrid) return;
-
-      hiddenGrid.hidden = false;
-      btn.remove();
-    });
-  }*/
-  function attachShowAllHandlers() {
+function attachShowAllHandlers(groups) {
   contentEl.addEventListener("click", (event) => {
     const btn = event.target.closest("[data-show-all]");
     if (!btn) return;
 
+    const index = Number(btn.getAttribute("data-show-all"));
+    const group = groups[index];
+
+    if (!group) return;
+
     const section = btn.closest(".nt-location");
-    const hiddenGrid = section?.querySelector(".nt-hidden-grid");
+    const grid = section?.querySelector(`[data-scene-grid="${index}"]`);
 
-    if (!hiddenGrid) return;
+    if (!grid) return;
 
-    hiddenGrid.hidden = false;
+    grid.innerHTML = sortScenes(group.rows)
+      .map(sceneCardHtml)
+      .join("");
 
     btn.remove();
   });
@@ -679,7 +618,9 @@ function groupLocations(rows) {
         .map((group, index) => locationSectionHtml(group, index))
         .join("");
 
-      attachShowAllHandlers();
+    //  attachShowAllHandlers();
+      attachShowAllHandlers(groups);
+      
     } catch (err) {
       console.error(err);
 
