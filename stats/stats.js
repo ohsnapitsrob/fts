@@ -5,6 +5,19 @@
     return (s || "").toString().trim();
   }
 
+  function getAccessValue(row) {
+  return norm(
+    row.access ||
+    row.Access ||
+    row.ACCESS ||
+    row["access "] ||
+    row["Access "] ||
+    row["No Access"] ||
+    row.noaccess ||
+    row.NOACCESS
+  );
+}
+  
   function hasNoAccess(row) {
     return norm(row.access) !== "";
   }
