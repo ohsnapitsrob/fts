@@ -95,9 +95,7 @@ p {
 }
 
 .actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  display: none;
 }
 
 .btn {
@@ -130,6 +128,27 @@ p {
   background: var(--surface);
   color: var(--purple);
   border-color: var(--purple);
+}
+
+.location-discover-btn {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: rgba(90, 0, 230, 0.08);
+  border: 1px solid rgba(90, 0, 230, 0.18);
+  color: var(--purple);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.location-discover-btn:hover {
+  background: rgba(90, 0, 230, 0.12);
+  transform: translateY(-1px);
 }
 
 .loading-card,
