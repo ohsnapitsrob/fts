@@ -32,6 +32,12 @@ App.Modal = (function () {
     return "";
   }
 
+  function hasNoAccess(loc) {
+    return App.State && typeof App.State.hasNoAccess === "function"
+      ? App.State.hasNoAccess(loc)
+      : !!(loc && (loc.access || "").toString().trim());
+  }
+
   function chipHtml(kind, label) {
     const k = escapeHtml(kind);
     const l = escapeHtml(label);
@@ -60,7 +66,7 @@ App.Modal = (function () {
     return aliases[v] || "";
   }
 
-  function renderRatingTags(ratings) {
+  function renderRatingTags(loc) {
     const labels = {
       red: "Needs reshooting",
       orange: "Average match",
@@ -68,28 +74,33 @@ App.Modal = (function () {
       blue: "Inspiration location"
     };
 
-    const valid = (ratings || [])
+    const valid = (loc.rating || [])
       .map(normalizeRating)
       .filter(Boolean)
       .filter((rating, index, arr) => arr.indexOf(rating) === index);
 
-    if (!valid.length) {
+    const tags = valid.map((rating) => {
+      return `<span class="rating-tag rating-${rating}">${labels[rating]}</span>`;
+    });
+
+    if (hasNoAccess(loc)) {
+      tags.unshift(`<span class="rating-tag rating-noaccess">NO PUBLIC ACCESS</span>`);
+    }
+
+    if (!tags.length) {
       mRatingTags.innerHTML = "";
       mRatingTags.style.display = "none";
       return;
     }
 
     mRatingTags.style.display = "flex";
-
-    mRatingTags.innerHTML = valid.map((rating) => {
-      return `<span class="rating-tag rating-${rating}">${labels[rating]}</span>`;
-    }).join("");
+    mRatingTags.innerHTML = tags.join("");
   }
 
   function renderActionButtons(loc) {
     const actions = [];
 
-    if (Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+    if (!hasNoAccess(loc) && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
       const directionsUrl =
         `https://www.google.com/maps/dir/?api=1&destination=${loc.lat},${loc.lng}`;
 
@@ -237,7 +248,7 @@ App.Modal = (function () {
       ` : ""}
     `;
 
-    renderRatingTags(loc.rating || []);
+    renderRatingTags(loc);
     renderActionButtons(loc);
 
     mDesc.textContent = loc.description || "";
