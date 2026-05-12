@@ -130,6 +130,7 @@ App.Data = (function () {
       images: splitPipe(row.images),
       rating: splitComma(row.rating),
 
+      access: norm(row.access),
       exportFileName: norm(row["export-file-name"]),
       imdb: norm(row.imdb),
       justwatch: norm(row.justwatch),
@@ -193,6 +194,17 @@ App.Data = (function () {
         justwatch: loc.justwatch || meta.justwatch || ""
       };
     });
+  }
+
+  function markerIsVisible(marker) {
+    if (!App.State || typeof App.State.getHideNoAccess !== "function") return true;
+    if (!App.State.getHideNoAccess()) return true;
+
+    return !App.State.hasNoAccess(marker?.__loc);
+  }
+
+  function visibleMarkers(markers) {
+    return (markers || []).filter(markerIsVisible);
   }
 
   async function init() {
@@ -279,22 +291,22 @@ App.Data = (function () {
       const groups = [];
 
       markersByTitle.forEach((arr, title) => {
-        groups.push({ kind: "Title", label: title, count: arr.length });
+        groups.push({ kind: "Title", label: title, count: visibleMarkers(arr).length });
         groupsIndex.set(`Title::${title}`, arr);
       });
 
       markersBySeries.forEach((arr, series) => {
-        groups.push({ kind: "Series", label: series, count: arr.length });
+        groups.push({ kind: "Series", label: series, count: visibleMarkers(arr).length });
         groupsIndex.set(`Series::${series}`, arr);
       });
 
       markersByCollection.forEach((arr, col) => {
-        groups.push({ kind: "Collection", label: col, count: arr.length });
+        groups.push({ kind: "Collection", label: col, count: visibleMarkers(arr).length });
         groupsIndex.set(`Collection::${col}`, arr);
       });
 
       markersByType.forEach((arr, type) => {
-        groups.push({ kind: "Type", label: type, count: arr.length });
+        groups.push({ kind: "Type", label: type, count: visibleMarkers(arr).length });
         groupsIndex.set(`Type::${type}`, arr);
       });
 
