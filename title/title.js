@@ -489,7 +489,7 @@
     sortedRows.forEach((row) => {
       if (row.type) types.add(row.type);
 
-      if (hasNoAccess(row)) return;
+     // if (hasNoAccess(row)) return;
 
       if (row.city) cities.add(row.city);
       if (row.country) countries.add(row.country);
