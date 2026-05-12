@@ -1,10 +1,19 @@
 window.App = window.App || {};
 
 App.State = (function () {
-  let currentFilter = null; // {kind,label} or null
+  let currentFilter = null;
+  let hideNoAccess = false;
 
   function init() {
-    // nothing required yet
+    const toggle = document.getElementById("hideNoAccessToggle");
+
+    if (toggle) {
+      toggle.checked = hideNoAccess;
+
+      toggle.addEventListener("change", () => {
+        setHideNoAccess(toggle.checked);
+      });
+    }
   }
 
   function getFilter() {
@@ -20,5 +29,41 @@ App.State = (function () {
     setFilter(null);
   }
 
-  return { init, getFilter, setFilter, clearFilter };
+  function getHideNoAccess() {
+    return hideNoAccess;
+  }
+
+  function setHideNoAccess(value) {
+    hideNoAccess = !!value;
+
+    const toggle = document.getElementById("hideNoAccessToggle");
+    if (toggle) toggle.checked = hideNoAccess;
+
+    if (App.Map && typeof App.Map.refreshNoAccessFilter === "function") {
+      App.Map.refreshNoAccessFilter();
+    }
+  }
+
+  function hasNoAccess(loc) {
+    return !!(loc && (loc.access || "").toString().trim());
+  }
+
+  function filterNoAccessMarkers(markers) {
+    if (!hideNoAccess) return markers || [];
+
+    return (markers || []).filter((marker) => {
+      return !hasNoAccess(marker?.__loc);
+    });
+  }
+
+  return {
+    init,
+    getFilter,
+    setFilter,
+    clearFilter,
+    getHideNoAccess,
+    setHideNoAccess,
+    hasNoAccess,
+    filterNoAccessMarkers
+  };
 })();
