@@ -10,6 +10,10 @@
     return (s || "").toString().trim();
   }
 
+  function hasNoAccess(row) {
+    return norm(row.access) !== "";
+  }
+
   function splitPipe(s) {
     const t = norm(s);
     if (!t) return [];
@@ -167,6 +171,7 @@
       city: norm(row.city || row.town || row.place),
       country: norm(row.country),
       collections: splitPipe(row.collections),
+      access: norm(row.access),
       visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
     };
   }
@@ -332,6 +337,8 @@
           title: loc.title,
           type: loc.type,
           count: 0,
+          totalCount: 0,
+          noAccessCount: 0,
           latestVisitedTs: null,
           cities: new Set(),
           countries: new Set()
@@ -339,6 +346,13 @@
       }
 
       const entry = grouped.get(key);
+      entry.totalCount += 1;
+
+      if (hasNoAccess(loc)) {
+        entry.noAccessCount += 1;
+        return;
+      }
+
       entry.count += 1;
 
       if (loc.city) entry.cities.add(loc.city);
@@ -351,11 +365,13 @@
       }
     });
 
-    return Array.from(grouped.values()).map((entry) => ({
-      ...entry,
-      cities: Array.from(entry.cities),
-      countries: Array.from(entry.countries)
-    }));
+    return Array.from(grouped.values())
+      .filter((entry) => entry.count > 0)
+      .map((entry) => ({
+        ...entry,
+        cities: Array.from(entry.cities),
+        countries: Array.from(entry.countries)
+      }));
   }
 
   async function init() {
