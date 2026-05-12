@@ -1,69 +1,14 @@
 (function () {
-  const listEl = document.getElementById("browseList");
+  const gridEl = document.getElementById("browseGrid");
   const searchEl = document.getElementById("browseSearch");
-  const sortEl = document.getElementById("browseSort");
   const countEl = document.getElementById("browseCount");
-
-  let ALL_ENTRIES = [];
 
   function norm(s) {
     return (s || "").toString().trim();
   }
 
-  function getAccessValue(row) {
-  return norm(
-    row.access ||
-    row.Access ||
-    row.ACCESS ||
-    row["access "] ||
-    row["Access "] ||
-    row["No Access"] ||
-    row.noaccess ||
-    row.NOACCESS
-  );
-}
-  
-  function hasNoAccess(row) {
-    return norm(row.access) !== "";
-  }
-
-  function splitPipe(s) {
-    const t = norm(s);
-    if (!t) return [];
-    return t.split("|").map(x => norm(x)).filter(Boolean);
-  }
-
-  function normalizeType(t) {
-    const x = norm(t).toLowerCase();
-    if (!x) return "Misc";
-    if (x === "film" || x === "movie" || x === "movies") return "Film";
-    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
-    if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
-    if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
-    if (x === "misc" || x === "other") return "Misc";
-    return norm(t);
-  }
-
-  function typeColor(type) {
-    const colors = {
-      Film: "#2563eb",
-      TV: "#16a34a",
-      "Music Video": "#db2777",
-      Misc: "#6b7280",
-      "Video Game": "#FFA500"
-    };
-    return colors[type] || colors.Misc;
-  }
-
-  function displayType(type) {
-    if (type === "Film") return "Movie";
-    if (type === "TV") return "TV Show";
-    return type;
-  }
-
-  function coerceNumber(x) {
-    const n = Number((x ?? "").toString().trim());
-    return Number.isFinite(n) ? n : null;
+  function normalizeComparable(s) {
+    return norm(s).toLowerCase();
   }
 
   function parseCSV(text) {
@@ -95,9 +40,14 @@
 
       if ((c === "\n" || c === "\r") && !inQuotes) {
         if (c === "\r" && next === "\n") i++;
+
         row.push(cur);
         cur = "";
-        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+
+        if (row.length > 1 || (row.length === 1 && row[0] !== "")) {
+          rows.push(row);
+        }
+
         row = [];
         continue;
       }
@@ -106,24 +56,31 @@
     }
 
     row.push(cur);
-    if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
+
+    if (row.length > 1 || (row.length === 1 && row[0] !== "")) {
+      rows.push(row);
+    }
 
     return rows;
   }
 
   function rowsToObjects(rows) {
     if (!rows.length) return [];
-    const header = rows[0].map(h => norm(h));
+
+    const header = rows[0].map((h) => norm(h));
     const out = [];
 
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
-      if (!r || r.every(cell => norm(cell) === "")) continue;
+
+      if (!r || r.every((cell) => norm(cell) === "")) continue;
 
       const obj = {};
+
       for (let j = 0; j < header.length; j++) {
-        obj[header[j]] = (r[j] ?? "");
+        obj[header[j]] = r[j] ?? "";
       }
+
       out.push(obj);
     }
 
@@ -132,8 +89,33 @@
 
   async function fetchSheetCSV(url) {
     const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to fetch CSV: ${url}`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch CSV: ${url}`);
+    }
+
     return res.text();
+  }
+
+  function normalizeType(t) {
+    const x = norm(t).toLowerCase();
+
+    if (!x) return "Misc";
+    if (x === "film" || x === "movie" || x === "movies") return "Film";
+    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
+    if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
+    if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
+    if (x === "misc" || x === "other") return "Misc";
+
+    return norm(t);
+  }
+
+  function buildTitleUrl(title) {
+    const params = new URLSearchParams();
+    params.set("fk", "Title");
+    params.set("fl", title);
+
+    return `../title/?${params.toString()}`;
   }
 
   function escapeHtml(s) {
@@ -145,171 +127,34 @@
       .replaceAll("'", "&#039;");
   }
 
-  function sceneLabel(n) {
-    return `${n} scene${n === 1 ? "" : "s"}`;
+  function formatNumber(n) {
+    return Number(n || 0).toLocaleString();
   }
 
-  function summaryLabel(titleCount, sceneCount) {
-    return `${titleCount.toLocaleString()} title${titleCount === 1 ? "" : "s"}, ${sceneCount.toLocaleString()} scene${sceneCount === 1 ? "" : "s"}`;
+  function plural(n, one, many) {
+    return `${formatNumber(n)} ${n === 1 ? one : many}`;
   }
 
-  function buildTitleUrl(title) {
-    const params = new URLSearchParams();
-    params.set("fl", title);
-    return `../title/?${params.toString()}`;
-  }
-
-  function parseVisitedDate(value) {
-    const raw = norm(value);
-    if (!raw) return null;
-
-    const cleaned = raw.replace(/(\d{1,2})(st|nd|rd|th)/gi, "$1");
-    const ts = Date.parse(cleaned);
-    return Number.isFinite(ts) ? ts : null;
-  }
-
-  function postProcessRow(row, fallbackType) {
-    const title = norm(row.title);
-    const type = normalizeType(row.type || fallbackType);
-    const lat = coerceNumber(row.lat);
-    const lng = coerceNumber(row.lng);
-
-    if (!title || typeof lat !== "number" || typeof lng !== "number") return null;
-
-    return {
-      id: norm(row.id),
-      title,
-      type,
-      place: norm(row.place),
-      city: norm(row.city || row.town || row.place),
-      country: norm(row.country),
-      collections: splitPipe(row.collections),
-    //  access: norm(row.access),
-      access: getAccessValue(row),
-      visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
-    };
-  }
-
-  function compareTitleAsc(a, b) {
-    return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
-  }
-
-  function compareTypeAsc(a, b) {
-    return a.type.localeCompare(b.type, undefined, { sensitivity: "base" });
-  }
-
-  function sortMost(a, b) {
-    if (b.count !== a.count) return b.count - a.count;
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
-  }
-
-  function sortAZ(a, b) {
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
-  }
-
-  function sortZA(a, b) {
-    const titleCmp = compareTitleAsc(b, a);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
-  }
-
-  function sortVisitedLatest(a, b) {
-    const aHas = Number.isFinite(a.latestVisitedTs);
-    const bHas = Number.isFinite(b.latestVisitedTs);
-
-    if (aHas && bHas && b.latestVisitedTs !== a.latestVisitedTs) {
-      return b.latestVisitedTs - a.latestVisitedTs;
-    }
-
-    if (aHas && !bHas) return -1;
-    if (!aHas && bHas) return 1;
-
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
-  }
-
-  function sortVisitedOldest(a, b) {
-    const aHas = Number.isFinite(a.latestVisitedTs);
-    const bHas = Number.isFinite(b.latestVisitedTs);
-
-    if (aHas && bHas && a.latestVisitedTs !== b.latestVisitedTs) {
-      return a.latestVisitedTs - b.latestVisitedTs;
-    }
-
-    if (aHas && !bHas) return -1;
-    if (!aHas && bHas) return 1;
-
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
-  }
-
-  function getSorted(entries, sortMode) {
-    const copy = [...entries];
-
-    if (sortMode === "az") return copy.sort(sortAZ);
-    if (sortMode === "za") return copy.sort(sortZA);
-    if (sortMode === "visited-latest") return copy.sort(sortVisitedLatest);
-    if (sortMode === "visited-oldest") return copy.sort(sortVisitedOldest);
-    return copy.sort(sortMost);
-  }
-
-  function render(entries) {
-    listEl.innerHTML = "";
-
-    const titleCount = entries.length;
-    const sceneCount = entries.reduce((sum, entry) => sum + entry.count, 0);
-    countEl.textContent = summaryLabel(titleCount, sceneCount);
-
-    if (!entries.length) {
-      listEl.innerHTML = `<div class="browse-empty">No matches.</div>`;
-      return;
-    }
-
-    entries.forEach((entry) => {
-      const a = document.createElement("a");
-      a.className = "browse-row";
-      a.href = buildTitleUrl(entry.title);
-
-      a.innerHTML = `
-        <div class="browse-marker" style="background:${escapeHtml(typeColor(entry.type))};"></div>
-        <div class="browse-main">
-          <div class="browse-title">${escapeHtml(entry.title)}</div>
+  function cardHtml(item) {
+    return `
+      <a class="browse-card" href="${buildTitleUrl(item.title)}">
+        <div class="browse-card-top">
+          <div class="browse-card-type">${escapeHtml(item.type)}</div>
+          <div class="browse-card-count">${plural(item.scenes, "scene", "scenes")}</div>
         </div>
-        <div class="browse-type">${escapeHtml(displayType(entry.type))}</div>
-        <div class="browse-scenes">${sceneLabel(entry.count)}</div>
-      `;
 
-      listEl.appendChild(a);
-    });
+        <h2>${escapeHtml(item.title)}</h2>
+
+        <div class="browse-card-meta">
+          <span>${plural(item.cities, "city", "cities")}</span>
+          <span>•</span>
+          <span>${plural(item.countries, "country", "countries")}</span>
+        </div>
+      </a>
+    `;
   }
 
-  function applyControls() {
-    const q = norm(searchEl.value).toLowerCase();
-    const sortMode = sortEl.value || "most";
-
-    let filtered = ALL_ENTRIES;
-
-    if (q) {
-      filtered = filtered.filter((entry) => {
-        return (
-          entry.title.toLowerCase().includes(q) ||
-          displayType(entry.type).toLowerCase().includes(q) ||
-          entry.cities.some((city) => city.toLowerCase().includes(q)) ||
-          entry.countries.some((country) => country.toLowerCase().includes(q))
-        );
-      });
-    }
-
-    render(getSorted(filtered, sortMode));
-  }
-
-  async function loadAll() {
+  async function loadRows() {
     const cfg = window.APP_CONFIG || {};
     const sheets = cfg.SHEETS || {};
 
@@ -321,10 +166,6 @@
       ["Misc", sheets.misc]
     ].filter(([, url]) => !!url);
 
-    if (!sources.length) {
-      throw new Error("No sheet URLs configured.");
-    }
-
     const texts = await Promise.all(
       sources.map(([, url]) => fetchSheetCSV(url))
     );
@@ -333,74 +174,102 @@
 
     for (let i = 0; i < sources.length; i++) {
       const [fallbackType] = sources[i];
+
       const parsed = rowsToObjects(parseCSV(texts[i]));
 
-      parsed.forEach((r) => {
-        const loc = postProcessRow(r, fallbackType);
-        if (loc) rows.push(loc);
+      parsed.forEach((row) => {
+        const title = norm(row.title);
+
+        if (!title) return;
+
+        rows.push({
+          title,
+          type: normalizeType(row.type || fallbackType),
+          city: norm(row.city || row.place),
+          country: norm(row.country)
+        });
       });
     }
 
+    return rows;
+  }
+
+  function buildBrowse(rows) {
     const grouped = new Map();
 
-    rows.forEach((loc) => {
-      const key = `${loc.title}|||${loc.type}`;
+    rows.forEach((row) => {
+      const key = normalizeComparable(row.title);
 
       if (!grouped.has(key)) {
         grouped.set(key, {
-          title: loc.title,
-          type: loc.type,
-          count: 0,
-          totalCount: 0,
-          noAccessCount: 0,
-          latestVisitedTs: null,
+          title: row.title,
+          type: row.type,
+          scenes: 0,
           cities: new Set(),
           countries: new Set()
         });
       }
 
-      const entry = grouped.get(key);
-      entry.totalCount += 1;
+      const item = grouped.get(key);
 
-      if (hasNoAccess(loc)) {
-        entry.noAccessCount += 1;
-        return;
-      }
+      item.scenes++;
 
-      entry.count += 1;
-
-      if (loc.city) entry.cities.add(loc.city);
-      if (loc.country) entry.countries.add(loc.country);
-
-      if (Number.isFinite(loc.visitedTs)) {
-        if (!Number.isFinite(entry.latestVisitedTs) || loc.visitedTs > entry.latestVisitedTs) {
-          entry.latestVisitedTs = loc.visitedTs;
-        }
-      }
+      if (row.city) item.cities.add(row.city);
+      if (row.country) item.countries.add(row.country);
     });
 
-    return Array.from(grouped.values())
-      .filter((entry) => entry.count > 0)
-      .map((entry) => ({
-        ...entry,
-        cities: Array.from(entry.cities),
-        countries: Array.from(entry.countries)
-      }));
+    return [...grouped.values()]
+      .map((item) => ({
+        title: item.title,
+        type: item.type,
+        scenes: item.scenes,
+        cities: item.cities.size,
+        countries: item.countries.size
+      }))
+      .sort((a, b) => {
+        return a.title.localeCompare(b.title, undefined, {
+          sensitivity: "base"
+        });
+      });
+  }
+
+  function render(items) {
+    countEl.textContent = plural(items.length, "title", "titles");
+    gridEl.innerHTML = items.map(cardHtml).join("");
   }
 
   async function init() {
     try {
-      listEl.innerHTML = `<div class="browse-empty">Loading…</div>`;
-      ALL_ENTRIES = await loadAll();
+      const rows = await loadRows();
+      const allItems = buildBrowse(rows);
 
-      searchEl.addEventListener("input", applyControls);
-      sortEl.addEventListener("change", applyControls);
+      render(allItems);
 
-      applyControls();
+      searchEl.addEventListener("input", () => {
+        const q = normalizeComparable(searchEl.value);
+
+        if (!q) {
+          render(allItems);
+          return;
+        }
+
+        const filtered = allItems.filter((item) => {
+          return (
+            normalizeComparable(item.title).includes(q) ||
+            normalizeComparable(item.type).includes(q)
+          );
+        });
+
+        render(filtered);
+      });
     } catch (err) {
       console.error(err);
-      listEl.innerHTML = `<div class="browse-empty">Could not load browse index.</div>`;
-      countEl.textContent = "";
+
+      gridEl.innerHTML = `
+        <div class="empty-state">
+          Could not load titles.
+        </div>
+      `;
     }
   }
 
