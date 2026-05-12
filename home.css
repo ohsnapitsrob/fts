@@ -347,3 +347,31 @@ body {
     min-height: 104px;
   }
 }
+
+
+.rail-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.rail-title-link {
+  flex-shrink: 0;
+  color: var(--purple);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.rail-title-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 560px) {
+  .rail-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
