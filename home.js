@@ -394,7 +394,7 @@
       .sort((a, b) => b.accessibleCount - a.accessibleCount || a.title.localeCompare(b.title))
       .slice(0, 10);
 
-    function orderedSeriesRail(seriesName) {
+   /* function orderedSeriesRail(seriesName) {
       return [...entries]
         .filter(hasPoster)
         .filter(
@@ -416,7 +416,35 @@
           return a.title.localeCompare(b.title);
         })
         .slice(0, 12);
-    }
+    }*/
+    function orderedSeriesRail(seriesName) {
+  const isBond =
+    normalizeComparable(seriesName) === "james bond";
+
+  return [...entries]
+    .filter(hasPoster)
+    .filter(
+      (entry) =>
+        normalizeComparable(entry.series) ===
+        normalizeComparable(seriesName)
+    )
+    .sort((a, b) => {
+      const aHas = Number.isFinite(a.railOrder);
+      const bHas = Number.isFinite(b.railOrder);
+
+      if (aHas && bHas) {
+        return isBond
+          ? b.railOrder - a.railOrder
+          : a.railOrder - b.railOrder;
+      }
+
+      if (aHas && !bHas) return -1;
+      if (!aHas && bHas) return 1;
+
+      return a.title.localeCompare(b.title);
+    })
+    .slice(0, 12);
+}
 
     const typeRail = (typeName) => {
       return shuffle(
