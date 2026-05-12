@@ -1,3 +1,21 @@
+.map-filter-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.map-filter-toggle input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: #5A00E6;
+}
+
 .location-actions {
   display: flex;
   flex-wrap: wrap;
@@ -30,4 +48,9 @@
   width: 14px;
   height: 14px;
   fill: currentColor;
+}
+
+.rating-noaccess {
+  background: #fee2e2;
+  color: #991b1b;
 }
