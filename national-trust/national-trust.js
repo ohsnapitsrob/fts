@@ -213,7 +213,7 @@
     return row.monthShort || row.dateFormatted || row.rawDate || "";
   }
 
-  function propertyName(row) {
+/*  function propertyName(row) {
     return norm(
       row.NationalTrust ||
       row["National Trust"] ||
@@ -221,7 +221,13 @@
       row.NT ||
       row.place
     );
-  }
+  }*/
+  function propertyName(row) {
+  return norm(
+    row.NationalTrust ||
+    row["National Trust"]
+  );
+}
 
   function ntUrl(row) {
     return norm(
@@ -390,7 +396,7 @@
     return `${sceneCount.toLocaleString()} ${sceneLabel} from ${productionCount.toLocaleString()} ${productionLabel}`;
   }
 
-  function locationSectionHtml(group, index) {
+/*  function locationSectionHtml(group, index) {
     const orderedAll = sortScenes(group.rows);
     const preview = previewOrder(group.rows).slice(0, 6);
     const hidden = orderedAll.filter((row) => !preview.includes(row));
@@ -424,9 +430,74 @@
         }
       </section>
     `;
-  }
+  }*/
 
-  function groupLocations(rows) {
+function locationSectionHtml(group, index) {
+  const allScenes = sortScenes(group.rows);
+
+  // Diversity-first preview ordering
+  const diversePreview = previewOrder(group.rows);
+
+  // STRICTLY max 6 preview cards
+  const preview = diversePreview.slice(0, 6);
+
+  // Everything else hidden initially
+  const previewIds = new Set(
+    preview.map((row) => row.id)
+  );
+
+  const remaining = allScenes.filter(
+    (row) => !previewIds.has(row.id)
+  );
+
+  const hasMore = remaining.length > 0;
+
+  return `
+    <section class="nt-location" data-location-index="${index}">
+      <div class="nt-location-head">
+        <h2 class="nt-location-title">
+          ${escapeHtml(group.name)}
+        </h2>
+
+        <div class="nt-location-meta">
+          ${escapeHtml(
+            countText(
+              group.rows.length,
+              group.productionCount
+            )
+          )}
+        </div>
+      </div>
+
+      <div class="scene-grid nt-preview-grid">
+        ${preview.map(sceneCardHtml).join("")}
+      </div>
+
+      ${
+        hasMore
+          ? `
+            <div
+              class="scene-grid nt-hidden-grid"
+              hidden
+            >
+              ${remaining.map(sceneCardHtml).join("")}
+            </div>
+
+            <button
+              class="btn btn-secondary nt-show-all"
+              type="button"
+              data-show-all="${index}"
+            >
+              Show all scenes
+            </button>
+          `
+          : ""
+      }
+    </section>
+  `;
+}
+  
+/*  function groupLocations(rows) {
     const groups = new Map();
 
     rows.forEach((row) => {
@@ -456,8 +527,49 @@
         productionCount: group.productionTitles.size
       }))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" }));
-  }
+  }*/
+function groupLocations(rows) {
+  const groups = new Map();
 
+  rows.forEach((row) => {
+    const name = propertyName(row);
+
+    // ONLY include rows with a National Trust value
+    if (!name) return;
+
+    const key = normalizeComparable(name);
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        name,
+        rows: [],
+        productionTitles: new Set()
+      });
+    }
+
+    const group = groups.get(key);
+
+    group.rows.push(row);
+
+    if (row.title) {
+      group.productionTitles.add(
+        normalizeComparable(row.title)
+      );
+    }
+  });
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      rows: sortScenes(group.rows),
+      productionCount: group.productionTitles.size
+    }))
+    .sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, {
+        sensitivity: "base"
+      })
+    );
+}
   async function loadAllRows() {
     const cfg = window.APP_CONFIG || {};
     const sheets = cfg.SHEETS || {};
@@ -520,7 +632,7 @@
     return rows;
   }
 
-  function attachShowAllHandlers() {
+/*  function attachShowAllHandlers() {
     contentEl.addEventListener("click", (event) => {
       const btn = event.target.closest("[data-show-all]");
       if (!btn) return;
@@ -532,7 +644,22 @@
       hiddenGrid.hidden = false;
       btn.remove();
     });
-  }
+  }*/
+  function attachShowAllHandlers() {
+  contentEl.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-show-all]");
+    if (!btn) return;
+
+    const section = btn.closest(".nt-location");
+    const hiddenGrid = section?.querySelector(".nt-hidden-grid");
+
+    if (!hiddenGrid) return;
+
+    hiddenGrid.hidden = false;
+
+    btn.remove();
+  });
+}
 
   async function init() {
     try {
