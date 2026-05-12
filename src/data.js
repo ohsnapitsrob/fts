@@ -143,7 +143,8 @@ App.Data = (function () {
       images: splitPipe(row.images),
       rating: splitComma(row.rating),
 
-      access: norm(row.access),
+    //  access: norm(row.access),
+      access: getAccessValue(row),
       exportFileName: norm(row["export-file-name"]),
       imdb: norm(row.imdb),
       justwatch: norm(row.justwatch),
