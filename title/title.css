@@ -297,6 +297,10 @@ h1 {
   align-content: start;
 }
 
+.scene-card-noaccess {
+  border-color: rgba(220, 38, 38, 0.24);
+}
+
 .scene-thumb {
   position: relative;
   width: 100%;
@@ -322,10 +326,52 @@ h1 {
   z-index: 2;
 }
 
+.scene-status-dot:nth-of-type(2) {
+  left: 30px;
+}
+
+.scene-status-dot:nth-of-type(3) {
+  left: 50px;
+}
+
 .scene-status-red { background: #ef4444; }
 .scene-status-orange { background: #f97316; }
 .scene-status-green { background: #22c55e; }
 .scene-status-blue { background: #3b82f6; }
+
+.scene-noaccess-dot {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid #ffffff;
+  background: #dc2626;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.22);
+  z-index: 4;
+}
+
+.scene-noaccess-dot::before,
+.scene-noaccess-dot::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  border-radius: 999px;
+  background: #ffffff;
+  transform-origin: center;
+}
+
+.scene-noaccess-dot::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.scene-noaccess-dot::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
 
 .scene-nt-badge {
   position: absolute;
