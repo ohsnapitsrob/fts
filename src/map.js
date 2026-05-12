@@ -5,6 +5,7 @@ App.Map = (function () {
   let sourceReady = false;
   let pendingMarkers = [];
   let currentMarkers = [];
+  let currentRawMarkers = [];
   let locById = new Map();
 
   let chooserEl = null;
@@ -112,6 +113,16 @@ App.Map = (function () {
     if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
     if (x === "misc" || x === "other") return "Misc";
     return type || "Misc";
+  }
+
+  function markerAllowedByAccess(marker) {
+    if (!App.State || typeof App.State.getHideNoAccess !== "function") return true;
+    if (!App.State.getHideNoAccess()) return true;
+    return !App.State.hasNoAccess(marker?.__loc);
+  }
+
+  function applyAccessFilter(markers) {
+    return (markers || []).filter(markerAllowedByAccess);
   }
 
   function setupSceneLayers() {
@@ -399,6 +410,7 @@ App.Map = (function () {
     const type = normalizeType(loc.type);
     const color = colorForType(type);
     const badge = badgeForType(type);
+    const accessText = App.State?.hasNoAccess?.(loc) ? " • No public access" : "";
 
     return `
       <button class="scene-choice" type="button" data-scene-id="${escapeHtml(loc.id)}">
@@ -411,7 +423,7 @@ App.Map = (function () {
         </span>
         <span class="scene-choice-body">
           <span class="scene-choice-title">${escapeHtml(loc.title || "Untitled")}</span>
-          <span class="scene-choice-meta">${escapeHtml([type, when].filter(Boolean).join(" • "))}</span>
+          <span class="scene-choice-meta">${escapeHtml([type, when].filter(Boolean).join(" • ") + accessText)}</span>
         </span>
       </button>
     `;
@@ -505,7 +517,9 @@ App.Map = (function () {
   }
 
   function rebuildCluster(markers) {
-    currentMarkers = markers || [];
+    currentRawMarkers = markers || [];
+    currentMarkers = applyAccessFilter(currentRawMarkers);
+
     App.UI.setCount(formatCountText(currentMarkers));
     closeChooser();
 
@@ -517,5 +531,15 @@ App.Map = (function () {
     setSourceData(currentMarkers);
   }
 
-  return { init, getMap, rebuildCluster, reopenStackedChooser };
+  function refreshNoAccessFilter() {
+    rebuildCluster(currentRawMarkers);
+  }
+
+  return {
+    init,
+    getMap,
+    rebuildCluster,
+    refreshNoAccessFilter,
+    reopenStackedChooser
+  };
 })();
