@@ -1,14 +1,17 @@
 (function () {
   const contentEl = document.getElementById("titleContent");
-  // const NT_ICON_URL = "https://images.pixieset.com/063553411/d68e9f40e4986e97d60a432895e1fabd-xxlarge.png";
   const NT_ICON_URL = "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png";
-  
+
   function norm(s) {
     return (s || "").toString().trim();
   }
 
   function normalizeComparable(s) {
     return norm(s).toLowerCase();
+  }
+
+  function hasNoAccess(row) {
+    return norm(row.access) !== "";
   }
 
   function splitPipe(s) {
@@ -27,7 +30,7 @@
     const x = norm(t).toLowerCase();
     if (!x) return "Misc";
     if (x === "film" || x === "movie" || x === "movies") return "Film";
-    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
+    if (x === "tv" || x === "tv show" || x === "series" || x === "tv shows") return "TV";
     if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
     if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
     if (x === "misc" || x === "other") return "Misc";
@@ -70,6 +73,11 @@
     return ratings.map((rating) => {
       return `<span class="scene-status-dot scene-status-${rating}" aria-hidden="true"></span>`;
     }).join("");
+  }
+
+  function noAccessDotHtml(row) {
+    if (!hasNoAccess(row)) return "";
+    return `<span class="scene-noaccess-dot" aria-label="No public access"></span>`;
   }
 
   function coerceNumber(x) {
@@ -262,16 +270,18 @@
   }
 
   function sceneDate(row) {
+    if (hasNoAccess(row)) return "";
     return row.monthShort || row.dateFormatted || row.rawDate || "";
   }
 
   function ntBadgeHtml(row) {
     if (!norm(row.NationalTrust)) return "";
+    if (!safeUrl(NT_ICON_URL)) return "";
 
     return `
       <img
         class="scene-nt-badge"
-        src="${NT_ICON_URL}"
+        src="${escapeHtml(NT_ICON_URL)}"
         alt="National Trust"
         loading="lazy"
       >
@@ -281,6 +291,7 @@
   function ntButtonHtml(row) {
     const url = safeUrl(row.NTURL);
     if (!url) return "";
+    if (!safeUrl(NT_ICON_URL)) return "";
 
     return `
       <a
@@ -290,7 +301,7 @@
         rel="noopener noreferrer"
         aria-label="View National Trust page"
       >
-        <img src="${NT_ICON_URL}" alt="">
+        <img src="${escapeHtml(NT_ICON_URL)}" alt="">
       </a>
     `;
   }
@@ -299,10 +310,12 @@
     const img = sceneImage(row);
     const location = sceneLocation(row);
     const date = sceneDate(row);
+    const noAccessClass = hasNoAccess(row) ? " scene-card-noaccess" : "";
 
     return `
-      <article class="scene-card">
+      <article class="scene-card${noAccessClass}">
         <div class="scene-thumb">
+          ${noAccessDotHtml(row)}
           ${ratingDotsHtml(row)}
           ${ntBadgeHtml(row)}
           ${
@@ -344,8 +357,14 @@
     `;
   }
 
-  function sortScenesNewestFirst(rows) {
+  function sortScenes(rows) {
     return [...rows].sort((a, b) => {
+      const aNoAccess = hasNoAccess(a);
+      const bNoAccess = hasNoAccess(b);
+
+      if (aNoAccess && !bNoAccess) return 1;
+      if (!aNoAccess && bNoAccess) return -1;
+
       const aHas = Number.isFinite(a.visitedTs);
       const bHas = Number.isFinite(b.visitedTs);
 
@@ -447,7 +466,7 @@
   }
 
   function renderTitlePage(title, rows, metadata) {
-    const sortedRows = sortScenesNewestFirst(rows);
+    const sortedRows = sortScenes(rows);
     const scenes = sortedRows.length;
 
     const cities = new Set();
@@ -455,9 +474,12 @@
     const types = new Set();
 
     sortedRows.forEach((row) => {
+      if (row.type) types.add(row.type);
+
+      if (hasNoAccess(row)) return;
+
       if (row.city) cities.add(row.city);
       if (row.country) countries.add(row.country);
-      if (row.type) types.add(row.type);
     });
 
     const cityCount = cities.size;
@@ -504,7 +526,7 @@
       <section class="scene-section">
         <div class="scene-section-head">
           <h2 class="scene-section-title">${labelForCount(scenes, "Scene", "Scenes")}</h2>
-          <p class="scene-section-copy">Newest visited first. Jump straight into a specific scene on the map.</p>
+          <p class="scene-section-copy">Newest visited first. Scenes with no public access are shown at the end.</p>
         </div>
 
         <div class="scene-grid">
@@ -581,8 +603,19 @@
           description: norm(row.description),
           images: splitPipe(row.images),
           rating: splitComma(row.rating),
-          NationalTrust: norm(row.NationalTrust),
-          NTURL: norm(row.NTURL),
+          access: norm(row.access),
+          NationalTrust: norm(
+            row.NationalTrust ||
+            row["National Trust"] ||
+            row.nt ||
+            row.NT
+          ),
+          NTURL: norm(
+            row.NTURL ||
+            row["NT URL"] ||
+            row.nturl ||
+            row.ntUrl
+          ),
           rawDate: norm(row["raw-date"]),
           dateFormatted: norm(row["date-formatted"]),
           monthShort: norm(row["month-short"]),
