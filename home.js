@@ -575,7 +575,8 @@
           series: norm(row.series),
           country: norm(row.country),
           city: norm(row.city || row.place),
-          access: norm(row.access),
+         // access: norm(row.access),
+          access: getAccessValue(row),
           thumbnail: norm(row.thumbnail),
           railOrder: coerceNumber(row["set-rail-order"]),
           visitedTs: parseVisitedDate(
