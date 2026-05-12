@@ -7,7 +7,7 @@
 
   <link href="https://cdn.maptiler.com/maptiler-sdk-js/v3.8.0/maptiler-sdk.css" rel="stylesheet" />
   <link rel="stylesheet" href="../styles.css" />
-<link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
 
@@ -33,6 +33,12 @@
 
     <div class="topbar-meta">
       <span id="count" class="count"></span>
+
+      <label class="map-filter-toggle">
+        <input id="hideNoAccessToggle" type="checkbox" />
+        <span>Hide scenes with no access</span>
+      </label>
+
       <span id="filterLabel" class="filter-label" style="display:none;"></span>
     </div>
   </header>
@@ -68,9 +74,9 @@
 
       <div id="mInfo" class="loc-info"></div>
       <div id="mRatingTags" class="rating-tags"></div>
-<div id="mActions" class="location-actions"></div>
+      <div id="mActions" class="location-actions"></div>
 
-<p id="mDesc" class="loc-desc"></p>
+      <p id="mDesc" class="loc-desc"></p>
       <div id="mGallery" class="gallery"></div>
 
       <div class="loc-tags-wrap">
