@@ -6,20 +6,20 @@
   }
 
   function getAccessValue(row) {
-  return norm(
-    row.access ||
-    row.Access ||
-    row.ACCESS ||
-    row["access "] ||
-    row["Access "] ||
-    row["No Access"] ||
-    row.noaccess ||
-    row.NOACCESS
-  );
-}
-  
+    return norm(
+      row.access ||
+      row.Access ||
+      row.ACCESS ||
+      row["access "] ||
+      row["Access "] ||
+      row["No Access"] ||
+      row.noaccess ||
+      row.NOACCESS
+    );
+  }
+
   function hasNoAccess(row) {
-    return norm(row.access) !== "";
+    return !!norm(row.access);
   }
 
   function normalizeType(t) {
@@ -226,13 +226,12 @@
           type,
           country: norm(row.country),
           city: norm(row.city || row.place),
-       //   access: norm(row.access),
           access: getAccessValue(row),
           visitedTs: parseVisitedDate(
             row["date-formatted"] ||
-              row["raw-date"] ||
-              row["visited"] ||
-              row["visit-date"]
+            row["raw-date"] ||
+            row["visited"] ||
+            row["visit-date"]
           )
         });
       });
