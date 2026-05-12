@@ -184,7 +184,8 @@
       city: norm(row.city || row.town || row.place),
       country: norm(row.country),
       collections: splitPipe(row.collections),
-      access: norm(row.access),
+    //  access: norm(row.access),
+      access: getAccessValue(row),
       visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
     };
   }
