@@ -226,7 +226,8 @@
           type,
           country: norm(row.country),
           city: norm(row.city || row.place),
-          access: norm(row.access),
+       //   access: norm(row.access),
+          access: getAccessValue(row),
           visitedTs: parseVisitedDate(
             row["date-formatted"] ||
               row["raw-date"] ||
