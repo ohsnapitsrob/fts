@@ -10,6 +10,10 @@
     return norm(s).toLowerCase();
   }
 
+  function hasNoAccess(row) {
+    return norm(row.access) !== "";
+  }
+
   function normalizeType(t) {
     const x = norm(t).toLowerCase();
 
@@ -272,7 +276,7 @@
     statsEl.innerHTML = `
       <article class="stat-card">
         <div class="stat-value">${formatNumber(scenes)}</div>
-        <div class="stat-label">Scenes</div>
+        <div class="stat-label">Scenes visited</div>
       </article>
 
       <article class="stat-card">
@@ -311,7 +315,9 @@
           type: row.type || meta.type,
           series: row.series,
           count: 0,
+          accessibleCount: 0,
           latestVisitedTs: null,
+          latestAccessibleVisitedTs: null,
 
           railOrder: Number.isFinite(meta.railOrder)
             ? meta.railOrder
@@ -327,13 +333,26 @@
 
       entry.count += 1;
 
+      if (!hasNoAccess(row)) {
+        entry.accessibleCount += 1;
+
+        if (
+          Number.isFinite(row.visitedTs) &&
+          (!Number.isFinite(entry.latestAccessibleVisitedTs) ||
+            row.visitedTs > entry.latestAccessibleVisitedTs)
+        ) {
+          entry.latestAccessibleVisitedTs = row.visitedTs;
+        }
+      }
+
       if (!entry.series && row.series) {
         entry.series = row.series;
       }
 
       if (
-        !Number.isFinite(entry.latestVisitedTs) ||
-        row.visitedTs > entry.latestVisitedTs
+        Number.isFinite(row.visitedTs) &&
+        (!Number.isFinite(entry.latestVisitedTs) ||
+          row.visitedTs > entry.latestVisitedTs)
       ) {
         entry.latestVisitedTs = row.visitedTs;
       }
@@ -347,16 +366,19 @@
 
     const hasPoster = (entry) => safeUrl(entry.poster);
     const hasThumbnail = (entry) => safeUrl(entry.thumbnail);
+    const hasAccessibleScene = (entry) => entry.accessibleCount > 0;
 
     const latestScenes = [...entries]
       .filter(hasPoster)
-      .filter((entry) => Number.isFinite(entry.latestVisitedTs))
-      .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
+      .filter(hasAccessibleScene)
+      .filter((entry) => Number.isFinite(entry.latestAccessibleVisitedTs))
+      .sort((a, b) => b.latestAccessibleVisitedTs - a.latestAccessibleVisitedTs)
       .slice(0, 6);
 
     const topScenes = [...entries]
       .filter(hasPoster)
-      .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+      .filter(hasAccessibleScene)
+      .sort((a, b) => b.accessibleCount - a.accessibleCount || a.title.localeCompare(b.title))
       .slice(0, 10);
 
     function orderedSeriesRail(seriesName) {
@@ -387,6 +409,7 @@
       return shuffle(
         entries
           .filter(hasPoster)
+          .filter(hasAccessibleScene)
           .filter((entry) => normalizeType(entry.type) === typeName)
       ).slice(0, 12);
     };
@@ -394,12 +417,14 @@
     const musicVideoThumbnailRail = shuffle(
       entries
         .filter(hasThumbnail)
+        .filter(hasAccessibleScene)
         .filter((entry) => normalizeType(entry.type) === "Music Video")
     ).slice(0, 12);
 
     const nationalTrustRail = shuffle(
       entries.filter((entry) => {
         if (!hasPoster(entry)) return false;
+        if (!hasAccessibleScene(entry)) return false;
 
         return norm(entry.nt) !== "";
       })
@@ -537,6 +562,7 @@
           series: norm(row.series),
           country: norm(row.country),
           city: norm(row.city || row.place),
+          access: norm(row.access),
           thumbnail: norm(row.thumbnail),
           railOrder: coerceNumber(row["set-rail-order"]),
           visitedTs: parseVisitedDate(
@@ -559,11 +585,13 @@
         loadTitleMetadata()
       ]);
 
+      const accessibleRows = sceneRows.filter((row) => !hasNoAccess(row));
+
       const titles = new Set();
       const cities = new Set();
       const countries = new Set();
 
-      sceneRows.forEach((row) => {
+      accessibleRows.forEach((row) => {
         if (row.title) titles.add(row.title);
         if (row.city) cities.add(row.city);
         if (row.country) countries.add(row.country);
@@ -572,7 +600,7 @@
       renderRails(sceneRows, metadataRows);
 
       renderStats({
-        scenes: sceneRows.length,
+        scenes: accessibleRows.length,
         titles: titles.size,
         cities: cities.size,
         countries: countries.size
