@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>National Trust Locations | Find That Scene</title>
+
+  <link rel="preconnect" href="https://images.pixieset.com">
+  <link rel="stylesheet" href="./national-trust.css" />
+</head>
+<body>
+  <main class="nt-shell">
+    <section class="nt-hero">
+      <a href="../" class="logo-link" aria-label="Find That Scene home">
+        <img
+          class="nt-logo"
+          src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
+          alt="Find That Scene"
+        />
+      </a>
+
+      <div class="nt-hero-copy">
+        <div class="kicker">Curated index</div>
+        <h1>National Trust Locations</h1>
+        <p>
+          Explore productions by real-world National Trust property first, then see the scenes connected to each location.
+        </p>
+      </div>
+
+      <nav class="actions" aria-label="National Trust navigation">
+        <a class="btn btn-primary" href="../explore/">Map view</a>
+        <a class="btn btn-secondary" href="../browse/">Browse titles</a>
+      </nav>
+    </section>
+
+    <section id="ntContent" class="nt-content" aria-live="polite">
+      <div class="loading-card">Loading National Trust locations…</div>
+    </section>
+  </main>
+
+  <script src="../config.js"></script>
+  <script src="./national-trust.js"></script>
+</body>
+</html>
