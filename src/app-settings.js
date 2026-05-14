@@ -40,13 +40,7 @@ FTS.AppSettings = (function () {
     return settings;
   }
 
-  function setMediaEmbeds(value) {
-    try {
-      localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
-        mediaEmbeds: value === true
-      }));
-    } catch (err) {}
-
+  function clearOptionalStorage() {
     try {
       Object.keys(localStorage).forEach((key) => {
         if (
@@ -67,6 +61,24 @@ FTS.AppSettings = (function () {
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
       });
     } catch (err) {}
+  }
+
+  function saveAllSettings(nextAppSettings, nextPrivacySettings, options = {}) {
+    save(nextAppSettings);
+
+    try {
+      localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
+        mediaEmbeds: nextPrivacySettings.mediaEmbeds === true
+      }));
+    } catch (err) {}
+
+    window.dispatchEvent(new CustomEvent("fts:app-settings-updated", {
+      detail: nextAppSettings
+    }));
+
+    if (options.privacyChanged) {
+      clearOptionalStorage();
+    }
 
     window.location.reload();
   }
@@ -139,7 +151,7 @@ FTS.AppSettings = (function () {
       }
 
       .fts-settings-body {
-        padding: 8px 22px 22px;
+        padding: 8px 22px 12px;
       }
 
       .fts-settings-section {
@@ -149,7 +161,6 @@ FTS.AppSettings = (function () {
 
       .fts-settings-section:last-child {
         border-bottom: 0;
-        padding-bottom: 4px;
       }
 
       .fts-settings-section-title {
@@ -228,6 +239,37 @@ FTS.AppSettings = (function () {
         transform: translateX(22px);
       }
 
+      .fts-settings-actions {
+        position: sticky;
+        bottom: 0;
+        display: flex;
+        gap: 10px;
+        padding: 16px 22px 22px;
+        border-top: 1px solid #e5e7eb;
+        background: #ffffff;
+      }
+
+      .fts-settings-save,
+      .fts-settings-cancel {
+        flex: 1;
+        min-height: 48px;
+        border: 0;
+        border-radius: 16px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .fts-settings-save {
+        background: #111827;
+        color: #ffffff;
+      }
+
+      .fts-settings-cancel {
+        background: #f3f4f6;
+        color: #111827;
+      }
+
       @media (min-width: 700px) {
         .fts-settings-overlay {
           align-items: center;
@@ -251,8 +293,13 @@ FTS.AppSettings = (function () {
   function open() {
     addStyles();
 
-    const appSettings = load();
-    const privacySettings = window.FTS?.Privacy?.getSettings?.() || { mediaEmbeds: false };
+    const originalAppSettings = load();
+    const originalPrivacySettings = window.FTS?.Privacy?.getSettings?.() || { mediaEmbeds: false };
+
+    const stagedAppSettings = { ...originalAppSettings };
+    const stagedPrivacySettings = {
+      mediaEmbeds: originalPrivacySettings.mediaEmbeds === true
+    };
 
     const overlay = document.createElement("div");
     overlay.className = "fts-settings-overlay";
@@ -274,7 +321,7 @@ FTS.AppSettings = (function () {
                 <div class="fts-settings-row-title">Hide scenes with no public access</div>
                 <div class="fts-settings-row-copy">Hides map pins for scenes marked as no access or unavailable.</div>
               </div>
-              ${toggleButton(appSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
+              ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
             </div>
           </section>
 
@@ -285,10 +332,15 @@ FTS.AppSettings = (function () {
                 <div class="fts-settings-row-title">Media embeds</div>
                 <div class="fts-settings-row-copy">Allows YouTube trailers and future embedded media content.</div>
               </div>
-              ${toggleButton(privacySettings.mediaEmbeds, "Toggle media embeds", "mediaEmbeds")}
+              ${toggleButton(stagedPrivacySettings.mediaEmbeds, "Toggle media embeds", "mediaEmbeds")}
             </div>
             <a class="fts-settings-link" href="${getRootPath()}privacy/">Read the privacy page</a>
           </section>
+        </div>
+
+        <div class="fts-settings-actions">
+          <button class="fts-settings-cancel" type="button">Cancel</button>
+          <button class="fts-settings-save" type="button">Save settings</button>
         </div>
       </div>
     `;
@@ -296,26 +348,27 @@ FTS.AppSettings = (function () {
     const close = () => overlay.remove();
 
     overlay.querySelector(".fts-settings-close")?.addEventListener("click", close);
+    overlay.querySelector(".fts-settings-cancel")?.addEventListener("click", close);
     overlay.addEventListener("click", (event) => {
       if (event.target === overlay) close();
     });
 
     overlay.querySelector('[data-setting-toggle="hideNoAccessScenes"]')?.addEventListener("click", (event) => {
-      const current = load().hideNoAccessScenes === true;
-      const next = !current;
-      setSetting("hideNoAccessScenes", next);
-      syncToggle(event.currentTarget, next);
-
-      if (window.App?.State?.setHideNoAccess) {
-        window.App.State.setHideNoAccess(next);
-      }
+      stagedAppSettings.hideNoAccessScenes = !stagedAppSettings.hideNoAccessScenes;
+      syncToggle(event.currentTarget, stagedAppSettings.hideNoAccessScenes);
     });
 
     overlay.querySelector('[data-setting-toggle="mediaEmbeds"]')?.addEventListener("click", (event) => {
-      const current = window.FTS?.Privacy?.getSettings?.().mediaEmbeds === true;
-      const next = !current;
-      syncToggle(event.currentTarget, next);
-      setMediaEmbeds(next);
+      stagedPrivacySettings.mediaEmbeds = !stagedPrivacySettings.mediaEmbeds;
+      syncToggle(event.currentTarget, stagedPrivacySettings.mediaEmbeds);
+    });
+
+    overlay.querySelector(".fts-settings-save")?.addEventListener("click", () => {
+      const privacyChanged = originalPrivacySettings.mediaEmbeds !== stagedPrivacySettings.mediaEmbeds;
+
+      saveAllSettings(stagedAppSettings, stagedPrivacySettings, {
+        privacyChanged
+      });
     });
 
     document.body.appendChild(overlay);
