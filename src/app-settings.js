@@ -172,6 +172,14 @@ FTS.AppSettings = (function () {
         font-weight: 850;
       }
 
+      .fts-settings-section-copy,
+      .fts-privacy-copy {
+        margin: 0 0 8px;
+        color: #5f5f5f;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
       .fts-settings-row {
         display: flex;
         align-items: center;
@@ -327,6 +335,10 @@ FTS.AppSettings = (function () {
 
           <section class="fts-settings-section">
             <h3 class="fts-settings-section-title">Privacy</h3>
+            <p class="fts-privacy-copy">
+              Find That Scene uses privacy-friendly analytics and optional media embeds.
+              You can control optional media features here at any time.
+            </p>
             <div class="fts-settings-row">
               <div>
                 <div class="fts-settings-row-title">Media embeds</div>
