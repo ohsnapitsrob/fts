@@ -8,41 +8,58 @@
     return script.src.slice(0, script.src.lastIndexOf("/") + 1);
   }
 
-  function loadSharedScript(name, attribute) {
-    if (document.querySelector(`script[${attribute}]`)) return;
+  const sharedScriptBase = currentScriptBase();
 
-    const script = document.createElement("script");
-    script.src = `${currentScriptBase()}${name}`;
-    script.defer = true;
-    script.setAttribute(attribute, "true");
+  function loadSharedScript(name, attribute, options = {}) {
+    if (document.querySelector(`script[${attribute}]`)) {
+      return Promise.resolve();
+    }
 
-    document.body.appendChild(script);
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = `${sharedScriptBase}${name}`;
+      script.setAttribute(attribute, "true");
+
+      if (options.defer !== false) {
+        script.defer = true;
+      }
+
+      script.onload = resolve;
+      script.onerror = resolve;
+
+      document.body.appendChild(script);
+    });
   }
 
   function loadFeatureToggles() {
-    loadSharedScript("feature-toggles.js", "data-fts-feature-toggles");
+    return loadSharedScript("feature-toggles.js", "data-fts-feature-toggles", {
+      defer: false
+    });
   }
 
   function loadPrivacySystem() {
-    loadSharedScript("privacy-consent.js", "data-fts-privacy-consent");
+    return loadSharedScript("privacy-consent.js", "data-fts-privacy-consent");
   }
 
   function loadAppSettings() {
-    loadSharedScript("app-settings.js", "data-fts-app-settings");
+    return loadSharedScript("app-settings.js", "data-fts-app-settings");
   }
 
   function loadBottomNav() {
-    loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
+    return loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
   }
 
   function loadAppHeaderModules() {
-    loadSharedScript("app-header-title-search.js", "data-fts-app-header-title-search");
-    loadSharedScript("app-header-map-search.js", "data-fts-app-header-map-search");
-    loadSharedScript("app-header.js", "data-fts-app-header");
+    return Promise.all([
+      loadSharedScript("app-header-title-search.js", "data-fts-app-header-title-search"),
+      loadSharedScript("app-header-map-search.js", "data-fts-app-header-map-search")
+    ]).then(() => {
+      return loadSharedScript("app-header.js", "data-fts-app-header");
+    });
   }
 
   function loadIOSInstallPrompt() {
-    loadSharedScript("ios-install-prompt.js", "data-fts-ios-install-prompt");
+    return loadSharedScript("ios-install-prompt.js", "data-fts-ios-install-prompt");
   }
 
   function showEnvironmentBadge() {
@@ -89,13 +106,14 @@
     document.body.appendChild(badge);
   }
 
-  loadFeatureToggles();
-  loadPrivacySystem();
-  loadAppSettings();
-  loadAppHeaderModules();
-  loadIOSInstallPrompt();
-  showEnvironmentBadge();
-  loadBottomNav();
+  loadFeatureToggles().then(() => {
+    loadPrivacySystem();
+    loadAppSettings();
+    loadAppHeaderModules();
+    loadIOSInstallPrompt();
+    showEnvironmentBadge();
+    loadBottomNav();
+  });
 
   window.addEventListener("load", () => {
     window.FTS?.Privacy?.maybeShowInitialPrompt?.();
