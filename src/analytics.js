@@ -2,6 +2,10 @@ window.FTS = window.FTS || {};
 
 FTS.Analytics = (function () {
   const config = window.APP_CONFIG || {};
+  const PARAMETER_UPDATE_EVENT = "parameterUpdate";
+  let parameterUpdateTimer = null;
+  let lastParameterSignature = "";
+  let historyWrapped = false;
 
   function enabled() {
     return window.FTS?.Features?.isEnabled("plausibleAnalyticsEnabled") === true;
@@ -62,7 +66,7 @@ FTS.Analytics = (function () {
   }
 
   function getFilterContext(params, pageType) {
-    const filterValue = params.get("fl") || params.get("title");
+    const filterValue = params.get("fl") || params.get("title") || (pageType === "title" ? params.get("q") : "");
     let filterType = params.get("fk");
 
     if (!filterType && pageType === "title" && filterValue) {
@@ -73,6 +77,16 @@ FTS.Analytics = (function () {
       filterType,
       filterValue
     };
+  }
+
+  function hasTrackableParams() {
+    const params = getParams();
+    const trackableKeys = ["q", "tab", "fk", "fl", "title", "loc", "rm", "mlat", "mlng", "mz"];
+
+    return trackableKeys.some((key) => {
+      const value = params.get(key);
+      return value !== null && value !== "";
+    });
   }
 
   function buildPageviewProperties() {
@@ -116,6 +130,66 @@ FTS.Analytics = (function () {
     return props;
   }
 
+  function parameterSignature() {
+    const params = getParams();
+    const entries = Array.from(params.entries())
+      .filter(([, value]) => value !== "")
+      .sort(([a], [b]) => a.localeCompare(b));
+
+    return JSON.stringify({
+      path: window.location.pathname,
+      params: entries
+    });
+  }
+
+  function trackParameterUpdate() {
+    if (!enabled()) return;
+    if (!hasTrackableParams()) return;
+
+    const signature = parameterSignature();
+    if (signature === lastParameterSignature) return;
+
+    lastParameterSignature = signature;
+
+    window.plausible?.(PARAMETER_UPDATE_EVENT, {
+      props: buildPageviewProperties()
+    });
+  }
+
+  function scheduleParameterUpdate() {
+    if (!enabled()) return;
+
+    if (parameterUpdateTimer) {
+      clearTimeout(parameterUpdateTimer);
+    }
+
+    parameterUpdateTimer = setTimeout(trackParameterUpdate, 350);
+  }
+
+  function wrapHistoryMethod(methodName) {
+    const original = window.history[methodName];
+
+    if (typeof original !== "function") return;
+
+    window.history[methodName] = function () {
+      const result = original.apply(this, arguments);
+      scheduleParameterUpdate();
+      return result;
+    };
+  }
+
+  function watchParameterUpdates() {
+    if (historyWrapped) return;
+    historyWrapped = true;
+
+    lastParameterSignature = parameterSignature();
+
+    wrapHistoryMethod("pushState");
+    wrapHistoryMethod("replaceState");
+
+    window.addEventListener("popstate", scheduleParameterUpdate);
+  }
+
   function init() {
     if (!enabled()) return;
 
@@ -142,6 +216,8 @@ FTS.Analytics = (function () {
       }
     });
 
+    watchParameterUpdates();
+
     const script = document.createElement("script");
     script.src = scriptUrl;
     script.async = true;
@@ -153,7 +229,8 @@ FTS.Analytics = (function () {
 
   return {
     init,
-    buildPageviewProperties
+    buildPageviewProperties,
+    trackParameterUpdate
   };
 })();
 
