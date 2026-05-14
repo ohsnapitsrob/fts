@@ -44,7 +44,10 @@
     const poster = safeUrl(metadata.poster);
     const imdb = safeUrl(metadata.imdb);
     const justwatch = safeUrl(metadata.justwatch);
-    const trailer = getYouTubeEmbedUrl(metadata.trailer);
+
+    const trailer = window.FTS?.Privacy?.mediaAllowed?.()
+      ? getYouTubeEmbedUrl(metadata.trailer)
+      : "";
 
     const hasTopRow = poster || norm(metadata.description) || imdb || justwatch;
 
@@ -83,7 +86,14 @@
           trailer
             ? `
               <div class="title-trailer-wrap">
-                <iframe class="title-trailer" src="${escapeHtml(trailer)}" title="Trailer" allowfullscreen loading="lazy"></iframe>
+                <iframe
+                  class="title-trailer"
+                  src="${escapeHtml(trailer)}"
+                  title="Trailer"
+                  allowfullscreen
+                  loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin">
+                </iframe>
               </div>
             `
             : ""
