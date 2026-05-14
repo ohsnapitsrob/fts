@@ -32,6 +32,7 @@
       const script = document.createElement("script");
       script.src = `${sharedScriptBase}${name}`;
       script.setAttribute(attribute, "true");
+      script.async = false;
 
       if (options.defer !== false) {
         script.defer = true;
@@ -44,16 +45,23 @@
     });
   }
 
+  function dispatchReady(name) {
+    window.dispatchEvent(new CustomEvent(`fts:${name}-ready`));
+  }
+
   function loadPrivacySystem() {
-    return loadSharedScript("privacy-consent.js", "data-fts-privacy-consent");
+    return loadSharedScript("privacy-consent.js", "data-fts-privacy-consent")
+      .then(() => dispatchReady("privacy"));
   }
 
   function loadAppSettings() {
-    return loadSharedScript("app-settings.js", "data-fts-app-settings");
+    return loadSharedScript("app-settings.js", "data-fts-app-settings")
+      .then(() => dispatchReady("app-settings"));
   }
 
   function loadBottomNav() {
-    return loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
+    return loadSharedScript("bottom-nav.js", "data-fts-bottom-nav")
+      .then(() => dispatchReady("bottom-nav"));
   }
 
   function loadAppHeaderModules() {
@@ -62,11 +70,12 @@
       loadSharedScript("app-header-map-search.js", "data-fts-app-header-map-search")
     ]).then(() => {
       return loadSharedScript("app-header.js", "data-fts-app-header");
-    });
+    }).then(() => dispatchReady("app-header"));
   }
 
   function loadIOSInstallPrompt() {
-    return loadSharedScript("ios-install-prompt.js", "data-fts-ios-install-prompt");
+    return loadSharedScript("ios-install-prompt.js", "data-fts-ios-install-prompt")
+      .then(() => dispatchReady("ios-install-prompt"));
   }
 
   function showEnvironmentBadge() {
