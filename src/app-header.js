@@ -144,7 +144,7 @@
     header.innerHTML = `
       <button class="fts-header-search-btn ${privacy ? "is-hidden" : ""}" type="button" aria-label="${explore ? "Search map" : "Search titles"}">${iconSearch()}</button>
       ${logoMarkup}
-      <button class="fts-header-settings-btn" type="button" aria-label="Privacy settings">${iconSettings()}</button>
+      <button class="fts-header-settings-btn" type="button" aria-label="Settings">${iconSettings()}</button>
     `;
 
     document.body.prepend(header);
@@ -165,6 +165,11 @@
     }
 
     settingsButton?.addEventListener("click", () => {
+      if (window.FTS?.AppSettings?.open) {
+        window.FTS.AppSettings.open();
+        return;
+      }
+
       window.FTS?.Privacy?.openSettings?.();
     });
   }
