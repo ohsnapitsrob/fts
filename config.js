@@ -8,6 +8,7 @@ window.APP_CONFIG = {
   CONTACT_EMAIL: "contact@findthatscene.co.uk",
 
   PLAUSIBLE_SCRIPT_URL: "https://plausible.io/js/pa-oOZwKrRSZ4iB9GYOB7KxN.js",
+  PLAUSIBLE_TRACKED_PARAMS: ["q", "tab", "fk", "fl", "loc", "rm", "mlat", "mlng", "mz"],
 
   MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
   MAP_STYLE: "streets",
