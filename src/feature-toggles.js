@@ -1,11 +1,11 @@
 window.FTS = window.FTS || {};
 
 FTS.FeatureToggles = {
-  headerLogoEnabled: true,
+  headerLogoEnabled: false,
   iosInstallPromptEnabled: true,
 
   homeRailsEnabled: true,
-  homeRailLatestScenesEnabled: true,
+  homeRailLatestScenesEnabled: false,
   homeRailTopScenesEnabled: true,
   homeRailJamesBondEnabled: true,
   homeRailHarryPotterEnabled: true,
