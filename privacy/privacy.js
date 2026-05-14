@@ -9,6 +9,8 @@
   }
 
   settingsButton?.addEventListener("click", () => {
-    window.FTS?.Privacy?.openSettings?.();
+    window.FTS?.Privacy?.openSettings?.({
+      saveLabel: "Save settings"
+    });
   });
 })();
