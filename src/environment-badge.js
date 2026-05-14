@@ -27,6 +27,10 @@
     loadSharedScript("privacy-consent.js", "data-fts-privacy-consent");
   }
 
+  function loadAppSettings() {
+    loadSharedScript("app-settings.js", "data-fts-app-settings");
+  }
+
   function loadBottomNav() {
     loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
   }
@@ -87,6 +91,7 @@
 
   loadFeatureToggles();
   loadPrivacySystem();
+  loadAppSettings();
   loadAppHeaderModules();
   loadIOSInstallPrompt();
   showEnvironmentBadge();
