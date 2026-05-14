@@ -1,14 +1,15 @@
 (function () {
   const config = window.APP_CONFIG || {};
 
-  function currentScriptBase() {
-    const script = document.currentScript;
-    if (!script || !script.src) return "";
+  function getSharedScriptBase() {
+    const path = window.location.pathname.replace(/\/+$/, "");
+    const routeNames = ["browse", "explore", "title", "stats", "national-trust", "privacy"];
+    const isNestedRoute = routeNames.some((route) => path.endsWith(`/${route}`));
 
-    return script.src.slice(0, script.src.lastIndexOf("/") + 1);
+    return isNestedRoute ? "../src/" : "./src/";
   }
 
-  const sharedScriptBase = currentScriptBase();
+  const sharedScriptBase = getSharedScriptBase();
 
   function loadSharedScript(name, attribute, options = {}) {
     if (document.querySelector(`script[${attribute}]`)) {
