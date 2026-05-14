@@ -70,8 +70,8 @@
         padding-bottom: calc(88px + env(safe-area-inset-bottom));
       }
 
-      body.fts-has-bottom-nav #map {
-        margin-bottom: calc(88px + env(safe-area-inset-bottom));
+      body.fts-has-bottom-nav:has(#map) {
+        padding-bottom: 0;
       }
 
       .fts-bottom-nav {
