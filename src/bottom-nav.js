@@ -1,0 +1,143 @@
+(function () {
+  const items = [
+    {
+      key: "home",
+      label: "Home",
+      href: document.body.dataset.navRoot || "./",
+      icon: "home"
+    },
+    {
+      key: "browse",
+      label: "Browse",
+      href: `${document.body.dataset.navRoot || "./"}browse/`,
+      icon: "browse"
+    },
+    {
+      key: "map",
+      label: "Map",
+      href: `${document.body.dataset.navRoot || "./"}explore/`,
+      icon: "map"
+    }
+  ];
+
+  function getActiveKey() {
+    const path = window.location.pathname.replace(/\/+$/, "");
+
+    if (path.endsWith("/browse")) return "browse";
+    if (path.endsWith("/explore")) return "map";
+    if (path.endsWith("/title") || path.endsWith("/stats") || path.endsWith("/national-trust")) return "browse";
+
+    return "home";
+  }
+
+  function iconSvg(icon) {
+    const icons = {
+      home: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11.4 12 4l9 7.4v8.1A1.5 1.5 0 0 1 19.5 21h-4.2v-5.7H8.7V21H4.5A1.5 1.5 0 0 1 3 19.5v-8.1z"></path></svg>`,
+      browse: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4h3A1.5 1.5 0 0 1 10 5.5v3A1.5 1.5 0 0 1 8.5 10h-3A1.5 1.5 0 0 1 4 8.5v-3zm10 0A1.5 1.5 0 0 1 15.5 4h3A1.5 1.5 0 0 1 20 5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 14 8.5v-3zM4 15.5A1.5 1.5 0 0 1 5.5 14h3a1.5 1.5 0 0 1 1.5 1.5v3A1.5 1.5 0 0 1 8.5 20h-3A1.5 1.5 0 0 1 4 18.5v-3zm10 0a1.5 1.5 0 0 1 1.5-1.5h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a1.5 1.5 0 0 1-1.5-1.5v-3z"></path></svg>`,
+      map: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5A6.5 6.5 0 0 0 5.5 9c0 4.9 6.5 12.5 6.5 12.5S18.5 13.9 18.5 9A6.5 6.5 0 0 0 12 2.5zm0 9.1A2.6 2.6 0 1 1 12 6.4a2.6 2.6 0 0 1 0 5.2z"></path></svg>`
+    };
+
+    return icons[icon] || "";
+  }
+
+  function addStyle() {
+    if (document.getElementById("fts-bottom-nav-style")) return;
+
+    const style = document.createElement("style");
+    style.id = "fts-bottom-nav-style";
+    style.textContent = `
+      .fts-bottom-nav {
+        display: none;
+      }
+
+      @media (max-width: 760px) {
+        body.fts-has-bottom-nav {
+          padding-bottom: calc(76px + env(safe-area-inset-bottom));
+        }
+
+        body.fts-has-bottom-nav #map {
+          margin-bottom: calc(76px + env(safe-area-inset-bottom));
+        }
+
+        .fts-bottom-nav {
+          position: fixed;
+          left: 10px;
+          right: 10px;
+          bottom: calc(10px + env(safe-area-inset-bottom));
+          z-index: 3600;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 6px;
+          padding: 7px;
+          border: 1px solid rgba(229, 231, 235, 0.9);
+          border-radius: 24px;
+          background: rgba(255, 255, 255, 0.88);
+          box-shadow: 0 18px 50px rgba(15, 23, 42, 0.18);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+        }
+
+        .fts-bottom-nav a {
+          min-width: 0;
+          min-height: 54px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+          border-radius: 18px;
+          color: #6b7280;
+          text-decoration: none;
+          font-size: 11px;
+          font-weight: 750;
+          letter-spacing: 0.01em;
+          -webkit-tap-highlight-color: transparent;
+        }
+
+        .fts-bottom-nav a[aria-current="page"] {
+          background: #111827;
+          color: #ffffff;
+        }
+
+        .fts-bottom-nav svg {
+          width: 22px;
+          height: 22px;
+          fill: currentColor;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  function render() {
+    if (document.querySelector(".fts-bottom-nav")) return;
+
+    const activeKey = getActiveKey();
+    const nav = document.createElement("nav");
+
+    nav.className = "fts-bottom-nav";
+    nav.setAttribute("aria-label", "Primary navigation");
+    nav.innerHTML = items.map((item) => {
+      const active = item.key === activeKey;
+
+      return `
+        <a href="${item.href}"${active ? ' aria-current="page"' : ""}>
+          ${iconSvg(item.icon)}
+          <span>${item.label}</span>
+        </a>
+      `;
+    }).join("");
+
+    document.body.classList.add("fts-has-bottom-nav");
+    document.body.appendChild(nav);
+  }
+
+  addStyle();
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", render);
+  } else {
+    render();
+  }
+})();
