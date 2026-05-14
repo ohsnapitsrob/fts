@@ -8,15 +8,23 @@
     return script.src.slice(0, script.src.lastIndexOf("/") + 1);
   }
 
-  function loadBottomNav() {
-    if (document.querySelector('script[data-fts-bottom-nav="true"]')) return;
+  function loadSharedScript(name, attribute) {
+    if (document.querySelector(`script[${attribute}]`)) return;
 
     const script = document.createElement("script");
-    script.src = `${currentScriptBase()}bottom-nav.js`;
+    script.src = `${currentScriptBase()}${name}`;
     script.defer = true;
-    script.dataset.ftsBottomNav = "true";
+    script.setAttribute(attribute, "true");
 
     document.body.appendChild(script);
+  }
+
+  function loadBottomNav() {
+    loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
+  }
+
+  function loadAppHeader() {
+    loadSharedScript("app-header.js", "data-fts-app-header");
   }
 
   function showEnvironmentBadge() {
@@ -63,6 +71,7 @@
     document.body.appendChild(badge);
   }
 
+  loadAppHeader();
   showEnvironmentBadge();
   loadBottomNav();
 })();
