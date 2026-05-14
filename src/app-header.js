@@ -83,6 +83,18 @@
         height: 44px;
       }
 
+      body:has(#map) .topbar-inner {
+        display: none;
+      }
+
+      body:has(#map) .topbar.fts-map-search-open .topbar-inner {
+        display: flex;
+      }
+
+      body:has(#map) .topbar.fts-map-search-open {
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+      }
+
       .fts-title-search-modal {
         position: fixed;
         inset: 0;
@@ -339,7 +351,7 @@
     `).join("");
   }
 
-  function createSearchModal() {
+  function createTitleSearchModal() {
     if (document.querySelector(".fts-title-search-modal")) return;
 
     const modal = document.createElement("div");
@@ -397,18 +409,38 @@
     };
   }
 
+  function createMapSearchTrigger() {
+    window.FTSHeaderSearch = {
+      open() {
+        const topbar = document.querySelector(".topbar");
+        const input = document.getElementById("search");
+
+        if (!topbar || !input) return;
+
+        topbar.classList.add("fts-map-search-open");
+        input.focus();
+        input.select();
+      }
+    };
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+
+      const topbar = document.querySelector(".topbar");
+      if (!topbar) return;
+
+      topbar.classList.remove("fts-map-search-open");
+    });
+  }
+
   function render() {
     if (document.querySelector(".fts-app-header")) return;
 
-    const showSearch = !isExploreView();
+    const explore = isExploreView();
     const header = document.createElement("header");
     header.className = "fts-app-header";
     header.innerHTML = `
-      ${
-        showSearch
-          ? `<button class="fts-header-search-btn" type="button" aria-label="Search titles">${iconSearch()}</button>`
-          : `<span class="fts-header-spacer" aria-hidden="true"></span>`
-      }
+      <button class="fts-header-search-btn" type="button" aria-label="${explore ? "Search map" : "Search titles"}">${iconSearch()}</button>
       <a class="fts-app-header-link" href="${getRootPath()}" aria-label="Find That Scene home">
         <img class="fts-app-header-logo" src="${LOGO_URL}" alt="Find That Scene">
       </a>
@@ -417,12 +449,15 @@
 
     document.body.prepend(header);
 
-    if (showSearch) {
-      createSearchModal();
-      header.querySelector(".fts-header-search-btn")?.addEventListener("click", () => {
-        window.FTSHeaderSearch?.open();
-      });
+    if (explore) {
+      createMapSearchTrigger();
+    } else {
+      createTitleSearchModal();
     }
+
+    header.querySelector(".fts-header-search-btn")?.addEventListener("click", () => {
+      window.FTSHeaderSearch?.open();
+    });
   }
 
   addStyle();
