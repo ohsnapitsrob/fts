@@ -5,6 +5,8 @@ FTS.FeatureToggles = {
   iosInstallPromptEnabled: true,
   privacyConsentEnabled: true,
   mediaEmbedsEnabled: true,
+  siteDisclaimerEnabled: true,
+  settingsMapSectionEnabled: true,
 
   homeRailsEnabled: true,
   homeRailLatestScenesEnabled: true,
