@@ -16,12 +16,17 @@ FTS.Analytics = (function () {
     return new URLSearchParams(window.location.search);
   }
 
+  function cleanValue(value) {
+    if (value === undefined || value === null) return "";
+    return value.toString().trim();
+  }
+
   function getText(selector) {
-    return (document.querySelector(selector)?.textContent || "").trim();
+    return cleanValue(document.querySelector(selector)?.textContent);
   }
 
   function getDataLabel(selector) {
-    return (document.querySelector(selector)?.dataset?.label || "").trim();
+    return cleanValue(document.querySelector(selector)?.dataset?.label);
   }
 
   function getPageType() {
@@ -39,9 +44,7 @@ FTS.Analytics = (function () {
   }
 
   function normalisePropertyName(value) {
-    return (value || "")
-      .toString()
-      .trim()
+    return cleanValue(value)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "_")
       .replace(/^_+|_+$/g, "");
@@ -70,8 +73,9 @@ FTS.Analytics = (function () {
   }
 
   function addIfPresent(props, key, value) {
-    if (value === undefined || value === null || value === "") return;
-    props[key] = value;
+    const clean = cleanValue(value);
+    if (!clean) return;
+    props[key] = clean;
   }
 
   function getModalTitleFallback() {
@@ -97,8 +101,8 @@ FTS.Analytics = (function () {
   }
 
   function getFilterContext(params, pageType) {
-    let filterValue = params.get("fl") || params.get("title");
-    let filterType = params.get("fk");
+    let filterValue = cleanValue(params.get("fl") || params.get("title"));
+    let filterType = cleanValue(params.get("fk"));
 
     if (!filterValue && pageType === "title") {
       filterValue = getTitlePageTitleFallback(pageType);
@@ -122,32 +126,36 @@ FTS.Analytics = (function () {
     return {
       params,
       pageType,
-      searchQuery: params.get("q"),
-      activeTab: params.get("tab"),
+      searchQuery: cleanValue(params.get("q")),
+      activeTab: cleanValue(params.get("tab")),
       filterType,
       filterValue,
       modalTitle: getModalTitleFallback(),
       viewType: getViewType(pageType),
-      locationId: params.get("loc"),
-      ratingMatch: params.get("rm"),
-      mapLatitude: params.get("mlat"),
-      mapLongitude: params.get("mlng"),
-      mapZoom: params.get("mz")
+      locationId: cleanValue(params.get("loc")),
+      ratingMatch: cleanValue(params.get("rm")),
+      mapLatitude: cleanValue(params.get("mlat")),
+      mapLongitude: cleanValue(params.get("mlng")),
+      mapZoom: cleanValue(params.get("mz"))
     };
   }
 
   function hasTrackableParams() {
-    const params = getParams();
-    const trackableKeys = ["q", "tab", "fk", "fl", "title", "loc", "rm", "mlat", "mlng", "mz"];
+    const context = getParameterContext();
 
-    if (trackableKeys.some((key) => {
-      const value = params.get(key);
-      return value !== null && value !== "";
-    })) {
-      return true;
-    }
-
-    return Boolean(getModalTitleFallback() || getViewType(getPageType()));
+    return Boolean(
+      context.searchQuery ||
+      context.activeTab ||
+      context.filterType ||
+      context.filterValue ||
+      context.modalTitle ||
+      context.viewType ||
+      context.locationId ||
+      context.ratingMatch ||
+      context.mapLatitude ||
+      context.mapLongitude ||
+      context.mapZoom
+    );
   }
 
   function buildGlobalProperties() {
@@ -155,23 +163,17 @@ FTS.Analytics = (function () {
     const props = {};
 
     addIfPresent(props, "page_type", getPageType());
-    addIfPresent(props, "route", window.location.pathname);
     addIfPresent(props, "consent_mode", getConsentMode());
     addIfPresent(props, "hide_no_access_scenes", appSettings.hideNoAccessScenes === true ? "true" : "false");
 
     return props;
   }
 
-  function buildParameterProperties() {
-    const context = getParameterContext();
-    const props = {};
+  function addFilterProperties(props, context) {
     const dynamicFilterKey = normalisePropertyName(context.filterType);
 
-    addIfPresent(props, "search_query", context.searchQuery);
-    addIfPresent(props, "active_tab", context.activeTab);
     addIfPresent(props, "filter_type", context.filterType);
     addIfPresent(props, "filter_value", context.filterValue);
-    addIfPresent(props, "view_type", context.viewType);
 
     if (dynamicFilterKey && context.filterValue) {
       addIfPresent(props, dynamicFilterKey, context.filterValue);
@@ -180,27 +182,50 @@ FTS.Analytics = (function () {
     if (context.modalTitle && dynamicFilterKey !== "title") {
       addIfPresent(props, "title", context.modalTitle);
     }
+  }
 
+  function addLocationProperties(props, context) {
     addIfPresent(props, "location_id", context.locationId);
-    addIfPresent(props, "rating_match", context.ratingMatch);
+    addIfPresent(props, "title", context.modalTitle || (normalisePropertyName(context.filterType) === "title" ? context.filterValue : ""));
+    addIfPresent(props, "view_type", context.viewType);
+  }
 
+  function addMapProperties(props, context) {
     if (context.mapLatitude && context.mapLongitude) {
       addIfPresent(props, "coordinates", `${context.mapLatitude},${context.mapLongitude}`);
     }
 
     addIfPresent(props, "map_zoom", context.mapZoom);
+  }
+
+  function addSearchProperties(props, context) {
+    addIfPresent(props, "search_query", context.searchQuery);
+  }
+
+  function addTabProperties(props, context) {
+    addIfPresent(props, "active_tab", context.activeTab);
+  }
+
+  function addViewTypeProperties(props, context) {
+    addIfPresent(props, "view_type", context.viewType);
+  }
+
+  function buildParameterProperties() {
+    const context = getParameterContext();
+    const props = {};
+
+    addSearchProperties(props, context);
+    addTabProperties(props, context);
+    addFilterProperties(props, context);
+    addLocationProperties(props, context);
+    addMapProperties(props, context);
+    addIfPresent(props, "rating_match", context.ratingMatch);
+    addViewTypeProperties(props, context);
 
     return props;
   }
 
   function buildPageviewProperties() {
-    return {
-      ...buildGlobalProperties(),
-      ...buildParameterProperties()
-    };
-  }
-
-  function buildFocusedParameterProperties() {
     return {
       ...buildGlobalProperties(),
       ...buildParameterProperties()
@@ -220,9 +245,53 @@ FTS.Analytics = (function () {
     return PARAMETER_UPDATE_EVENT;
   }
 
+  function buildFocusedParameterProperties(eventName) {
+    const context = getParameterContext();
+    const props = buildGlobalProperties();
+
+    if (eventName === "locationUpdate") {
+      addLocationProperties(props, context);
+      addFilterProperties(props, context);
+      return props;
+    }
+
+    if (eventName === "filterUpdate") {
+      addFilterProperties(props, context);
+      addViewTypeProperties(props, context);
+      return props;
+    }
+
+    if (eventName === "mapUpdate") {
+      addMapProperties(props, context);
+      return props;
+    }
+
+    if (eventName === "searchUpdate") {
+      addSearchProperties(props, context);
+      return props;
+    }
+
+    if (eventName === "tabUpdate") {
+      addTabProperties(props, context);
+      return props;
+    }
+
+    if (eventName === "viewTypeUpdate") {
+      addViewTypeProperties(props, context);
+      addFilterProperties(props, context);
+      return props;
+    }
+
+    return {
+      ...props,
+      ...buildParameterProperties()
+    };
+  }
+
   function parameterSignature() {
     const params = getParams();
     const entries = Array.from(params.entries())
+      .map(([key, value]) => [key, cleanValue(value)])
       .filter(([, value]) => value !== "")
       .sort(([a], [b]) => a.localeCompare(b));
 
@@ -244,8 +313,10 @@ FTS.Analytics = (function () {
 
     lastParameterSignature = signature;
 
-    window.plausible?.(getParameterUpdateEventName(), {
-      props: buildFocusedParameterProperties()
+    const eventName = getParameterUpdateEventName();
+
+    window.plausible?.(eventName, {
+      props: buildFocusedParameterProperties(eventName)
     });
   }
 
