@@ -6,6 +6,7 @@ FTS.Analytics = (function () {
   let parameterUpdateTimer = null;
   let lastParameterSignature = "";
   let historyWrapped = false;
+  let titleObserverStarted = false;
 
   function enabled() {
     return window.FTS?.Features?.isEnabled("plausibleAnalyticsEnabled") === true;
@@ -82,6 +83,11 @@ FTS.Analytics = (function () {
     return getText("#mTitle");
   }
 
+  function getTitlePageTitleFallback(pageType) {
+    if (pageType !== "title") return "";
+    return getText("#titleContent h1") || getText(".title-content h1");
+  }
+
   function getViewType(pageType) {
     if (pageType === "title") {
       return getText("#titleContent .kicker") || getText(".title-content .kicker");
@@ -94,15 +100,11 @@ FTS.Analytics = (function () {
     let filterValue = params.get("fl") || params.get("title");
     let filterType = params.get("fk");
 
-    if (!filterValue && pageType === "explore") {
-      filterValue = getModalTitleFallback();
+    if (!filterValue && pageType === "title") {
+      filterValue = getTitlePageTitleFallback(pageType);
     }
 
     if (!filterType && pageType === "title" && filterValue) {
-      filterType = "Title";
-    }
-
-    if (!filterType && pageType === "explore" && filterValue) {
       filterType = "Title";
     }
 
@@ -124,6 +126,7 @@ FTS.Analytics = (function () {
       activeTab: params.get("tab"),
       filterType,
       filterValue,
+      modalTitle: getModalTitleFallback(),
       viewType: getViewType(pageType),
       locationId: params.get("loc"),
       ratingMatch: params.get("rm"),
@@ -137,10 +140,14 @@ FTS.Analytics = (function () {
     const params = getParams();
     const trackableKeys = ["q", "tab", "fk", "fl", "title", "loc", "rm", "mlat", "mlng", "mz"];
 
-    return trackableKeys.some((key) => {
+    if (trackableKeys.some((key) => {
       const value = params.get(key);
       return value !== null && value !== "";
-    });
+    })) {
+      return true;
+    }
+
+    return Boolean(getModalTitleFallback() || getViewType(getPageType()));
   }
 
   function buildGlobalProperties() {
@@ -168,6 +175,10 @@ FTS.Analytics = (function () {
 
     if (dynamicFilterKey && context.filterValue) {
       addIfPresent(props, dynamicFilterKey, context.filterValue);
+    }
+
+    if (context.modalTitle && dynamicFilterKey !== "title") {
+      addIfPresent(props, "title", context.modalTitle);
     }
 
     addIfPresent(props, "location_id", context.locationId);
@@ -199,11 +210,12 @@ FTS.Analytics = (function () {
   function getParameterUpdateEventName() {
     const context = getParameterContext();
 
+    if (context.modalTitle || context.locationId) return "locationUpdate";
     if (context.filterType && context.filterValue) return "filterUpdate";
-    if (context.locationId) return "locationUpdate";
     if (context.mapLatitude && context.mapLongitude) return "mapUpdate";
     if (context.searchQuery) return "searchUpdate";
     if (context.activeTab) return "tabUpdate";
+    if (context.viewType) return "viewTypeUpdate";
 
     return PARAMETER_UPDATE_EVENT;
   }
@@ -218,6 +230,7 @@ FTS.Analytics = (function () {
       path: window.location.pathname,
       params: entries,
       modalTitle: getModalTitleFallback(),
+      titlePageTitle: getTitlePageTitleFallback(getPageType()),
       viewType: getViewType(getPageType())
     });
   }
@@ -236,14 +249,14 @@ FTS.Analytics = (function () {
     });
   }
 
-  function scheduleParameterUpdate() {
+  function scheduleParameterUpdate(delay = 600) {
     if (!enabled()) return;
 
     if (parameterUpdateTimer) {
       clearTimeout(parameterUpdateTimer);
     }
 
-    parameterUpdateTimer = setTimeout(trackParameterUpdate, 600);
+    parameterUpdateTimer = setTimeout(trackParameterUpdate, delay);
   }
 
   function wrapHistoryMethod(methodName) {
@@ -258,6 +271,32 @@ FTS.Analytics = (function () {
     };
   }
 
+  function watchTitleContentUpdates() {
+    if (titleObserverStarted || getPageType() !== "title") return;
+    titleObserverStarted = true;
+
+    const start = () => {
+      const target = document.getElementById("titleContent");
+      if (!target) return;
+
+      const observer = new MutationObserver(() => {
+        scheduleParameterUpdate(250);
+      });
+
+      observer.observe(target, {
+        childList: true,
+        subtree: true,
+        characterData: true
+      });
+    };
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", start, { once: true });
+    } else {
+      start();
+    }
+  }
+
   function watchParameterUpdates() {
     if (historyWrapped) return;
     historyWrapped = true;
@@ -268,6 +307,7 @@ FTS.Analytics = (function () {
     wrapHistoryMethod("replaceState");
 
     window.addEventListener("popstate", scheduleParameterUpdate);
+    watchTitleContentUpdates();
   }
 
   function init() {
