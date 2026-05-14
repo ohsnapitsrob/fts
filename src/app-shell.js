@@ -78,6 +78,40 @@
       .then(() => dispatchReady("ios-install-prompt"));
   }
 
+  function loadPlausibleAnalytics() {
+    if (window.FTS?.Features?.isEnabled("plausibleAnalyticsEnabled") !== true) {
+      return;
+    }
+
+    const scriptUrl = config.PLAUSIBLE_SCRIPT_URL;
+
+    if (!scriptUrl) {
+      return;
+    }
+
+    if (document.querySelector("script[data-fts-plausible]")) {
+      return;
+    }
+
+    window.plausible = window.plausible || function () {
+      (window.plausible.q = window.plausible.q || []).push(arguments);
+    };
+
+    window.plausible.init = window.plausible.init || function (options) {
+      window.plausible.o = options || {};
+    };
+
+    window.plausible.init();
+
+    const script = document.createElement("script");
+    script.src = scriptUrl;
+    script.async = true;
+    script.defer = true;
+    script.setAttribute("data-fts-plausible", "true");
+
+    document.head.appendChild(script);
+  }
+
   function showEnvironmentBadge() {
     if (config.ENVIRONMENT !== "staging") return;
 
@@ -128,6 +162,7 @@
   loadAppSettings();
   loadAppHeaderModules();
   loadIOSInstallPrompt();
+  loadPlausibleAnalytics();
   showEnvironmentBadge();
   loadBottomNav();
 
