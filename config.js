@@ -1,5 +1,7 @@
 // config.js
 window.APP_CONFIG = {
+  ENVIRONMENT: "staging",
+  ENVIRONMENT_LABEL: "REFRACTOR BUILD",
   MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
   MAP_STYLE: "streets",
   NT_ICON_URL: "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png",
