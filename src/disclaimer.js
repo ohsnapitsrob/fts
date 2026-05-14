@@ -11,16 +11,16 @@
 
     style.textContent = `
       .fts-site-disclaimer {
-        margin-top: 48px;
-        padding: 20px 18px;
-        border-top: 1px solid rgba(229, 231, 235, 0.9);
-        color: #6b7280;
-        font-size: 11px;
-        line-height: 1.7;
+        max-width: 100%;
+        margin: 34px auto 0;
+        color: #5f5f5f;
+        font-size: 8px;
+        line-height: 12px;
+        opacity: 0.95;
       }
 
       .fts-site-disclaimer p {
-        margin: 0 0 12px;
+        margin: 0 0 10px;
       }
 
       .fts-site-disclaimer p:last-child {
@@ -28,7 +28,7 @@
       }
 
       .fts-site-disclaimer a {
-        color: inherit;
+        color: #5f5f5f;
         text-decoration: none;
       }
     `;
