@@ -19,6 +19,10 @@
     document.body.appendChild(script);
   }
 
+  function loadFeatureToggles() {
+    loadSharedScript("feature-toggles.js", "data-fts-feature-toggles");
+  }
+
   function loadBottomNav() {
     loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
   }
@@ -75,6 +79,7 @@
     document.body.appendChild(badge);
   }
 
+  loadFeatureToggles();
   loadAppHeader();
   loadIOSInstallPrompt();
   showEnvironmentBadge();
