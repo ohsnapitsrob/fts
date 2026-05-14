@@ -1,21 +1,41 @@
 (function () {
+  function getRootPath() {
+    if (document.body.dataset.navRoot) return document.body.dataset.navRoot;
+
+    const path = window.location.pathname.replace(/\/+$/, "");
+
+    if (
+      path.endsWith("/browse") ||
+      path.endsWith("/explore") ||
+      path.endsWith("/title") ||
+      path.endsWith("/stats") ||
+      path.endsWith("/national-trust")
+    ) {
+      return "../";
+    }
+
+    return "./";
+  }
+
+  const rootPath = getRootPath();
+
   const items = [
     {
       key: "home",
       label: "Home",
-      href: document.body.dataset.navRoot || "./",
+      href: rootPath,
       icon: "home"
     },
     {
       key: "browse",
       label: "Browse",
-      href: `${document.body.dataset.navRoot || "./"}browse/`,
+      href: `${rootPath}browse/`,
       icon: "browse"
     },
     {
       key: "map",
       label: "Map",
-      href: `${document.body.dataset.navRoot || "./"}explore/`,
+      href: `${rootPath}explore/`,
       icon: "map"
     }
   ];
