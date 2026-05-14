@@ -3,17 +3,22 @@
 
   window.FTS = window.FTS || {};
 
+  function getPath() {
+    return window.location.pathname.replace(/\/+$/, "");
+  }
+
   function getRootPath() {
     if (document.body.dataset.navRoot) return document.body.dataset.navRoot;
 
-    const path = window.location.pathname.replace(/\/+$/, "");
+    const path = getPath();
 
     if (
       path.endsWith("/browse") ||
       path.endsWith("/explore") ||
       path.endsWith("/title") ||
       path.endsWith("/stats") ||
-      path.endsWith("/national-trust")
+      path.endsWith("/national-trust") ||
+      path.endsWith("/privacy")
     ) {
       return "../";
     }
@@ -22,7 +27,11 @@
   }
 
   function isExploreView() {
-    return window.location.pathname.replace(/\/+$/, "").endsWith("/explore");
+    return getPath().endsWith("/explore");
+  }
+
+  function isPrivacyView() {
+    return getPath().endsWith("/privacy");
   }
 
   function logoEnabled() {
@@ -119,6 +128,8 @@
     if (document.querySelector(".fts-app-header")) return;
 
     const explore = isExploreView();
+    const privacy = isPrivacyView();
+
     const header = document.createElement("header");
     header.className = "fts-app-header";
 
@@ -131,7 +142,7 @@
       : `<span></span>`;
 
     header.innerHTML = `
-      <button class="fts-header-search-btn" type="button" aria-label="${explore ? "Search map" : "Search titles"}">${iconSearch()}</button>
+      <button class="fts-header-search-btn ${privacy ? "is-hidden" : ""}" type="button" aria-label="${explore ? "Search map" : "Search titles"}">${iconSearch()}</button>
       ${logoMarkup}
       <button class="fts-header-settings-btn" type="button" aria-label="Privacy settings">${iconSettings()}</button>
     `;
@@ -141,15 +152,17 @@
     const searchButton = header.querySelector(".fts-header-search-btn");
     const settingsButton = header.querySelector(".fts-header-settings-btn");
 
-    if (explore) {
-      window.FTS?.AppHeaderMapSearch?.init?.(searchButton);
-    } else {
-      window.FTS?.AppHeaderTitleSearch?.init?.();
-    }
+    if (!privacy) {
+      if (explore) {
+        window.FTS?.AppHeaderMapSearch?.init?.(searchButton);
+      } else {
+        window.FTS?.AppHeaderTitleSearch?.init?.();
+      }
 
-    searchButton?.addEventListener("click", () => {
-      window.FTSHeaderSearch?.open();
-    });
+      searchButton?.addEventListener("click", () => {
+        window.FTSHeaderSearch?.open();
+      });
+    }
 
     settingsButton?.addEventListener("click", () => {
       window.FTS?.Privacy?.openSettings?.();
