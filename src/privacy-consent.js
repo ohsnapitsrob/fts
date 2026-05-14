@@ -48,6 +48,39 @@ FTS.Privacy = (function () {
     } catch (err) {}
   }
 
+  function clearOptionalStorage() {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (
+          key.startsWith("plausible_") ||
+          key.startsWith("yt-") ||
+          key.startsWith("youtube")
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (err) {}
+
+    try {
+      document.cookie.split(";").forEach((cookie) => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1
+          ? cookie.slice(0, eqPos).trim()
+          : cookie.trim();
+
+        if (!name) return;
+
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      });
+    } catch (err) {}
+  }
+
+  function applySettings(settings) {
+    save(settings);
+    clearOptionalStorage();
+    window.location.reload();
+  }
+
   function getSettings() {
     return load();
   }
@@ -251,23 +284,15 @@ FTS.Privacy = (function () {
     overlay.querySelector('[data-action="reject"]')?.addEventListener("click", () => {
       mediaEmbeds = false;
 
-      save({
+      applySettings({
         mediaEmbeds
       });
-
-      overlay.remove();
-
-      window.dispatchEvent(new CustomEvent("fts:privacy-updated"));
     });
 
     overlay.querySelector('[data-action="save"]')?.addEventListener("click", () => {
-      save({
+      applySettings({
         mediaEmbeds
       });
-
-      overlay.remove();
-
-      window.dispatchEvent(new CustomEvent("fts:privacy-updated"));
     });
 
     return overlay;
