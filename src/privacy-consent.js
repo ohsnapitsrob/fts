@@ -11,6 +11,10 @@ FTS.Privacy = (function () {
     return window.FTS?.Features?.isEnabled("privacyConsentEnabled") !== false;
   }
 
+  function getRootPath() {
+    return window.FTS?.AppHeader?.getRootPath?.() || "./";
+  }
+
   function load() {
     if (!enabled()) {
       return {
@@ -137,6 +141,16 @@ FTS.Privacy = (function () {
         font-size: 14px;
       }
 
+      .fts-privacy-link {
+        display: inline-flex;
+        margin-top: 12px;
+        color: #111827;
+        font-size: 14px;
+        font-weight: 800;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
       .fts-privacy-section {
         margin-top: 18px;
         padding-top: 18px;
@@ -239,6 +253,8 @@ FTS.Privacy = (function () {
             Find That Scene uses privacy-friendly analytics and optional media embeds.
             You can control optional media features here at any time.
           </p>
+
+          <a class="fts-privacy-link" href="${getRootPath()}privacy/">Read the privacy page</a>
 
           <div class="fts-privacy-section">
             <div class="fts-privacy-setting">
