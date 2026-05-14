@@ -23,6 +23,10 @@
     loadSharedScript("feature-toggles.js", "data-fts-feature-toggles");
   }
 
+  function loadPrivacySystem() {
+    loadSharedScript("privacy-consent.js", "data-fts-privacy-consent");
+  }
+
   function loadBottomNav() {
     loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
   }
@@ -82,8 +86,13 @@
   }
 
   loadFeatureToggles();
+  loadPrivacySystem();
   loadAppHeaderModules();
   loadIOSInstallPrompt();
   showEnvironmentBadge();
   loadBottomNav();
+
+  window.addEventListener("load", () => {
+    window.FTS?.Privacy?.maybeShowInitialPrompt?.();
+  });
 })();
