@@ -181,54 +181,65 @@ FTS.Analytics = (function () {
     return props;
   }
 
-  function buildSettingsProperties() {
+  function getSettingsState() {
     const appSettings = getAppSettings();
-    const props = {};
 
-    if (hasPrivacyChoice()) {
-      addIfPresent(props, "consent_mode", getConsentMode());
+    if (!hasPrivacyChoice()) {
+      return null;
     }
 
-    addIfPresent(props, "hide_no_access_scenes", appSettings.hideNoAccessScenes === true ? "true" : "false");
-
-    return props;
+    return {
+      consentMode: getConsentMode(),
+      hideNoAccessScenes: appSettings.hideNoAccessScenes === true ? "true" : "false"
+    };
   }
 
-  function settingsSignature() {
-    return JSON.stringify(buildSettingsProperties());
-  }
-
-  function getPreviousSessionSettingsSignature() {
+  function getPreviousSessionSettingsState() {
     try {
-      return sessionStorage.getItem(SESSION_SETTINGS_KEY) || "";
+      const raw = sessionStorage.getItem(SESSION_SETTINGS_KEY);
+      return raw ? JSON.parse(raw) : null;
     } catch (err) {
-      return "";
+      return null;
     }
   }
 
-  function setPreviousSessionSettingsSignature(signature) {
+  function setPreviousSessionSettingsState(state) {
     try {
-      sessionStorage.setItem(SESSION_SETTINGS_KEY, signature);
+      sessionStorage.setItem(SESSION_SETTINGS_KEY, JSON.stringify(state));
     } catch (err) {}
+  }
+
+  function eventSuffix(value) {
+    return cleanValue(value)
+      .split(/[^a-zA-Z0-9]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join("");
+  }
+
+  function trackSettingEvent(eventName) {
+    window.plausible?.(eventName, {
+      props: buildGlobalProperties()
+    });
   }
 
   function trackSessionSettings() {
     if (!enabled()) return;
-    if (!hasPrivacyChoice()) return;
 
-    const props = buildSettingsProperties();
-    const signature = JSON.stringify(props);
-    const previous = getPreviousSessionSettingsSignature();
+    const state = getSettingsState();
+    if (!state) return;
 
-    if (!Object.keys(props).length || signature === previous) {
-      return;
+    const previous = getPreviousSessionSettingsState();
+
+    if (!previous || previous.consentMode !== state.consentMode) {
+      trackSettingEvent(`settingConsent${eventSuffix(state.consentMode)}`);
     }
 
-    setPreviousSessionSettingsSignature(signature);
+    if (!previous || previous.hideNoAccessScenes !== state.hideNoAccessScenes) {
+      trackSettingEvent(`settingHideNoAccessScenes${eventSuffix(state.hideNoAccessScenes)}`);
+    }
 
-    window.plausible?.(previous ? "settingsUpdate" : "settingsState", {
-      props
-    });
+    setPreviousSessionSettingsState(state);
   }
 
   function addFilterProperties(props, context) {
@@ -469,7 +480,6 @@ FTS.Analytics = (function () {
       }
     });
 
-    trackSessionSettings();
     watchParameterUpdates();
 
     const script = document.createElement("script");
@@ -477,6 +487,7 @@ FTS.Analytics = (function () {
     script.async = true;
     script.defer = true;
     script.setAttribute("data-fts-plausible", "true");
+    script.addEventListener("load", trackSessionSettings, { once: true });
 
     document.head.appendChild(script);
   }
