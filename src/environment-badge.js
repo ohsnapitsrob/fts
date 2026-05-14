@@ -27,7 +27,9 @@
     loadSharedScript("bottom-nav.js", "data-fts-bottom-nav");
   }
 
-  function loadAppHeader() {
+  function loadAppHeaderModules() {
+    loadSharedScript("app-header-title-search.js", "data-fts-app-header-title-search");
+    loadSharedScript("app-header-map-search.js", "data-fts-app-header-map-search");
     loadSharedScript("app-header.js", "data-fts-app-header");
   }
 
@@ -80,7 +82,7 @@
   }
 
   loadFeatureToggles();
-  loadAppHeader();
+  loadAppHeaderModules();
   loadIOSInstallPrompt();
   showEnvironmentBadge();
   loadBottomNav();
