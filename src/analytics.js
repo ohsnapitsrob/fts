@@ -3,6 +3,7 @@ window.FTS = window.FTS || {};
 FTS.Analytics = (function () {
   const config = window.APP_CONFIG || {};
   const PARAMETER_UPDATE_EVENT = "parameterUpdate";
+  const SESSION_SETTINGS_KEY = "fts-analytics-session-settings";
   let parameterUpdateTimer = null;
   let lastParameterSignature = "";
   let historyWrapped = false;
@@ -175,10 +176,14 @@ FTS.Analytics = (function () {
   }
 
   function buildGlobalProperties() {
+    const props = {};
+    addIfPresent(props, "page_type", getPageType());
+    return props;
+  }
+
+  function buildSettingsProperties() {
     const appSettings = getAppSettings();
     const props = {};
-
-    addIfPresent(props, "page_type", getPageType());
 
     if (hasPrivacyChoice()) {
       addIfPresent(props, "consent_mode", getConsentMode());
@@ -187,6 +192,43 @@ FTS.Analytics = (function () {
     addIfPresent(props, "hide_no_access_scenes", appSettings.hideNoAccessScenes === true ? "true" : "false");
 
     return props;
+  }
+
+  function settingsSignature() {
+    return JSON.stringify(buildSettingsProperties());
+  }
+
+  function getPreviousSessionSettingsSignature() {
+    try {
+      return sessionStorage.getItem(SESSION_SETTINGS_KEY) || "";
+    } catch (err) {
+      return "";
+    }
+  }
+
+  function setPreviousSessionSettingsSignature(signature) {
+    try {
+      sessionStorage.setItem(SESSION_SETTINGS_KEY, signature);
+    } catch (err) {}
+  }
+
+  function trackSessionSettings() {
+    if (!enabled()) return;
+    if (!hasPrivacyChoice()) return;
+
+    const props = buildSettingsProperties();
+    const signature = JSON.stringify(props);
+    const previous = getPreviousSessionSettingsSignature();
+
+    if (!Object.keys(props).length || signature === previous) {
+      return;
+    }
+
+    setPreviousSessionSettingsSignature(signature);
+
+    window.plausible?.(previous ? "settingsUpdate" : "settingsState", {
+      props
+    });
   }
 
   function addFilterProperties(props, context) {
@@ -427,6 +469,7 @@ FTS.Analytics = (function () {
       }
     });
 
+    trackSessionSettings();
     watchParameterUpdates();
 
     const script = document.createElement("script");
@@ -442,7 +485,8 @@ FTS.Analytics = (function () {
     init,
     buildPageviewProperties,
     buildParameterProperties,
-    trackParameterUpdate
+    trackParameterUpdate,
+    trackSessionSettings
   };
 })();
 
