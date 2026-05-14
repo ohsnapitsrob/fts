@@ -159,23 +159,28 @@ FTS.Utils = (function () {
     const raw = norm(value);
     if (!raw) return "";
 
-    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return `https://www.youtube.com/embed/${raw}`;
+    const embedBase = "https://www.youtube-nocookie.com/embed/";
+
+    if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return `${embedBase}${raw}`;
 
     try {
       const url = new URL(raw);
       const host = url.hostname.replace(/^www\./, "");
 
-      if (host === "youtube.com" || host === "m.youtube.com") {
+      if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
         const id = url.searchParams.get("v");
-        if (id) return `https://www.youtube.com/embed/${id}`;
+        if (id) return `${embedBase}${id}`;
       }
 
       if (host === "youtu.be") {
         const id = url.pathname.split("/").filter(Boolean)[0];
-        if (id) return `https://www.youtube.com/embed/${id}`;
+        if (id) return `${embedBase}${id}`;
       }
 
-      if (host === "youtube.com" && url.pathname.startsWith("/embed/")) return raw;
+      if ((host === "youtube.com" || host === "youtube-nocookie.com") && url.pathname.startsWith("/embed/")) {
+        const id = url.pathname.split("/").filter(Boolean)[1];
+        if (id) return `${embedBase}${id}`;
+      }
     } catch (err) {
       return "";
     }
