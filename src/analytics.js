@@ -79,6 +79,26 @@ FTS.Analytics = (function () {
     };
   }
 
+  function getParameterContext() {
+    const params = getParams();
+    const pageType = getPageType();
+    const { filterType, filterValue } = getFilterContext(params, pageType);
+
+    return {
+      params,
+      pageType,
+      searchQuery: params.get("q"),
+      activeTab: params.get("tab"),
+      filterType,
+      filterValue,
+      locationId: params.get("loc"),
+      ratingMatch: params.get("rm"),
+      mapLatitude: params.get("mlat"),
+      mapLongitude: params.get("mlng"),
+      mapZoom: params.get("mz")
+    };
+  }
+
   function hasTrackableParams() {
     const params = getParams();
     const trackableKeys = ["q", "tab", "fk", "fl", "title", "loc", "rm", "mlat", "mlng", "mz"];
@@ -89,45 +109,68 @@ FTS.Analytics = (function () {
     });
   }
 
-  function buildPageviewProperties() {
-    const params = getParams();
-    const pageType = getPageType();
+  function buildGlobalProperties() {
+    const appSettings = getAppSettings();
     const props = {};
 
-    const searchQuery = params.get("q");
-    const activeTab = params.get("tab");
-    const { filterType, filterValue } = getFilterContext(params, pageType);
-    const locationId = params.get("loc");
-    const ratingMatch = params.get("rm");
-    const mapLatitude = params.get("mlat");
-    const mapLongitude = params.get("mlng");
-    const mapZoom = params.get("mz");
-    const dynamicFilterKey = normalisePropertyName(filterType);
-    const appSettings = getAppSettings();
-
-    addIfPresent(props, "page_type", pageType);
+    addIfPresent(props, "page_type", getPageType());
     addIfPresent(props, "route", window.location.pathname);
-    addIfPresent(props, "search_query", searchQuery);
-    addIfPresent(props, "active_tab", activeTab);
-    addIfPresent(props, "filter_type", filterType);
-    addIfPresent(props, "filter_value", filterValue);
-
-    if (dynamicFilterKey && filterValue) {
-      addIfPresent(props, dynamicFilterKey, filterValue);
-    }
-
-    addIfPresent(props, "location_id", locationId);
-    addIfPresent(props, "rating_match", ratingMatch);
-
-    if (mapLatitude && mapLongitude) {
-      addIfPresent(props, "coordinates", `${mapLatitude},${mapLongitude}`);
-    }
-
-    addIfPresent(props, "map_zoom", mapZoom);
     addIfPresent(props, "consent_mode", getConsentMode());
     addIfPresent(props, "hide_no_access_scenes", appSettings.hideNoAccessScenes === true ? "true" : "false");
 
     return props;
+  }
+
+  function buildParameterProperties() {
+    const context = getParameterContext();
+    const props = {};
+    const dynamicFilterKey = normalisePropertyName(context.filterType);
+
+    addIfPresent(props, "search_query", context.searchQuery);
+    addIfPresent(props, "active_tab", context.activeTab);
+    addIfPresent(props, "filter_type", context.filterType);
+    addIfPresent(props, "filter_value", context.filterValue);
+
+    if (dynamicFilterKey && context.filterValue) {
+      addIfPresent(props, dynamicFilterKey, context.filterValue);
+    }
+
+    addIfPresent(props, "location_id", context.locationId);
+    addIfPresent(props, "rating_match", context.ratingMatch);
+
+    if (context.mapLatitude && context.mapLongitude) {
+      addIfPresent(props, "coordinates", `${context.mapLatitude},${context.mapLongitude}`);
+    }
+
+    addIfPresent(props, "map_zoom", context.mapZoom);
+
+    return props;
+  }
+
+  function buildPageviewProperties() {
+    return {
+      ...buildGlobalProperties(),
+      ...buildParameterProperties()
+    };
+  }
+
+  function buildFocusedParameterProperties() {
+    return {
+      ...buildGlobalProperties(),
+      ...buildParameterProperties()
+    };
+  }
+
+  function getParameterUpdateEventName() {
+    const context = getParameterContext();
+
+    if (context.filterType && context.filterValue) return "filterUpdate";
+    if (context.locationId) return "locationUpdate";
+    if (context.mapLatitude && context.mapLongitude) return "mapUpdate";
+    if (context.searchQuery) return "searchUpdate";
+    if (context.activeTab) return "tabUpdate";
+
+    return PARAMETER_UPDATE_EVENT;
   }
 
   function parameterSignature() {
@@ -151,8 +194,8 @@ FTS.Analytics = (function () {
 
     lastParameterSignature = signature;
 
-    window.plausible?.(PARAMETER_UPDATE_EVENT, {
-      props: buildPageviewProperties()
+    window.plausible?.(getParameterUpdateEventName(), {
+      props: buildFocusedParameterProperties()
     });
   }
 
@@ -230,6 +273,7 @@ FTS.Analytics = (function () {
   return {
     init,
     buildPageviewProperties,
+    buildParameterProperties,
     trackParameterUpdate
   };
 })();
