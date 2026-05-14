@@ -1,8 +1,15 @@
 (function () {
   const STORAGE_KEY = "fts-ios-install-prompt-dismissed";
+  const ELIGIBLE_NEXT_PAGE_KEY = "fts-ios-install-prompt-eligible-next-page";
 
   function featureEnabled() {
     return window.FTS?.Features?.isEnabled("iosInstallPromptEnabled") !== false;
+  }
+
+  function privacyAnswered() {
+    if (window.FTS?.Privacy?.enabled?.() === false) return true;
+
+    return window.FTS?.Privacy?.getSettings?.().hasAnswered === true;
   }
 
   function isIOSDevice() {
@@ -34,8 +41,37 @@
     } catch (err) {}
   }
 
+  function isEligibleThisPage() {
+    try {
+      return window.sessionStorage.getItem(ELIGIBLE_NEXT_PAGE_KEY) === "true";
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function markEligibleForNextPage() {
+    try {
+      window.sessionStorage.setItem(ELIGIBLE_NEXT_PAGE_KEY, "true");
+    } catch (err) {}
+  }
+
+  function consumeEligibility() {
+    try {
+      window.sessionStorage.removeItem(ELIGIBLE_NEXT_PAGE_KEY);
+    } catch (err) {}
+  }
+
   function shouldShow() {
-    return featureEnabled() && isIOSDevice() && !isStandalone() && !wasDismissed();
+    if (!featureEnabled()) return false;
+    if (!isIOSDevice()) return false;
+    if (isStandalone()) return false;
+    if (wasDismissed()) return false;
+    if (!privacyAnswered()) return false;
+
+    if (isEligibleThisPage()) return true;
+
+    markEligibleForNextPage();
+    return false;
   }
 
   function addStyle() {
@@ -163,6 +199,7 @@
     if (!shouldShow()) return;
     if (document.querySelector(".fts-ios-install-overlay")) return;
 
+    consumeEligibility();
     addStyle();
 
     const overlay = document.createElement("div");
