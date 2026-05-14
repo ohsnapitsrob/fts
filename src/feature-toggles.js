@@ -3,6 +3,8 @@ window.FTS = window.FTS || {};
 FTS.FeatureToggles = {
   headerLogoEnabled: true,
   iosInstallPromptEnabled: true,
+  privacyConsentEnabled: true,
+  mediaEmbedsEnabled: true,
 
   homeRailsEnabled: true,
   homeRailLatestScenesEnabled: true,
