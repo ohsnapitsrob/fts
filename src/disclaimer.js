@@ -52,6 +52,10 @@
   }
 
   function render() {
+    if (window.FTS?.Features?.isEnabled("siteDisclaimerEnabled") === false) {
+      return;
+    }
+
     if (document.querySelector(".fts-site-disclaimer")) return;
 
     const target = document.querySelector("[data-site-disclaimer]");
