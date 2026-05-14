@@ -2,6 +2,7 @@ window.FTS = window.FTS || {};
 
 FTS.AppSettings = (function () {
   const STORAGE_KEY = "fts-app-settings";
+  const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
 
   const defaults = {
     hideNoAccessScenes: false
@@ -37,6 +38,37 @@ FTS.AppSettings = (function () {
     }));
 
     return settings;
+  }
+
+  function setMediaEmbeds(value) {
+    try {
+      localStorage.setItem(PRIVACY_STORAGE_KEY, JSON.stringify({
+        mediaEmbeds: value === true
+      }));
+    } catch (err) {}
+
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (
+          key.startsWith("plausible_") ||
+          key.startsWith("yt-") ||
+          key.startsWith("youtube")
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch (err) {}
+
+    try {
+      document.cookie.split(";").forEach((cookie) => {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.slice(0, eqPos).trim() : cookie.trim();
+        if (!name) return;
+        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+      });
+    } catch (err) {}
+
+    window.location.reload();
   }
 
   function getRootPath() {
@@ -283,7 +315,7 @@ FTS.AppSettings = (function () {
       const current = window.FTS?.Privacy?.getSettings?.().mediaEmbeds === true;
       const next = !current;
       syncToggle(event.currentTarget, next);
-      window.FTS?.Privacy?.setMediaEmbeds?.(next);
+      setMediaEmbeds(next);
     });
 
     document.body.appendChild(overlay);
