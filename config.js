@@ -5,7 +5,7 @@ window.APP_CONFIG = {
 
   SITE_NAME: "Find That Scene",
   SITE_LOGO_URL: "https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG",
-  CONTACT_EMAIL: "robholdersnaps@gmail.com",
+  CONTACT_EMAIL: "contact@findthatscene.co.uk",
 
   MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
   MAP_STYLE: "streets",
