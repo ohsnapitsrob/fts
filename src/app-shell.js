@@ -49,6 +49,18 @@
     window.dispatchEvent(new CustomEvent(`fts:${name}-ready`));
   }
 
+  function hasPrivacyChoice() {
+    try {
+      const raw = localStorage.getItem("fts-privacy-settings");
+      if (!raw) return false;
+
+      const settings = JSON.parse(raw);
+      return settings && typeof settings === "object";
+    } catch (err) {
+      return false;
+    }
+  }
+
   function loadPrivacySystem() {
     return loadSharedScript("privacy-consent.js", "data-fts-privacy-consent")
       .then(() => dispatchReady("privacy"));
@@ -80,6 +92,10 @@
 
   function loadAnalytics() {
     if (window.FTS?.Features?.isEnabled("plausibleAnalyticsEnabled") !== true) {
+      return;
+    }
+
+    if (!hasPrivacyChoice()) {
       return;
     }
 
