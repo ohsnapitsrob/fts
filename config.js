@@ -7,6 +7,8 @@ window.APP_CONFIG = {
   SITE_LOGO_URL: "https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG",
   CONTACT_EMAIL: "contact@findthatscene.co.uk",
 
+  PLAUSIBLE_SCRIPT_URL: "https://plausible.io/js/pa-oOZwKrRSZ4iB9GYOB7KxN.js",
+
   MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
   MAP_STYLE: "streets",
   NT_ICON_URL: "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png",
