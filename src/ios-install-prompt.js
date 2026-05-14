@@ -1,6 +1,10 @@
 (function () {
   const STORAGE_KEY = "fts-ios-install-prompt-dismissed";
 
+  function featureEnabled() {
+    return window.FTS?.Features?.isEnabled("iosInstallPromptEnabled") !== false;
+  }
+
   function isIOSDevice() {
     const ua = window.navigator.userAgent || "";
     const platform = window.navigator.platform || "";
@@ -31,7 +35,7 @@
   }
 
   function shouldShow() {
-    return isIOSDevice() && !isStandalone() && !wasDismissed();
+    return featureEnabled() && isIOSDevice() && !isStandalone() && !wasDismissed();
   }
 
   function addStyle() {
