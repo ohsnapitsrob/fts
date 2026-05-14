@@ -243,8 +243,11 @@ FTS.Privacy = (function () {
     document.head.appendChild(style);
   }
 
-  function buildModal(isInitial = false) {
+  function buildModal(options = {}) {
     addStyles();
+
+    const isInitial = options.isInitial === true;
+    const saveLabel = options.saveLabel || (isInitial ? "Save preferences" : "Done");
 
     const settings = load();
     const initialMediaValue = isInitial && !settings.hasAnswered
@@ -288,7 +291,7 @@ FTS.Privacy = (function () {
           ` : ""}
 
           <button class="fts-privacy-btn fts-privacy-btn-primary" data-action="save" type="button">
-            ${isInitial ? "Save preferences" : "Done"}
+            ${saveLabel}
           </button>
         </div>
       </div>
@@ -325,10 +328,10 @@ FTS.Privacy = (function () {
     return overlay;
   }
 
-  function openSettings() {
+  function openSettings(options = {}) {
     if (!enabled()) return;
 
-    document.body.appendChild(buildModal(false));
+    document.body.appendChild(buildModal(options));
   }
 
   function maybeShowInitialPrompt() {
@@ -338,7 +341,9 @@ FTS.Privacy = (function () {
 
     if (settings.hasAnswered) return;
 
-    document.body.appendChild(buildModal(true));
+    document.body.appendChild(buildModal({
+      isInitial: true
+    }));
   }
 
   return {
