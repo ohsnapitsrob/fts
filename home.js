@@ -2,6 +2,10 @@
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
 
+  function featureEnabled(key) {
+    return window.FTS?.Features?.isEnabled(key) !== false;
+  }
+
   function norm(s) {
     return (s || "").toString().trim();
   }
@@ -463,37 +467,43 @@
     );
 
     return [
-      { title: "Latest scenes found", items: latestScenes },
+      { key: "homeRailLatestScenesEnabled", title: "Latest scenes found", items: latestScenes },
 
-      { title: "Top 10 most scenes", items: topScenes },
+      { key: "homeRailTopScenesEnabled", title: "Top 10 most scenes", items: topScenes },
 
       {
+        key: "homeRailJamesBondEnabled",
         title: "James Bond",
         items: orderedSeriesRail("James Bond")
       },
 
       {
+        key: "homeRailHarryPotterEnabled",
         title: "Harry Potter",
         items: orderedSeriesRail("Harry Potter")
       },
 
       {
+        key: "homeRailMoviesEnabled",
         title: "A selection of Movies",
         items: typeRail("Film")
       },
 
       {
+        key: "homeRailTVEnabled",
         title: "A selection of TV Shows",
         items: typeRail("TV")
       },
 
       {
+        key: "homeRailMusicVideosEnabled",
         title: "A selection of Music Videos",
         items: musicVideoThumbnailRail,
         variant: "thumbnail"
       },
 
       {
+        key: "homeRailNationalTrustEnabled",
         title: "National Trust On Screen",
         items: nationalTrustRail,
         link: "./national-trust/",
@@ -501,6 +511,7 @@
       },
 
       {
+        key: "homeRailGamesEnabled",
         title: "A selection of Games",
         items: typeRail("Video Game")
       }
@@ -508,7 +519,13 @@
   }
 
   function renderRails(rows, metadataRows) {
-    const rails = buildRails(rows, metadataRows);
+    if (!featureEnabled("homeRailsEnabled")) {
+      railsEl.innerHTML = "";
+      return;
+    }
+
+    const rails = buildRails(rows, metadataRows)
+      .filter((rail) => featureEnabled(rail.key));
 
     const html = rails
       .map((rail) =>
@@ -521,8 +538,7 @@
       .filter(Boolean)
       .join("");
 
-    railsEl.innerHTML =
-      html || `<div class="loading-card">No poster rails to show yet.</div>`;
+    railsEl.innerHTML = html;
 
     makeRailsDraggable();
   }
