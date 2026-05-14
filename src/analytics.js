@@ -59,7 +59,23 @@ FTS.Analytics = (function () {
     }
   }
 
+  function hasPrivacyChoice() {
+    try {
+      const raw = localStorage.getItem("fts-privacy-settings");
+      if (!raw) return false;
+
+      const settings = JSON.parse(raw);
+      return settings && typeof settings === "object";
+    } catch (err) {
+      return false;
+    }
+  }
+
   function getConsentMode() {
+    if (!hasPrivacyChoice()) {
+      return "";
+    }
+
     const settings = loadJsonStorage("fts-privacy-settings");
     return settings.mediaEmbeds === true ? "media" : "essential_only";
   }
@@ -163,7 +179,11 @@ FTS.Analytics = (function () {
     const props = {};
 
     addIfPresent(props, "page_type", getPageType());
-    addIfPresent(props, "consent_mode", getConsentMode());
+
+    if (hasPrivacyChoice()) {
+      addIfPresent(props, "consent_mode", getConsentMode());
+    }
+
     addIfPresent(props, "hide_no_access_scenes", appSettings.hideNoAccessScenes === true ? "true" : "false");
 
     return props;
