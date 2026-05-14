@@ -203,13 +203,19 @@ FTS.Privacy = (function () {
       }
 
       .fts-privacy-toggle {
+        flex: 0 0 auto;
         position: relative;
-        width: 52px;
+        width: 54px;
         height: 32px;
-        border-radius: 999px;
+        min-width: 54px;
+        padding: 0;
         border: 0;
+        border-radius: 999px;
         background: #d1d5db;
         cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.06);
       }
 
       .fts-privacy-toggle::after {
@@ -221,6 +227,7 @@ FTS.Privacy = (function () {
         height: 24px;
         border-radius: 999px;
         background: #ffffff;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.22);
         transition: transform 0.2s ease;
       }
 
@@ -229,7 +236,7 @@ FTS.Privacy = (function () {
       }
 
       .fts-privacy-toggle.is-active::after {
-        transform: translateX(20px);
+        transform: translateX(22px);
       }
     `;
 
@@ -240,6 +247,9 @@ FTS.Privacy = (function () {
     addStyles();
 
     const settings = load();
+    const initialMediaValue = isInitial && !settings.hasAnswered
+      ? true
+      : settings.mediaEmbeds;
 
     const overlay = document.createElement("div");
     overlay.className = "fts-privacy-overlay";
@@ -265,7 +275,7 @@ FTS.Privacy = (function () {
                 </div>
               </div>
 
-              <button class="fts-privacy-toggle ${settings.mediaEmbeds ? "is-active" : ""}" type="button" aria-label="Toggle media embeds"></button>
+              <button class="fts-privacy-toggle ${initialMediaValue ? "is-active" : ""}" type="button" aria-label="Toggle media embeds" aria-pressed="${initialMediaValue ? "true" : "false"}"></button>
             </div>
           </div>
         </div>
@@ -284,12 +294,13 @@ FTS.Privacy = (function () {
       </div>
     `;
 
-    let mediaEmbeds = settings.mediaEmbeds;
+    let mediaEmbeds = initialMediaValue;
 
     const toggle = overlay.querySelector(".fts-privacy-toggle");
 
     function syncToggle() {
       toggle.classList.toggle("is-active", mediaEmbeds);
+      toggle.setAttribute("aria-pressed", mediaEmbeds ? "true" : "false");
     }
 
     toggle.addEventListener("click", () => {
