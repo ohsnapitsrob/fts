@@ -15,6 +15,14 @@ FTS.Analytics = (function () {
     return new URLSearchParams(window.location.search);
   }
 
+  function getText(selector) {
+    return (document.querySelector(selector)?.textContent || "").trim();
+  }
+
+  function getDataLabel(selector) {
+    return (document.querySelector(selector)?.dataset?.label || "").trim();
+  }
+
   function getPageType() {
     const path = window.location.pathname.replace(/\/+$/, "");
 
@@ -65,11 +73,36 @@ FTS.Analytics = (function () {
     props[key] = value;
   }
 
+  function getModalTitleFallback() {
+    const modal = document.getElementById("modal");
+    const modalVisible = modal && modal.getAttribute("aria-hidden") !== "true";
+
+    if (!modalVisible) return "";
+
+    return getText("#mTitle");
+  }
+
+  function getViewType(pageType) {
+    if (pageType === "title") {
+      return getText("#titleContent .kicker") || getText(".title-content .kicker");
+    }
+
+    return getDataLabel('#mTags [data-kind="Type"]');
+  }
+
   function getFilterContext(params, pageType) {
-    const filterValue = params.get("fl") || params.get("title");
+    let filterValue = params.get("fl") || params.get("title");
     let filterType = params.get("fk");
 
+    if (!filterValue && pageType === "explore") {
+      filterValue = getModalTitleFallback();
+    }
+
     if (!filterType && pageType === "title" && filterValue) {
+      filterType = "Title";
+    }
+
+    if (!filterType && pageType === "explore" && filterValue) {
       filterType = "Title";
     }
 
@@ -91,6 +124,7 @@ FTS.Analytics = (function () {
       activeTab: params.get("tab"),
       filterType,
       filterValue,
+      viewType: getViewType(pageType),
       locationId: params.get("loc"),
       ratingMatch: params.get("rm"),
       mapLatitude: params.get("mlat"),
@@ -130,6 +164,7 @@ FTS.Analytics = (function () {
     addIfPresent(props, "active_tab", context.activeTab);
     addIfPresent(props, "filter_type", context.filterType);
     addIfPresent(props, "filter_value", context.filterValue);
+    addIfPresent(props, "view_type", context.viewType);
 
     if (dynamicFilterKey && context.filterValue) {
       addIfPresent(props, dynamicFilterKey, context.filterValue);
@@ -181,7 +216,9 @@ FTS.Analytics = (function () {
 
     return JSON.stringify({
       path: window.location.pathname,
-      params: entries
+      params: entries,
+      modalTitle: getModalTitleFallback(),
+      viewType: getViewType(getPageType())
     });
   }
 
@@ -206,7 +243,7 @@ FTS.Analytics = (function () {
       clearTimeout(parameterUpdateTimer);
     }
 
-    parameterUpdateTimer = setTimeout(trackParameterUpdate, 350);
+    parameterUpdateTimer = setTimeout(trackParameterUpdate, 600);
   }
 
   function wrapHistoryMethod(methodName) {
