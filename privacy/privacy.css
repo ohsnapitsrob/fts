@@ -79,6 +79,33 @@ h1 {
   font-weight: 700;
 }
 
+.privacy-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 18px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 16px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.privacy-action-btn:hover {
+  opacity: 0.92;
+}
+
+.privacy-action-btn:active {
+  transform: scale(0.98);
+}
+
 [data-site-disclaimer] {
   margin-top: 28px;
 }
@@ -92,5 +119,9 @@ h1 {
   .privacy-card {
     padding: 18px;
     border-radius: 24px;
+  }
+
+  .privacy-action-btn {
+    width: 100%;
   }
 }
