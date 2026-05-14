@@ -9,7 +9,8 @@
       path.endsWith("/explore") ||
       path.endsWith("/title") ||
       path.endsWith("/stats") ||
-      path.endsWith("/national-trust")
+      path.endsWith("/national-trust") ||
+      path.endsWith("/privacy")
     ) {
       return "../";
     }
@@ -43,6 +44,7 @@
   function getActiveKey() {
     const path = window.location.pathname.replace(/\/+$/, "");
 
+    if (path.endsWith("/privacy")) return null;
     if (path.endsWith("/browse")) return "browse";
     if (path.endsWith("/explore")) return "map";
     if (path.endsWith("/title") || path.endsWith("/stats") || path.endsWith("/national-trust")) return "browse";
@@ -141,7 +143,7 @@
     nav.className = "fts-bottom-nav";
     nav.setAttribute("aria-label", "Primary navigation");
     nav.innerHTML = items.map((item) => {
-      const active = item.key === activeKey;
+      const active = activeKey && item.key === activeKey;
 
       return `
         <a href="${item.href}"${active ? ' aria-current="page"' : ""}>
