@@ -61,14 +61,28 @@ FTS.Analytics = (function () {
     props[key] = value;
   }
 
+  function getFilterContext(params, pageType) {
+    const filterValue = params.get("fl") || params.get("title");
+    let filterType = params.get("fk");
+
+    if (!filterType && pageType === "title" && filterValue) {
+      filterType = "Title";
+    }
+
+    return {
+      filterType,
+      filterValue
+    };
+  }
+
   function buildPageviewProperties() {
     const params = getParams();
+    const pageType = getPageType();
     const props = {};
 
     const searchQuery = params.get("q");
     const activeTab = params.get("tab");
-    const filterType = params.get("fk");
-    const filterValue = params.get("fl");
+    const { filterType, filterValue } = getFilterContext(params, pageType);
     const locationId = params.get("loc");
     const ratingMatch = params.get("rm");
     const mapLatitude = params.get("mlat");
@@ -77,7 +91,7 @@ FTS.Analytics = (function () {
     const dynamicFilterKey = normalisePropertyName(filterType);
     const appSettings = getAppSettings();
 
-    addIfPresent(props, "page_type", getPageType());
+    addIfPresent(props, "page_type", pageType);
     addIfPresent(props, "route", window.location.pathname);
     addIfPresent(props, "search_query", searchQuery);
     addIfPresent(props, "active_tab", activeTab);
