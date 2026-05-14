@@ -301,6 +301,8 @@ FTS.AppSettings = (function () {
   function open() {
     addStyles();
 
+    const mapSettingsEnabled = window.FTS?.Features?.isEnabled("settingsMapSectionEnabled") !== false;
+
     const originalAppSettings = load();
     const originalPrivacySettings = window.FTS?.Privacy?.getSettings?.() || { mediaEmbeds: false };
 
@@ -322,16 +324,18 @@ FTS.AppSettings = (function () {
         </div>
 
         <div class="fts-settings-body">
-          <section class="fts-settings-section">
-            <h3 class="fts-settings-section-title">Map</h3>
-            <div class="fts-settings-row">
-              <div>
-                <div class="fts-settings-row-title">Hide scenes with no public access</div>
-                <div class="fts-settings-row-copy">Hides map pins for scenes marked as no access or unavailable.</div>
+          ${mapSettingsEnabled ? `
+            <section class="fts-settings-section">
+              <h3 class="fts-settings-section-title">Map</h3>
+              <div class="fts-settings-row">
+                <div>
+                  <div class="fts-settings-row-title">Hide scenes with no public access</div>
+                  <div class="fts-settings-row-copy">Hides map pins for scenes marked as no access or unavailable.</div>
+                </div>
+                ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
               </div>
-              ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
-            </div>
-          </section>
+            </section>
+          ` : ""}
 
           <section class="fts-settings-section">
             <h3 class="fts-settings-section-title">Privacy</h3>
