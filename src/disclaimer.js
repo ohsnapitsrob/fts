@@ -11,25 +11,40 @@
 
     style.textContent = `
       .fts-site-disclaimer {
+        display: block;
+        width: 100%;
         max-width: 100%;
         margin: 34px auto 0;
-        color: #5f5f5f;
-        font-size: 8px;
-        line-height: 12px;
+        color: #5f5f5f !important;
+        font-size: 8px !important;
+        line-height: 12px !important;
+        font-weight: 400 !important;
+        letter-spacing: normal !important;
+        text-align: left !important;
         opacity: 0.95;
       }
 
       .fts-site-disclaimer p {
-        margin: 0 0 10px;
+        display: block;
+        margin: 0 0 10px !important;
+        padding: 0 !important;
+        color: inherit !important;
+        font-size: inherit !important;
+        line-height: inherit !important;
+        font-weight: inherit !important;
+        letter-spacing: inherit !important;
+        text-align: inherit !important;
       }
 
       .fts-site-disclaimer p:last-child {
-        margin-bottom: 0;
+        margin-bottom: 0 !important;
       }
 
       .fts-site-disclaimer a {
-        color: #5f5f5f;
-        text-decoration: none;
+        color: #5f5f5f !important;
+        text-decoration: none !important;
+        font-size: inherit !important;
+        line-height: inherit !important;
       }
     `;
 
