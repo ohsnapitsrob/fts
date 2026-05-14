@@ -2,6 +2,11 @@
 window.APP_CONFIG = {
   ENVIRONMENT: "staging",
   ENVIRONMENT_LABEL: "STAGING BUILD",
+
+  SITE_NAME: "Find That Scene",
+  SITE_LOGO_URL: "https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG",
+  CONTACT_EMAIL: "robholdersnaps@gmail.com",
+
   MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
   MAP_STYLE: "streets",
   NT_ICON_URL: "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png",
