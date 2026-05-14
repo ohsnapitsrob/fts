@@ -11,6 +11,18 @@
 
   const sharedScriptBase = getSharedScriptBase();
 
+  function getScriptTarget() {
+    return document.head || document.documentElement;
+  }
+
+  function onDomReady(callback) {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", callback, { once: true });
+    } else {
+      callback();
+    }
+  }
+
   function loadSharedScript(name, attribute, options = {}) {
     if (document.querySelector(`script[${attribute}]`)) {
       return Promise.resolve();
@@ -28,7 +40,7 @@
       script.onload = resolve;
       script.onerror = resolve;
 
-      document.body.appendChild(script);
+      getScriptTarget().appendChild(script);
     });
   }
 
@@ -60,45 +72,47 @@
   function showEnvironmentBadge() {
     if (config.ENVIRONMENT !== "staging") return;
 
-    const label = config.ENVIRONMENT_LABEL || "STAGING";
+    onDomReady(() => {
+      const label = config.ENVIRONMENT_LABEL || "STAGING";
 
-    const badge = document.createElement("div");
-    badge.className = "fts-env-badge";
-    badge.textContent = label;
+      const badge = document.createElement("div");
+      badge.className = "fts-env-badge";
+      badge.textContent = label;
 
-    const style = document.createElement("style");
-    style.textContent = `
-      .fts-env-badge {
-        position: fixed;
-        right: 12px;
-        bottom: 12px;
-        z-index: 99999;
-        padding: 8px 10px;
-        border-radius: 999px;
-        background: rgba(17, 24, 39, 0.88);
-        color: #ffffff;
-        font-size: 11px;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-        pointer-events: none;
-        user-select: none;
-      }
-
-      @media (max-width: 640px) {
+      const style = document.createElement("style");
+      style.textContent = `
         .fts-env-badge {
-          font-size: 10px;
-          padding: 7px 9px;
-          bottom: calc(92px + env(safe-area-inset-bottom));
+          position: fixed;
+          right: 12px;
+          bottom: 12px;
+          z-index: 99999;
+          padding: 8px 10px;
+          border-radius: 999px;
+          background: rgba(17, 24, 39, 0.88);
+          color: #ffffff;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          backdrop-filter: blur(10px);
+          -webkit-backdrop-filter: blur(10px);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+          pointer-events: none;
+          user-select: none;
         }
-      }
-    `;
 
-    document.head.appendChild(style);
-    document.body.appendChild(badge);
+        @media (max-width: 640px) {
+          .fts-env-badge {
+            font-size: 10px;
+            padding: 7px 9px;
+            bottom: calc(92px + env(safe-area-inset-bottom));
+          }
+        }
+      `;
+
+      document.head.appendChild(style);
+      document.body.appendChild(badge);
+    });
   }
 
   loadPrivacySystem();
