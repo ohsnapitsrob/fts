@@ -2,7 +2,18 @@ window.FTS = window.FTS || {};
 
 FTS.FeatureToggles = {
   headerLogoEnabled: true,
-  iosInstallPromptEnabled: true
+  iosInstallPromptEnabled: true,
+
+  homeRailsEnabled: true,
+  homeRailLatestScenesEnabled: true,
+  homeRailTopScenesEnabled: true,
+  homeRailJamesBondEnabled: true,
+  homeRailHarryPotterEnabled: true,
+  homeRailMoviesEnabled: true,
+  homeRailTVEnabled: true,
+  homeRailMusicVideosEnabled: true,
+  homeRailNationalTrustEnabled: true,
+  homeRailGamesEnabled: true
 };
 
 FTS.Features = (function () {
