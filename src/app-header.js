@@ -44,17 +44,29 @@
     const style = document.createElement("style");
     style.id = "fts-app-header-style";
     style.textContent = `
+      body.fts-has-app-header:not(:has(#map)) {
+        padding-top: 72px;
+      }
+
+      body.fts-has-app-header:has(#map) {
+        padding-top: 0;
+      }
+
       .fts-app-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
         width: 100%;
+        min-height: 72px;
         max-height: 72px;
         padding: 12px 16px;
         background: #ffffff;
         display: grid;
         grid-template-columns: 48px minmax(0, 1fr) 48px;
         align-items: center;
-        position: relative;
         z-index: 3200;
-        flex: 0 0 auto;
+        box-shadow: 0 1px 0 rgba(229, 231, 235, 0.9);
       }
 
       .fts-app-header-link {
@@ -98,6 +110,10 @@
         width: 21px;
         height: 21px;
         fill: currentColor;
+      }
+
+      body:has(#map) .topbar {
+        top: 72px;
       }
 
       body:has(#map) .topbar-inner {
@@ -147,6 +163,7 @@
       <button class="fts-header-settings-btn" type="button" aria-label="Settings">${iconSettings()}</button>
     `;
 
+    document.body.classList.add("fts-has-app-header");
     document.body.prepend(header);
 
     const searchButton = header.querySelector(".fts-header-search-btn");
