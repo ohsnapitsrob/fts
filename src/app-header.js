@@ -1,5 +1,7 @@
 (function () {
-  const LOGO_URL = "https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG";
+  const CONFIG = window.APP_CONFIG || {};
+  const LOGO_URL = CONFIG.SITE_LOGO_URL || "";
+  const SITE_NAME = CONFIG.SITE_NAME || "Find That Scene";
 
   window.FTS = window.FTS || {};
 
@@ -149,10 +151,10 @@
     const header = document.createElement("header");
     header.className = "fts-app-header";
 
-    const logoMarkup = logoEnabled()
+    const logoMarkup = logoEnabled() && LOGO_URL
       ? `
-        <a class="fts-app-header-link" href="${getRootPath()}" aria-label="Find That Scene home">
-          <img class="fts-app-header-logo" src="${LOGO_URL}" alt="Find That Scene">
+        <a class="fts-app-header-link" href="${getRootPath()}" aria-label="${SITE_NAME} home">
+          <img class="fts-app-header-logo" src="${LOGO_URL}" alt="${SITE_NAME}">
         </a>
       `
       : `<span></span>`;
