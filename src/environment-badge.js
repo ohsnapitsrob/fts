@@ -27,6 +27,10 @@
     loadSharedScript("app-header.js", "data-fts-app-header");
   }
 
+  function loadIOSInstallPrompt() {
+    loadSharedScript("ios-install-prompt.js", "data-fts-ios-install-prompt");
+  }
+
   function showEnvironmentBadge() {
     if (config.ENVIRONMENT !== "staging") return;
 
@@ -72,6 +76,7 @@
   }
 
   loadAppHeader();
+  loadIOSInstallPrompt();
   showEnvironmentBadge();
   loadBottomNav();
 })();
