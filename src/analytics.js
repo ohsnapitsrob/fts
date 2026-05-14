@@ -66,7 +66,7 @@ FTS.Analytics = (function () {
   }
 
   function getFilterContext(params, pageType) {
-    const filterValue = params.get("fl") || params.get("title") || (pageType === "title" ? params.get("q") : "");
+    const filterValue = params.get("fl") || params.get("title");
     let filterType = params.get("fk");
 
     if (!filterType && pageType === "title" && filterValue) {
