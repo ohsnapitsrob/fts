@@ -6,6 +6,31 @@
     return window.FTS?.Features?.isEnabled(key) !== false;
   }
 
+  function privacyChoiceRequired() {
+    return window.FTS?.Privacy?.enabled?.() !== false;
+  }
+
+  function privacyChoiceAnswered() {
+    if (!privacyChoiceRequired()) return true;
+
+    return window.FTS?.Privacy?.getSettings?.().hasAnswered === true;
+  }
+
+  function waitForPrivacyChoice(callback) {
+    if (privacyChoiceAnswered()) {
+      callback();
+      return;
+    }
+
+    railsEl.innerHTML = `
+      <div class="loading-card">
+        Choose your privacy settings to load the homepage.
+      </div>
+    `;
+
+    window.addEventListener("fts:privacy-updated", callback, { once: true });
+  }
+
   function norm(s) {
     return (s || "").toString().trim();
   }
@@ -202,7 +227,7 @@
         <div class="poster-card ${isThumbnail ? "thumbnail-card" : ""}">
           ${
             src
-              ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy" draggable="false">`
+              ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy" decoding="async" draggable="false">`
               : `<div class="poster-fallback">${escapeHtml(title)}</div>`
           }
         </div>
@@ -674,5 +699,5 @@
     }
   }
 
-  init();
+  waitForPrivacyChoice(init);
 })();
