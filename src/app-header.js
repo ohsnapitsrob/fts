@@ -114,10 +114,6 @@
         fill: currentColor;
       }
 
-      body:has(#map) .topbar {
-        top: 72px;
-      }
-
       body:has(#map) .topbar-inner {
         display: none;
       }
