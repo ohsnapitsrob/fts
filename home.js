@@ -1,4 +1,5 @@
 (function () {
+  const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
 
@@ -6,12 +7,28 @@
     return window.FTS?.Features?.isEnabled(key) !== false;
   }
 
+  function privacyConsentFeatureEnabled() {
+    return window.FTS?.Features?.isEnabled("privacyConsentEnabled") !== false;
+  }
+
+  function savedPrivacyChoiceExists() {
+    try {
+      return Boolean(window.localStorage.getItem(PRIVACY_STORAGE_KEY));
+    } catch (err) {
+      return false;
+    }
+  }
+
   function privacyChoiceRequired() {
-    return window.FTS?.Privacy?.enabled?.() !== false;
+    if (!privacyConsentFeatureEnabled()) return false;
+    if (window.FTS?.Privacy?.enabled?.() === false) return false;
+
+    return true;
   }
 
   function privacyChoiceAnswered() {
     if (!privacyChoiceRequired()) return true;
+    if (savedPrivacyChoiceExists()) return true;
 
     return window.FTS?.Privacy?.getSettings?.().hasAnswered === true;
   }
