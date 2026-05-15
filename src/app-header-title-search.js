@@ -27,6 +27,11 @@ FTS.AppHeaderTitleSearch = (function () {
     return norm(value).toLowerCase();
   }
 
+  function getNoResultsMessage(query) {
+    const easterEggMessage = window.FTS?.EasterEggs?.getTitleSearchNoResultsMessage?.(query);
+    return easterEggMessage || "No matching titles.";
+  }
+
   function getAccessValue(row) {
     return norm(
       row.access ||
@@ -313,7 +318,7 @@ FTS.AppHeaderTitleSearch = (function () {
     }
 
     if (!results.length) {
-      resultsEl.innerHTML = `<div class="fts-title-search-empty">No matching titles.</div>`;
+      resultsEl.innerHTML = `<div class="fts-title-search-empty">${escapeHtml(getNoResultsMessage(query))}</div>`;
       return;
     }
 

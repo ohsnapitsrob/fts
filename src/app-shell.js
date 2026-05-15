@@ -112,9 +112,18 @@
       .then(() => dispatchReady("analytics"));
   }
 
+  function loadEasterEggs() {
+    if (window.FTS?.Features?.isEnabled("easterEggsEnabled") !== true) {
+      return;
+    }
+
+    return loadSharedScript("easter-eggs.js", "data-fts-easter-eggs")
+      .then(() => dispatchReady("easter-eggs"));
+  }
+
   function showEnvironmentBadge() {
     const runtime = getRuntimeConfig();
-    const isStaging = runtime.environment === "staging" || (!runtime.environment && config.ENVIRONMENT === "staging");
+    const isStaging = runtime.environment === "staging";
 
     if (!isStaging) return;
 
@@ -165,6 +174,7 @@
   loadAppSettings();
   loadVisibility();
   loadAppHeaderModules();
+  loadEasterEggs();
 
   if (window.FTS?.Features?.isEnabled("iosInstallPromptEnabled") === true) {
     loadIOSInstallPrompt();
