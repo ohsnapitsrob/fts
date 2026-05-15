@@ -71,6 +71,11 @@
       .then(() => dispatchReady("app-settings"));
   }
 
+  function loadVisibility() {
+    return loadSharedScript("visibility.js", "data-fts-visibility")
+      .then(() => dispatchReady("visibility"));
+  }
+
   function loadBottomNav() {
     return loadSharedScript("bottom-nav.js", "data-fts-bottom-nav")
       .then(() => dispatchReady("bottom-nav"));
@@ -151,6 +156,7 @@
 
   loadPrivacySystem();
   loadAppSettings();
+  loadVisibility();
   loadAppHeaderModules();
   loadIOSInstallPrompt();
   loadAnalytics();
