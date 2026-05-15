@@ -245,7 +245,14 @@
 
     return `
       <section class="rail">
-        <h2 class="rail-title">${escapeHtml(title)}</h2>
+        <div class="rail-header">
+          <h2 class="rail-title">${escapeHtml(title)}</h2>
+          ${
+            options.href
+              ? `<a class="rail-link" href="${escapeHtml(options.href)}">${escapeHtml(options.linkLabel || "View more")}</a>`
+              : ""
+          }
+        </div>
 
         <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""}">
           ${withImages
@@ -405,7 +412,9 @@
       .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
       .slice(0, 10);
 
-    function orderedSeriesRail(seriesName) {
+    function orderedSeriesRail(seriesName, options = {}) {
+      const direction = options.direction || "asc";
+
       return [...entries]
         .filter(hasPoster)
         .filter(
@@ -418,7 +427,9 @@
           const bHas = Number.isFinite(b.railOrder);
 
           if (aHas && bHas) {
-            return a.railOrder - b.railOrder;
+            return direction === "desc"
+              ? b.railOrder - a.railOrder
+              : a.railOrder - b.railOrder;
           }
 
           if (aHas && !bHas) return -1;
@@ -458,7 +469,7 @@
 
       {
         title: "James Bond",
-        items: orderedSeriesRail("James Bond")
+        items: orderedSeriesRail("James Bond", { direction: "desc" })
       },
 
       {
@@ -484,7 +495,9 @@
 
       {
         title: "National Trust On Screen",
-        items: nationalTrustRail
+        items: nationalTrustRail,
+        href: "./national-trust/",
+        linkLabel: "Explore National Trust locations"
       },
 
       {
@@ -500,7 +513,9 @@
     const html = rails
       .map((rail) =>
         railHtml(rail.title, rail.items, {
-          variant: rail.variant
+          variant: rail.variant,
+          href: rail.href,
+          linkLabel: rail.linkLabel
         })
       )
       .filter(Boolean)
