@@ -55,15 +55,33 @@ function inferBranchFromUrl(value) {
 function branchFromProjectName(value) {
   const name = firstValue(value);
   if (!name) return "";
-  if (name.toLowerCase().includes("staging")) return "staging";
+
+  const lower = name.toLowerCase();
+
+  if (lower.includes("staging")) return "staging";
+  if (lower.includes("live") || lower.includes("production")) return "main";
+
   return "";
 }
+
+const forcedEnvironment = firstValue(
+  process.env.FTS_ENVIRONMENT,
+  process.env.RUNTIME_ENVIRONMENT,
+  process.env.DEPLOY_ENVIRONMENT
+);
+
+const forcedBranch = forcedEnvironment === "live"
+  ? "main"
+  : forcedEnvironment === "staging"
+    ? "staging"
+    : "";
 
 const gitBranch = runGit("git branch --show-current") || runGit("git rev-parse --abbrev-ref HEAD");
 const gitCommit = runGit("git rev-parse HEAD");
 const inferredBranch = inferBranchFromUrl(process.env.CF_PAGES_URL);
 
 const branch = firstValue(
+  forcedBranch,
   process.env.CF_PAGES_BRANCH,
   process.env.CLOUDFLARE_PAGES_BRANCH,
   process.env.BRANCH_NAME,
@@ -85,7 +103,7 @@ const commit = shortCommit(
   gitCommit
 );
 
-const environment = branch === "main" ? "live" : "staging";
+const environment = forcedEnvironment || (branch === "main" ? "live" : "staging");
 const builtAt = new Date().toISOString();
 
 const content = `window.RUNTIME_CONFIG = ${JSON.stringify({
