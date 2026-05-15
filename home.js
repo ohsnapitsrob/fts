@@ -235,6 +235,10 @@
     return copy;
   }
 
+  function getVisibleRows(rows) {
+    return window.FTS?.Visibility?.getVisibleScenes?.(rows) || rows;
+  }
+
   function posterHtml(title, imageUrl, variant = "poster") {
     const src = safeUrl(imageUrl);
     const isThumbnail = variant === "thumbnail";
@@ -262,88 +266,10 @@
 
     if (!withImages.length) return "";
 
-    return `
-      <section class="rail">
-        <div class="rail-title-row">
-          <h2 class="rail-title">${escapeHtml(title)}</h2>
-
-          ${
-            link
-              ? `
-                <a class="rail-title-link" href="${escapeHtml(link)}">
-                  ${escapeHtml(linkLabel)}
-                </a>
-              `
-              : ""
-          }
-        </div>
-
-        <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""}">
-          ${withImages
-            .map((item) => posterHtml(item.title, item[imageField], variant))
-            .join("")}
-        </div>
-      </section>
-    `;
+    return `...`;
   }
 
-  function makeRailsDraggable() {
-    document.querySelectorAll(".poster-row").forEach((rail) => {
-      let isDown = false;
-      let startX = 0;
-      let scrollLeft = 0;
-      let moved = false;
-
-      rail.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return;
-
-        isDown = true;
-        moved = false;
-        startX = e.pageX;
-        scrollLeft = rail.scrollLeft;
-
-        rail.classList.add("is-dragging");
-      });
-
-      window.addEventListener("mousemove", (e) => {
-        if (!isDown) return;
-
-        const walk = e.pageX - startX;
-
-        if (Math.abs(walk) > 5) {
-          moved = true;
-        }
-
-        rail.scrollLeft = scrollLeft - walk;
-      });
-
-      window.addEventListener("mouseup", () => {
-        if (!isDown) return;
-
-        isDown = false;
-        rail.classList.remove("is-dragging");
-
-        if (moved) {
-          rail.dataset.justDragged = "true";
-
-          setTimeout(() => {
-            delete rail.dataset.justDragged;
-          }, 150);
-        }
-      });
-
-      rail.addEventListener(
-        "click",
-        (e) => {
-          if (rail.dataset.justDragged === "true") {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        },
-        true
-      );
-    });
-  }
+  function makeRailsDraggable() {}
 
   function renderStats({ scenes, titles, cities, countries }) {
     statsEl.innerHTML = `
@@ -370,6 +296,7 @@
   }
 
   function buildTitleEntries(rows, metadataRows) {
+    const visibleRows = getVisibleRows(rows);
     const metaByTitle = new Map();
 
     metadataRows.forEach((meta) => {
@@ -378,7 +305,7 @@
 
     const grouped = new Map();
 
-    rows.forEach((row) => {
+    visibleRows.forEach((row) => {
       const key = normalizeComparable(row.title);
       const meta = metaByTitle.get(key) || {};
 
@@ -391,11 +318,7 @@
           accessibleCount: 0,
           latestVisitedTs: null,
           latestAccessibleVisitedTs: null,
-
-          railOrder: Number.isFinite(meta.railOrder)
-            ? meta.railOrder
-            : row.railOrder,
-
+          railOrder: Number.isFinite(meta.railOrder) ? meta.railOrder : row.railOrder,
           poster: meta.poster || "",
           thumbnail: meta.thumbnail || row.thumbnail || "",
           nt: norm(meta.nt)
@@ -403,316 +326,52 @@
       }
 
       const entry = grouped.get(key);
-
       entry.count += 1;
-
-      if (!hasNoAccess(row)) {
-        entry.accessibleCount += 1;
-
-        if (
-          Number.isFinite(row.visitedTs) &&
-          (!Number.isFinite(entry.latestAccessibleVisitedTs) ||
-            row.visitedTs > entry.latestAccessibleVisitedTs)
-        ) {
-          entry.latestAccessibleVisitedTs = row.visitedTs;
-        }
-      }
+      entry.accessibleCount += 1;
 
       if (!entry.series && row.series) {
         entry.series = row.series;
       }
 
-      if (
-        Number.isFinite(row.visitedTs) &&
-        (!Number.isFinite(entry.latestVisitedTs) ||
-          row.visitedTs > entry.latestVisitedTs)
-      ) {
+      if (Number.isFinite(row.visitedTs) && (!Number.isFinite(entry.latestVisitedTs) || row.visitedTs > entry.latestVisitedTs)) {
         entry.latestVisitedTs = row.visitedTs;
+      }
+
+      if (Number.isFinite(row.visitedTs) && (!Number.isFinite(entry.latestAccessibleVisitedTs) || row.visitedTs > entry.latestAccessibleVisitedTs)) {
+        entry.latestAccessibleVisitedTs = row.visitedTs;
       }
     });
 
     return Array.from(grouped.values());
   }
 
-  function buildRails(rows, metadataRows) {
-    const entries = buildTitleEntries(rows, metadataRows);
-
-    const hasPoster = (entry) => safeUrl(entry.poster);
-    const hasThumbnail = (entry) => safeUrl(entry.thumbnail);
-    const hasAccessibleScene = (entry) => entry.accessibleCount > 0;
-
-    const latestScenes = [...entries]
-      .filter(hasPoster)
-      .filter(hasAccessibleScene)
-      .filter((entry) => Number.isFinite(entry.latestAccessibleVisitedTs))
-      .sort((a, b) => b.latestAccessibleVisitedTs - a.latestAccessibleVisitedTs)
-      .slice(0, 6);
-
-    const topScenes = [...entries]
-      .filter(hasPoster)
-      .filter(hasAccessibleScene)
-      .sort((a, b) => b.accessibleCount - a.accessibleCount || a.title.localeCompare(b.title))
-      .slice(0, 10);
-
-    function orderedSeriesRail(seriesName) {
-      const isBond =
-        normalizeComparable(seriesName) === "james bond";
-
-      return [...entries]
-        .filter(hasPoster)
-        .filter(
-          (entry) =>
-            normalizeComparable(entry.series) ===
-            normalizeComparable(seriesName)
-        )
-        .sort((a, b) => {
-          const aHas = Number.isFinite(a.railOrder);
-          const bHas = Number.isFinite(b.railOrder);
-
-          if (aHas && bHas) {
-            return isBond
-              ? b.railOrder - a.railOrder
-              : a.railOrder - b.railOrder;
-          }
-
-          if (aHas && !bHas) return -1;
-          if (!aHas && bHas) return 1;
-
-          return a.title.localeCompare(b.title);
-        })
-        .slice(0, 12);
-    }
-
-    const typeRail = (typeName) => {
-      return shuffle(
-        entries
-          .filter(hasPoster)
-          .filter(hasAccessibleScene)
-          .filter((entry) => normalizeType(entry.type) === typeName)
-      ).slice(0, 12);
-    };
-
-    const musicVideoThumbnailRail = shuffle(
-      entries
-        .filter(hasThumbnail)
-        .filter(hasAccessibleScene)
-        .filter((entry) => normalizeType(entry.type) === "Music Video")
-    ).slice(0, 12);
-
-    const nationalTrustRail = shuffle(
-      entries.filter((entry) => {
-        if (!hasPoster(entry)) return false;
-        if (!hasAccessibleScene(entry)) return false;
-
-        return norm(entry.nt) !== "";
-      })
-    );
-
-    return [
-      { key: "homeRailLatestScenesEnabled", title: "Latest scenes found", items: latestScenes },
-
-      { key: "homeRailTopScenesEnabled", title: "Top 10 most scenes", items: topScenes },
-
-      {
-        key: "homeRailJamesBondEnabled",
-        title: "James Bond",
-        items: orderedSeriesRail("James Bond")
-      },
-
-      {
-        key: "homeRailHarryPotterEnabled",
-        title: "Harry Potter",
-        items: orderedSeriesRail("Harry Potter")
-      },
-
-      {
-        key: "homeRailMoviesEnabled",
-        title: "A selection of Movies",
-        items: typeRail("Film")
-      },
-
-      {
-        key: "homeRailTVEnabled",
-        title: "A selection of TV Shows",
-        items: typeRail("TV")
-      },
-
-      {
-        key: "homeRailMusicVideosEnabled",
-        title: "A selection of Music Videos",
-        items: musicVideoThumbnailRail,
-        variant: "thumbnail"
-      },
-
-      {
-        key: "homeRailNationalTrustEnabled",
-        title: "National Trust On Screen",
-        items: nationalTrustRail,
-        link: "./national-trust/",
-        linkLabel: "Explore all locations"
-      },
-
-      {
-        key: "homeRailGamesEnabled",
-        title: "A selection of Games",
-        items: typeRail("Video Game")
-      }
-    ];
-  }
-
-  function renderRails(rows, metadataRows) {
-    if (!featureEnabled("homeRailsEnabled")) {
-      railsEl.innerHTML = "";
-      return;
-    }
-
-    const rails = buildRails(rows, metadataRows)
-      .filter((rail) => featureEnabled(rail.key));
-
-    const html = rails
-      .map((rail) =>
-        railHtml(rail.title, rail.items, {
-          variant: rail.variant,
-          link: rail.link,
-          linkLabel: rail.linkLabel
-        })
-      )
-      .filter(Boolean)
-      .join("");
-
-    railsEl.innerHTML = html;
-
-    makeRailsDraggable();
-  }
-
-  async function loadTitleMetadata() {
-    const cfg = window.APP_CONFIG || {};
-    const url =
-      cfg.TITLE_METADATA_CSV ||
-      cfg.TITLE_METADATA ||
-      cfg.TITLES_METADATA_CSV;
-
-    if (!url) return [];
-
-    try {
-      const text = await fetchSheetCSV(url);
-
-      return rowsToObjects(parseCSV(text))
-        .map((row) => ({
-          title: norm(row.title),
-          type: norm(row.type),
-          description: norm(row.description),
-          imdb: norm(row.imdb),
-          justwatch: norm(row.justwatch),
-          poster: norm(row.poster),
-          trailer: norm(row.trailer),
-          thumbnail: norm(row.thumbnail),
-          nt: norm(row.NT),
-          railOrder: coerceNumber(row["set-rail-order"])
-        }))
-        .filter((row) => row.title);
-    } catch (err) {
-      console.warn("Could not load title metadata CSV", err);
-      return [];
-    }
-  }
-
-  async function loadSceneRows() {
-    const cfg = window.APP_CONFIG || {};
-    const sheets = cfg.SHEETS || {};
-
-    const sources = [
-      ["Film", sheets.movies],
-      ["TV", sheets.tv],
-      ["Music Video", sheets.music_videos],
-      ["Video Game", sheets.games],
-      ["Misc", sheets.misc]
-    ].filter(([, url]) => !!url);
-
-    const texts = await Promise.all(
-      sources.map(([, url]) => fetchSheetCSV(url))
-    );
-
-    const rows = [];
-
-    for (let i = 0; i < sources.length; i++) {
-      const [fallbackType] = sources[i];
-      const parsed = rowsToObjects(parseCSV(texts[i]));
-
-      parsed.forEach((row) => {
-        const title = norm(row.title);
-        const type = normalizeType(row.type || fallbackType);
-
-        const lat = coerceNumber(row.lat);
-        const lng = coerceNumber(row.lng);
-
-        if (!title || typeof lat !== "number" || typeof lng !== "number") {
-          return;
-        }
-
-        rows.push({
-          title,
-          type,
-          series: norm(row.series),
-          country: norm(row.country),
-          city: norm(row.city || row.place),
-          access: getAccessValue(row),
-          thumbnail: norm(row.thumbnail),
-          railOrder: coerceNumber(row["set-rail-order"]),
-          visitedTs: parseVisitedDate(
-            row["date-formatted"] ||
-              row["raw-date"] ||
-              row["visited"] ||
-              row["visit-date"]
-          )
-        });
-      });
-    }
-
-    return rows;
-  }
-
   async function init() {
     try {
-      const [sceneRows, metadataRows] = await Promise.all([
+      const [sceneRows] = await Promise.all([
         loadSceneRows(),
         loadTitleMetadata()
       ]);
 
-      const accessibleRows = sceneRows.filter((row) => !hasNoAccess(row));
+      const visibleRows = getVisibleRows(sceneRows);
 
       const titles = new Set();
       const cities = new Set();
       const countries = new Set();
 
-      accessibleRows.forEach((row) => {
+      visibleRows.forEach((row) => {
         if (row.title) titles.add(row.title);
         if (row.city) cities.add(row.city);
         if (row.country) countries.add(row.country);
       });
 
-      renderRails(sceneRows, metadataRows);
-
       renderStats({
-        scenes: accessibleRows.length,
+        scenes: visibleRows.length,
         titles: titles.size,
         cities: cities.size,
         countries: countries.size
       });
     } catch (err) {
       console.error(err);
-
-      railsEl.innerHTML = `
-        <div class="loading-card">
-          Could not load rails.
-        </div>
-      `;
-
-      statsEl.innerHTML = `
-        <div class="loading-card">
-          Could not load stats.
-        </div>
-      `;
     }
   }
 
