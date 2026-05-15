@@ -1,6 +1,5 @@
 // config.js
 window.APP_CONFIG = {
-  ENVIRONMENT: "staging",
   ENVIRONMENT_LABEL: "STAGING BUILD",
 
   SITE_NAME: "Find That Scene",
