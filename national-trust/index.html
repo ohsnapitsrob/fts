@@ -7,18 +7,22 @@
 
   <link rel="preconnect" href="https://images.pixieset.com">
   <link rel="stylesheet" href="./national-trust.css" />
+
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/app-shell.js"></script>
 </head>
 <body>
+  <noscript>
+    <div style="margin:16px; padding:16px; border-radius:18px; background:#111827; color:#ffffff; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <strong>JavaScript is needed for Find That Scene.</strong><br>
+      Maps, search, browsing features, privacy settings, and optional media controls rely on JavaScript. Optional media embeds are not loaded unless JavaScript is enabled and consent is given.
+    </div>
+  </noscript>
+
   <main class="nt-shell">
     <section class="nt-hero">
-      <a href="../" class="logo-link" aria-label="Find That Scene home">
-        <img
-          class="nt-logo"
-          src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-          alt="Find That Scene"
-        />
-      </a>
-
       <div class="nt-hero-copy">
         <div class="kicker">Curated index</div>
         <h1>National Trust Locations</h1>
@@ -27,7 +31,7 @@
         </p>
       </div>
 
-      <nav  style="display:none;" class="actions" aria-label="National Trust navigation">
+      <nav style="display:none;" class="actions" aria-label="National Trust navigation">
         <a class="btn btn-primary" href="../explore/">Map view</a>
         <a class="btn btn-secondary" href="../browse/">Browse titles</a>
       </nav>
@@ -36,9 +40,16 @@
     <section id="ntContent" class="nt-content" aria-live="polite">
       <div class="loading-card">Loading National Trust locations…</div>
     </section>
+
+    <div data-site-disclaimer></div>
   </main>
 
-  <script src="../config.js"></script>
+  <script src="../src/disclaimer.js"></script>
+  <script src="../src/utils.js"></script>
+  <script src="../src/csv.js"></script>
+  <script src="../src/visibility.js"></script>
+  <script src="../src/locations.js"></script>
+  <script src="../src/scene-card.js"></script>
   <script src="./national-trust.js"></script>
 </body>
 </html>

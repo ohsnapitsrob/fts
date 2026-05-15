@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Privacy | Find That Scene</title>
+
+  <link rel="stylesheet" href="./privacy.css" />
+
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/app-shell.js"></script>
+</head>
+<body>
+  <noscript>
+    <div style="margin:16px; padding:16px; border-radius:18px; background:#111827; color:#ffffff; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <strong>JavaScript is needed for Find That Scene.</strong><br>
+      Maps, search, browsing features, privacy settings, and optional media controls rely on JavaScript. Optional media embeds are not loaded unless JavaScript is enabled and consent is given.
+    </div>
+  </noscript>
+
+  <main class="privacy-shell">
+    <section class="privacy-hero">
+      <div class="kicker">Privacy</div>
+      <h1>Privacy at Find That Scene</h1>
+      <p>
+        Find That Scene is a personal fan project. The site is built to be lightweight, useful, and respectful of your privacy.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>What this site collects</h2>
+      <p>
+        The site does not ask you to create an account, sign in, or provide personal information to browse locations, titles, or scenes.
+      </p>
+      <p>
+        Some basic technical information may be processed by the services needed to deliver the site, such as your browser, device, IP address, and the page you request.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>Essential site features</h2>
+      <p>
+        Core features such as navigation, browsing, search, saved preferences, and the map are treated as essential to the experience.
+      </p>
+      <p>
+        Search is powered locally in your browser using Fuse.js. Search queries are processed on your device and are not sent to Fuse.js.
+      </p>
+      <p>
+        The site may use local storage or temporary session storage on your device to remember simple preferences and interface state, such as privacy choices, dismissed prompts, install prompt timing, and app settings.
+      </p>
+      <p>
+        Some interface elements and features are controlled using internal feature toggles and saved settings so the experience can adapt across different pages and devices.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>MapTiler</h2>
+      <p>
+        The map view uses MapTiler to display interactive maps. When you use the map, your browser connects to MapTiler so map tiles and related map data can load.
+      </p>
+      <p>
+        This is required for the map to work. If you do not want your browser to contact MapTiler, avoid opening the map view.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>YouTube trailers and media embeds</h2>
+      <p>
+        Some title pages may include trailers or embedded media. These are optional and are blocked by default until you allow media embeds in the privacy settings.
+      </p>
+      <p>
+        If media embeds are not allowed, YouTube iframes are not added to the page and the trailer section is hidden entirely.
+      </p>
+      <p>
+        If media embeds are allowed, trailers are loaded using YouTube’s privacy-enhanced no-cookie embed domain where possible.
+      </p>
+      <p>
+        When privacy settings are changed, the site refreshes so the updated media preference is applied consistently across the experience.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>Analytics</h2>
+      <p>
+        The project may use Plausible Analytics to understand simple site usage, such as which pages are visited, which devices are used, and where visitors broadly come from.
+      </p>
+      <p>
+        Plausible is intended to be lightweight and privacy-friendly. The project does not use Google Analytics, Mixpanel, advertising pixels, or cross-site tracking.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>Your choices</h2>
+      <p>
+        You can manage optional media embeds and app preferences at any time using the settings button in the top navigation, or by opening the settings here.
+      </p>
+      <p>
+        When you change your privacy settings, the site clears optional local storage and cookies it can access, then refreshes the page so the new choice is applied immediately.
+      </p>
+      <button id="openPrivacySettings" class="privacy-action-btn" type="button">Open privacy settings</button>
+    </section>
+
+    <section class="privacy-card">
+      <h2>Third-party content and rights</h2>
+      <p>
+        Posters, screenshots, logos, trailers, and related media remain the property of their respective owners. They are used for identification, commentary, and educational context within this independent fan project.
+      </p>
+      <p>
+        Find That Scene is not affiliated with, endorsed by, or connected to any studio, publisher, streaming platform, map provider, or rights holder.
+      </p>
+    </section>
+
+    <section class="privacy-card">
+      <h2>Contact</h2>
+      <p>
+        If you have a privacy question, or you are a rights holder and would like content reviewed, credited differently, or removed, please get in touch at
+        <a id="privacyContactEmail" href="#">the project contact email</a>.
+      </p>
+    </section>
+  </main>
+
+  <script src="./privacy.js"></script>
+</body>
+</html>

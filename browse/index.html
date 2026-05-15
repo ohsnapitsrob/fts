@@ -7,29 +7,28 @@
 
   <link rel="preconnect" href="https://images.pixieset.com">
   <link rel="stylesheet" href="./browse.css" />
+
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/app-shell.js"></script>
 </head>
 <body>
+  <noscript>
+    <div style="margin:16px; padding:16px; border-radius:18px; background:#111827; color:#ffffff; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <strong>JavaScript is needed for Find That Scene.</strong><br>
+      Maps, search, browsing features, privacy settings, and optional media controls rely on JavaScript. Optional media embeds are not loaded unless JavaScript is enabled and consent is given.
+    </div>
+  </noscript>
+
   <main class="browse-shell">
     <section class="browse-hero">
       <div class="browse-hero-main">
-        <a href="../" class="logo-link" aria-label="Find That Scene home">
-          <img
-            class="browse-logo"
-            src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-            alt="Find That Scene"
-          />
-        </a>
-
         <div>
           <h1>All titles</h1>
           <p>Browse every title in the project, sort by scene count or visit date, then jump straight to the map.</p>
         </div>
       </div>
-
-   <!--     <nav class="browse-nav" aria-label="Browse navigation">
-        <a class="btn btn-secondary" href="../explore/">Map view</a>
-      <a class="btn btn-primary" href="../stats/">Stats view</a> 
-      </nav> -->
     </section>
 
     <section class="browse-panel">
@@ -50,21 +49,20 @@
           <option value="visited-oldest">Visited (oldest to latest)</option>
         </select>
 
-        <a href="../explore/" class="icon-btn browse-map-btn" aria-label="Back to map" title="Back to map">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 2c-3.314 0-6 2.686-6 6c0 4.5 6 14 6 14s6-9.5 6-14c0-3.314-2.686-6-6-6z"></path>
-            <circle cx="12" cy="8" r="2.5"></circle>
-          </svg>
-        </a>
-
         <div id="browseCount" class="browse-count"></div>
       </div>
 
       <div id="browseList" class="browse-list"></div>
     </section>
+
+    <div data-site-disclaimer></div>
   </main>
 
-  <script src="../config.js"></script>
+  <script src="../src/disclaimer.js"></script>
+  <script src="../src/utils.js"></script>
+  <script src="../src/csv.js"></script>
+  <script src="../src/visibility.js"></script>
+  <script src="../src/locations.js"></script>
   <script src="./browse.js"></script>
 </body>
 </html>

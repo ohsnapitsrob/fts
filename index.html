@@ -7,37 +7,24 @@
 
   <link rel="preconnect" href="https://images.pixieset.com">
   <link rel="stylesheet" href="./home.css" />
+
+  <script src="./config.js"></script>
+  <script src="./src/feature-toggles.js"></script>
+  <script src="./src/site-content.js"></script>
+  <script src="./src/app-shell.js"></script>
 </head>
 <body>
+  <noscript>
+    <div style="margin:16px; padding:16px; border-radius:18px; background:#111827; color:#ffffff; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <strong>JavaScript is needed for Find That Scene.</strong><br>
+      Maps, search, browsing features, privacy settings, and optional media controls rely on JavaScript. Optional media embeds are not loaded unless JavaScript is enabled and consent is given.
+    </div>
+  </noscript>
+
   <main class="home-shell">
-    <section class="hero">
-      <img
-        class="hero-logo"
-        src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-        alt="Find That Scene"
-      />
-
-      <p class="hero-copy">
-        Exploring the real world locations behind films, TV, games and music videos. From filming spots to the places that inspired CGI worlds.
-      </p>
-
-      <nav class="hero-actions" aria-label="Main navigation">
-        <a class="btn btn-secondary" href="./browse/">
-          <span aria-hidden="true">⌕</span>
-          Browse
-        </a>
-
-        <a class="btn btn-primary" href="./explore/">
-          <span aria-hidden="true">✦</span>
-          Map
-        </a>
-      </nav>
-    </section>
-
     <section id="railsRoot" class="rails-root" aria-live="polite">
       <div class="loading-card">Loading rails…</div>
     </section>
-
 
     <section class="home-stats-section" style="display:none;">
       <h2 class="rail-title">Project stats at a glance</h2>
@@ -67,17 +54,7 @@
 
     <a style="display:none;" class="more-stats" href="./stats/">View more stats</a>
 
-    <p class="hero-copy" style="font-size: 8px;max-width: 100%;line-height: 12px;">
-A personal project built from a love of film locations, photography, and discovering the real world places behind iconic scenes.
-
-Find That Scene is an independent fan project created to document and explore filming locations, inspiration locations, and places seen across film, television, music videos, and games.
-
-Posters, screenshots, logos, and related media remain the property of their respective owners and are used for identification, commentary, and educational purposes.
-
-This project is not affiliated with, endorsed by, or connected to any studio, publisher, streaming platform, or rights holder.
-
-If you are a rights holder and would like any content reviewed, credited differently, or removed, please get in touch at <a style="color: #5f5f5f; text-decoration: none;" href="mailto:robholdersnaps@gmail.com">robholdersnaps@gmail.com</a>.      </p>
-    
+    <div data-site-disclaimer></div>
   </main>
 
   <script>
@@ -92,7 +69,7 @@ If you are a rights holder and would like any content reviewed, credited differe
     })();
   </script>
 
-  <script src="./config.js"></script>
+  <script src="./src/disclaimer.js"></script>
   <script src="./home.js"></script>
 </body>
 </html>

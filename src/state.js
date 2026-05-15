@@ -4,16 +4,28 @@ App.State = (function () {
   let currentFilter = null;
   let hideNoAccess = false;
 
-  function init() {
-    const toggle = document.getElementById("hideNoAccessToggle");
-
-    if (toggle) {
-      toggle.checked = hideNoAccess;
-
-      toggle.addEventListener("change", () => {
-        setHideNoAccess(toggle.checked);
-      });
+  function getSavedHideNoAccessSetting() {
+    if (window.FTS?.AppSettings?.getSettings) {
+      return window.FTS.AppSettings.getSettings().hideNoAccessScenes === true;
     }
+
+    try {
+      const raw = localStorage.getItem("fts-app-settings");
+      if (!raw) return false;
+
+      return JSON.parse(raw).hideNoAccessScenes === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function init() {
+    hideNoAccess = getSavedHideNoAccessSetting();
+
+    window.addEventListener("fts:app-settings-updated", (event) => {
+      if (!event.detail) return;
+      setHideNoAccess(event.detail.hideNoAccessScenes === true);
+    });
   }
 
   function getFilter() {
@@ -35,9 +47,6 @@ App.State = (function () {
 
   function setHideNoAccess(value) {
     hideNoAccess = !!value;
-
-    const toggle = document.getElementById("hideNoAccessToggle");
-    if (toggle) toggle.checked = hideNoAccess;
 
     if (App.Map && typeof App.Map.refreshNoAccessFilter === "function") {
       App.Map.refreshNoAccessFilter();

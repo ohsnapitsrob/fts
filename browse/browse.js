@@ -1,174 +1,29 @@
 (function () {
+  const {
+    norm,
+    escapeHtml,
+    displayType,
+    typeColor
+  } = FTS.Utils;
+
+  const {
+    loadAll,
+    buildTitleUrl
+  } = FTS.Locations;
+
   const listEl = document.getElementById("browseList");
   const searchEl = document.getElementById("browseSearch");
   const sortEl = document.getElementById("browseSort");
   const countEl = document.getElementById("browseCount");
 
-  let ALL_ENTRIES = [];
+  let allEntries = [];
 
-  function norm(s) {
-    return (s || "").toString().trim();
-  }
-
-  function splitPipe(s) {
-    const t = norm(s);
-    if (!t) return [];
-    return t.split("|").map(x => norm(x)).filter(Boolean);
-  }
-
-  function normalizeType(t) {
-    const x = norm(t).toLowerCase();
-    if (!x) return "Misc";
-    if (x === "film" || x === "movie" || x === "movies") return "Film";
-    if (x === "tv" || x === "tv show" || x === "tv shows" || x === "series") return "TV";
-    if (x === "music video" || x === "music videos" || x === "mv") return "Music Video";
-    if (x === "game" || x === "games" || x === "video game" || x === "video games") return "Video Game";
-    if (x === "misc" || x === "other") return "Misc";
-    return norm(t);
-  }
-
-  function typeColor(type) {
-    const colors = {
-      Film: "#2563eb",
-      TV: "#16a34a",
-      "Music Video": "#db2777",
-      Misc: "#6b7280",
-      "Video Game": "#FFA500"
-    };
-    return colors[type] || colors.Misc;
-  }
-
-  function displayType(type) {
-    if (type === "Film") return "Movie";
-    if (type === "TV") return "TV Show";
-    return type;
-  }
-
-  function coerceNumber(x) {
-    const n = Number((x ?? "").toString().trim());
-    return Number.isFinite(n) ? n : null;
-  }
-
-  function parseCSV(text) {
-    const rows = [];
-    let row = [];
-    let cur = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      const next = text[i + 1];
-
-      if (c === '"' && inQuotes && next === '"') {
-        cur += '"';
-        i++;
-        continue;
-      }
-
-      if (c === '"') {
-        inQuotes = !inQuotes;
-        continue;
-      }
-
-      if (c === "," && !inQuotes) {
-        row.push(cur);
-        cur = "";
-        continue;
-      }
-
-      if ((c === "\n" || c === "\r") && !inQuotes) {
-        if (c === "\r" && next === "\n") i++;
-        row.push(cur);
-        cur = "";
-        if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
-        row = [];
-        continue;
-      }
-
-      cur += c;
-    }
-
-    row.push(cur);
-    if (row.length > 1 || (row.length === 1 && row[0] !== "")) rows.push(row);
-
-    return rows;
-  }
-
-  function rowsToObjects(rows) {
-    if (!rows.length) return [];
-    const header = rows[0].map(h => norm(h));
-    const out = [];
-
-    for (let i = 1; i < rows.length; i++) {
-      const r = rows[i];
-      if (!r || r.every(cell => norm(cell) === "")) continue;
-
-      const obj = {};
-      for (let j = 0; j < header.length; j++) {
-        obj[header[j]] = (r[j] ?? "");
-      }
-      out.push(obj);
-    }
-
-    return out;
-  }
-
-  async function fetchSheetCSV(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to fetch CSV: ${url}`);
-    return res.text();
-  }
-
-  function escapeHtml(s) {
-    return (s || "").toString()
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function sceneLabel(n) {
-    return `${n} scene${n === 1 ? "" : "s"}`;
+  function sceneLabel(number) {
+    return `${number} scene${number === 1 ? "" : "s"}`;
   }
 
   function summaryLabel(titleCount, sceneCount) {
     return `${titleCount.toLocaleString()} title${titleCount === 1 ? "" : "s"}, ${sceneCount.toLocaleString()} scene${sceneCount === 1 ? "" : "s"}`;
-  }
-
-  function buildTitleUrl(title) {
-    const params = new URLSearchParams();
-    params.set("fl", title);
-    return `../title/?${params.toString()}`;
-  }
-
-  function parseVisitedDate(value) {
-    const raw = norm(value);
-    if (!raw) return null;
-
-    const cleaned = raw.replace(/(\d{1,2})(st|nd|rd|th)/gi, "$1");
-    const ts = Date.parse(cleaned);
-    return Number.isFinite(ts) ? ts : null;
-  }
-
-  function postProcessRow(row, fallbackType) {
-    const title = norm(row.title);
-    const type = normalizeType(row.type || fallbackType);
-    const lat = coerceNumber(row.lat);
-    const lng = coerceNumber(row.lng);
-
-    if (!title || typeof lat !== "number" || typeof lng !== "number") return null;
-
-    return {
-      id: norm(row.id),
-      title,
-      type,
-      place: norm(row.place),
-      city: norm(row.city || row.town || row.place),
-      country: norm(row.country),
-      collections: splitPipe(row.collections),
-      visitedTs: parseVisitedDate(row["date-formatted"] || row["raw-date"] || row["visited"] || row["visit-date"])
-    };
   }
 
   function compareTitleAsc(a, b) {
@@ -181,20 +36,24 @@
 
   function sortMost(a, b) {
     if (b.count !== a.count) return b.count - a.count;
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
+
+    const titleCompare = compareTitleAsc(a, b);
+    if (titleCompare !== 0) return titleCompare;
+
     return compareTypeAsc(a, b);
   }
 
   function sortAZ(a, b) {
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
+    const titleCompare = compareTitleAsc(a, b);
+    if (titleCompare !== 0) return titleCompare;
+
     return compareTypeAsc(a, b);
   }
 
   function sortZA(a, b) {
-    const titleCmp = compareTitleAsc(b, a);
-    if (titleCmp !== 0) return titleCmp;
+    const titleCompare = compareTitleAsc(b, a);
+    if (titleCompare !== 0) return titleCompare;
+
     return compareTypeAsc(a, b);
   }
 
@@ -209,9 +68,7 @@
     if (aHas && !bHas) return -1;
     if (!aHas && bHas) return 1;
 
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
+    return sortAZ(a, b);
   }
 
   function sortVisitedOldest(a, b) {
@@ -225,9 +82,7 @@
     if (aHas && !bHas) return -1;
     if (!aHas && bHas) return 1;
 
-    const titleCmp = compareTitleAsc(a, b);
-    if (titleCmp !== 0) return titleCmp;
-    return compareTypeAsc(a, b);
+    return sortAZ(a, b);
   }
 
   function getSorted(entries, sortMode) {
@@ -237,6 +92,7 @@
     if (sortMode === "za") return copy.sort(sortZA);
     if (sortMode === "visited-latest") return copy.sort(sortVisitedLatest);
     if (sortMode === "visited-oldest") return copy.sort(sortVisitedOldest);
+
     return copy.sort(sortMost);
   }
 
@@ -245,6 +101,7 @@
 
     const titleCount = entries.length;
     const sceneCount = entries.reduce((sum, entry) => sum + entry.count, 0);
+
     countEl.textContent = summaryLabel(titleCount, sceneCount);
 
     if (!entries.length) {
@@ -253,11 +110,12 @@
     }
 
     entries.forEach((entry) => {
-      const a = document.createElement("a");
-      a.className = "browse-row";
-      a.href = buildTitleUrl(entry.title);
+      const link = document.createElement("a");
 
-      a.innerHTML = `
+      link.className = "browse-row";
+      link.href = buildTitleUrl(entry.title);
+
+      link.innerHTML = `
         <div class="browse-marker" style="background:${escapeHtml(typeColor(entry.type))};"></div>
         <div class="browse-main">
           <div class="browse-title">${escapeHtml(entry.title)}</div>
@@ -266,23 +124,23 @@
         <div class="browse-scenes">${sceneLabel(entry.count)}</div>
       `;
 
-      listEl.appendChild(a);
+      listEl.appendChild(link);
     });
   }
 
   function applyControls() {
-    const q = norm(searchEl.value).toLowerCase();
+    const query = norm(searchEl.value).toLowerCase();
     const sortMode = sortEl.value || "most";
 
-    let filtered = ALL_ENTRIES;
+    let filtered = allEntries;
 
-    if (q) {
+    if (query) {
       filtered = filtered.filter((entry) => {
         return (
-          entry.title.toLowerCase().includes(q) ||
-          displayType(entry.type).toLowerCase().includes(q) ||
-          entry.cities.some((city) => city.toLowerCase().includes(q)) ||
-          entry.countries.some((country) => country.toLowerCase().includes(q))
+          entry.title.toLowerCase().includes(query) ||
+          displayType(entry.type).toLowerCase().includes(query) ||
+          entry.cities.some((city) => city.toLowerCase().includes(query)) ||
+          entry.countries.some((country) => country.toLowerCase().includes(query))
         );
       });
     }
@@ -290,47 +148,17 @@
     render(getSorted(filtered, sortMode));
   }
 
-  async function loadAll() {
-    const cfg = window.APP_CONFIG || {};
-    const sheets = cfg.SHEETS || {};
-
-    const sources = [
-      ["Film", sheets.movies],
-      ["TV", sheets.tv],
-      ["Music Video", sheets.music_videos],
-      ["Video Game", sheets.games],
-      ["Misc", sheets.misc]
-    ].filter(([, url]) => !!url);
-
-    if (!sources.length) {
-      throw new Error("No sheet URLs configured.");
-    }
-
-    const texts = await Promise.all(
-      sources.map(([, url]) => fetchSheetCSV(url))
-    );
-
-    const rows = [];
-
-    for (let i = 0; i < sources.length; i++) {
-      const [fallbackType] = sources[i];
-      const parsed = rowsToObjects(parseCSV(texts[i]));
-
-      parsed.forEach((r) => {
-        const loc = postProcessRow(r, fallbackType);
-        if (loc) rows.push(loc);
-      });
-    }
-
+  function buildEntries(rows) {
+    const visibleRows = FTS.Visibility?.getVisibleScenes?.(rows) || rows;
     const grouped = new Map();
 
-    rows.forEach((loc) => {
-      const key = `${loc.title}|||${loc.type}`;
+    visibleRows.forEach((location) => {
+      const key = `${location.title}|||${location.type}`;
 
       if (!grouped.has(key)) {
         grouped.set(key, {
-          title: loc.title,
-          type: loc.type,
+          title: location.title,
+          type: location.type,
           count: 0,
           latestVisitedTs: null,
           cities: new Set(),
@@ -339,14 +167,15 @@
       }
 
       const entry = grouped.get(key);
+
       entry.count += 1;
 
-      if (loc.city) entry.cities.add(loc.city);
-      if (loc.country) entry.countries.add(loc.country);
+      if (location.city) entry.cities.add(location.city);
+      if (location.country) entry.countries.add(location.country);
 
-      if (Number.isFinite(loc.visitedTs)) {
-        if (!Number.isFinite(entry.latestVisitedTs) || loc.visitedTs > entry.latestVisitedTs) {
-          entry.latestVisitedTs = loc.visitedTs;
+      if (Number.isFinite(location.visitedTs)) {
+        if (!Number.isFinite(entry.latestVisitedTs) || location.visitedTs > entry.latestVisitedTs) {
+          entry.latestVisitedTs = location.visitedTs;
         }
       }
     });
@@ -361,7 +190,9 @@
   async function init() {
     try {
       listEl.innerHTML = `<div class="browse-empty">Loading…</div>`;
-      ALL_ENTRIES = await loadAll();
+
+      const rows = await loadAll();
+      allEntries = buildEntries(rows);
 
       searchEl.addEventListener("input", applyControls);
       sortEl.addEventListener("change", applyControls);

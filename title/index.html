@@ -7,25 +7,35 @@
 
   <link rel="preconnect" href="https://images.pixieset.com">
   <link rel="stylesheet" href="./title.css" />
+
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/app-shell.js"></script>
 </head>
 <body>
+  <noscript>
+    <div style="margin:16px; padding:16px; border-radius:18px; background:#111827; color:#ffffff; font:14px/1.5 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      <strong>JavaScript is needed for Find That Scene.</strong><br>
+      Maps, search, browsing features, privacy settings, and optional media controls rely on JavaScript. Optional media embeds are not loaded unless JavaScript is enabled and consent is given.
+    </div>
+  </noscript>
+
   <main class="title-shell">
     <section class="title-hero">
-      <a href="../" class="logo-link" aria-label="Find That Scene home">
-        <img
-          class="title-logo"
-          src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-          alt="Find That Scene"
-        />
-      </a>
-
       <div id="titleContent" class="title-content">
         <div class="loading-card">Loading title…</div>
       </div>
     </section>
+
+    <div data-site-disclaimer></div>
   </main>
 
-  <script src="../config.js"></script>
+  <script src="../src/disclaimer.js"></script>
+  <script src="../src/utils.js"></script>
+  <script src="../src/csv.js"></script>
+  <script src="../src/locations.js"></script>
+  <script src="../src/scene-card.js"></script>
   <script src="./title.js"></script>
 </body>
 </html>

@@ -1,30 +1,55 @@
 (function () {
+  const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
+
+  function privacyConsentFeatureEnabled() {
+    return window.FTS?.Features?.isEnabled("privacyConsentEnabled") !== false;
+  }
+
+  function savedPrivacyChoiceExists() {
+    try {
+      return Boolean(window.localStorage.getItem(PRIVACY_STORAGE_KEY));
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function privacyChoiceRequired() {
+    if (!privacyConsentFeatureEnabled()) return false;
+    if (window.FTS?.Privacy?.enabled?.() === false) return false;
+
+    return true;
+  }
+
+  function privacyChoiceAnswered() {
+    if (!privacyChoiceRequired()) return true;
+    if (savedPrivacyChoiceExists()) return true;
+
+    return window.FTS?.Privacy?.getSettings?.().hasAnswered === true;
+  }
+
+  function waitForPrivacyChoice(callback) {
+    if (privacyChoiceAnswered()) {
+      callback();
+      return;
+    }
+
+    railsEl.innerHTML = `
+      <div class="loading-card">
+        Choose your privacy settings to load the homepage.
+      </div>
+    `;
+
+    window.addEventListener("fts:privacy-updated", callback, { once: true });
+  }
 
   function norm(s) {
     return (s || "").toString().trim();
   }
 
-  function getAccessValue(row) {
-    return norm(
-      row.access ||
-      row.Access ||
-      row.ACCESS ||
-      row["access "] ||
-      row["Access "] ||
-      row["No Access"] ||
-      row.noaccess ||
-      row.NOACCESS
-    );
-  }
-
   function normalizeComparable(s) {
     return norm(s).toLowerCase();
-  }
-
-  function hasNoAccess(row) {
-    return norm(row.access) !== "";
   }
 
   function normalizeType(t) {
@@ -131,6 +156,10 @@
     return res.text();
   }
 
+  function getVisibleRows(rows) {
+    return window.FTS?.Visibility?.getVisibleScenes?.(rows) || rows;
+  }
+
   function formatNumber(n) {
     return Number(n || 0).toLocaleString();
   }
@@ -209,8 +238,6 @@
   function railHtml(title, items, options = {}) {
     const variant = options.variant || "poster";
     const imageField = variant === "thumbnail" ? "thumbnail" : "poster";
-    const link = options.link || "";
-    const linkLabel = options.linkLabel || "View more";
 
     const withImages = items.filter((item) => safeUrl(item[imageField]));
 
@@ -218,16 +245,11 @@
 
     return `
       <section class="rail">
-        <div class="rail-title-row">
+        <div class="rail-header">
           <h2 class="rail-title">${escapeHtml(title)}</h2>
-
           ${
-            link
-              ? `
-                <a class="rail-title-link" href="${escapeHtml(link)}">
-                  ${escapeHtml(linkLabel)}
-                </a>
-              `
+            options.href
+              ? `<a class="rail-link" href="${escapeHtml(options.href)}">${escapeHtml(options.linkLabel || "View more")}</a>`
               : ""
           }
         </div>
@@ -303,7 +325,7 @@
     statsEl.innerHTML = `
       <article class="stat-card">
         <div class="stat-value">${formatNumber(scenes)}</div>
-        <div class="stat-label">Scenes visited</div>
+        <div class="stat-label">Scenes</div>
       </article>
 
       <article class="stat-card">
@@ -342,9 +364,7 @@
           type: row.type || meta.type,
           series: row.series,
           count: 0,
-          accessibleCount: 0,
           latestVisitedTs: null,
-          latestAccessibleVisitedTs: null,
 
           railOrder: Number.isFinite(meta.railOrder)
             ? meta.railOrder
@@ -360,26 +380,13 @@
 
       entry.count += 1;
 
-      if (!hasNoAccess(row)) {
-        entry.accessibleCount += 1;
-
-        if (
-          Number.isFinite(row.visitedTs) &&
-          (!Number.isFinite(entry.latestAccessibleVisitedTs) ||
-            row.visitedTs > entry.latestAccessibleVisitedTs)
-        ) {
-          entry.latestAccessibleVisitedTs = row.visitedTs;
-        }
-      }
-
       if (!entry.series && row.series) {
         entry.series = row.series;
       }
 
       if (
-        Number.isFinite(row.visitedTs) &&
-        (!Number.isFinite(entry.latestVisitedTs) ||
-          row.visitedTs > entry.latestVisitedTs)
+        !Number.isFinite(entry.latestVisitedTs) ||
+        row.visitedTs > entry.latestVisitedTs
       ) {
         entry.latestVisitedTs = row.visitedTs;
       }
@@ -393,24 +400,20 @@
 
     const hasPoster = (entry) => safeUrl(entry.poster);
     const hasThumbnail = (entry) => safeUrl(entry.thumbnail);
-    const hasAccessibleScene = (entry) => entry.accessibleCount > 0;
 
     const latestScenes = [...entries]
       .filter(hasPoster)
-      .filter(hasAccessibleScene)
-      .filter((entry) => Number.isFinite(entry.latestAccessibleVisitedTs))
-      .sort((a, b) => b.latestAccessibleVisitedTs - a.latestAccessibleVisitedTs)
+      .filter((entry) => Number.isFinite(entry.latestVisitedTs))
+      .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
       .slice(0, 6);
 
     const topScenes = [...entries]
       .filter(hasPoster)
-      .filter(hasAccessibleScene)
-      .sort((a, b) => b.accessibleCount - a.accessibleCount || a.title.localeCompare(b.title))
+      .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
       .slice(0, 10);
 
-    function orderedSeriesRail(seriesName) {
-      const isBond =
-        normalizeComparable(seriesName) === "james bond";
+    function orderedSeriesRail(seriesName, options = {}) {
+      const direction = options.direction || "asc";
 
       return [...entries]
         .filter(hasPoster)
@@ -424,7 +427,7 @@
           const bHas = Number.isFinite(b.railOrder);
 
           if (aHas && bHas) {
-            return isBond
+            return direction === "desc"
               ? b.railOrder - a.railOrder
               : a.railOrder - b.railOrder;
           }
@@ -441,7 +444,6 @@
       return shuffle(
         entries
           .filter(hasPoster)
-          .filter(hasAccessibleScene)
           .filter((entry) => normalizeType(entry.type) === typeName)
       ).slice(0, 12);
     };
@@ -449,14 +451,12 @@
     const musicVideoThumbnailRail = shuffle(
       entries
         .filter(hasThumbnail)
-        .filter(hasAccessibleScene)
         .filter((entry) => normalizeType(entry.type) === "Music Video")
     ).slice(0, 12);
 
     const nationalTrustRail = shuffle(
       entries.filter((entry) => {
         if (!hasPoster(entry)) return false;
-        if (!hasAccessibleScene(entry)) return false;
 
         return norm(entry.nt) !== "";
       })
@@ -469,7 +469,7 @@
 
       {
         title: "James Bond",
-        items: orderedSeriesRail("James Bond")
+        items: orderedSeriesRail("James Bond", { direction: "desc" })
       },
 
       {
@@ -496,8 +496,8 @@
       {
         title: "National Trust On Screen",
         items: nationalTrustRail,
-        link: "./national-trust/",
-        linkLabel: "Explore all locations"
+        href: "./national-trust/",
+        linkLabel: "Explore National Trust locations"
       },
 
       {
@@ -514,7 +514,7 @@
       .map((rail) =>
         railHtml(rail.title, rail.items, {
           variant: rail.variant,
-          link: rail.link,
+          href: rail.href,
           linkLabel: rail.linkLabel
         })
       )
@@ -598,8 +598,8 @@
           series: norm(row.series),
           country: norm(row.country),
           city: norm(row.city || row.place),
-          access: getAccessValue(row),
           thumbnail: norm(row.thumbnail),
+          access: norm(row.Access || row.access || row.ACCESS),
           railOrder: coerceNumber(row["set-rail-order"]),
           visitedTs: parseVisitedDate(
             row["date-formatted"] ||
@@ -621,22 +621,21 @@
         loadTitleMetadata()
       ]);
 
-      const accessibleRows = sceneRows.filter((row) => !hasNoAccess(row));
-
+      const visibleRows = getVisibleRows(sceneRows);
       const titles = new Set();
       const cities = new Set();
       const countries = new Set();
 
-      accessibleRows.forEach((row) => {
+      visibleRows.forEach((row) => {
         if (row.title) titles.add(row.title);
         if (row.city) cities.add(row.city);
         if (row.country) countries.add(row.country);
       });
 
-      renderRails(sceneRows, metadataRows);
+      renderRails(visibleRows, metadataRows);
 
       renderStats({
-        scenes: accessibleRows.length,
+        scenes: visibleRows.length,
         titles: titles.size,
         cities: cities.size,
         countries: countries.size
@@ -658,5 +657,5 @@
     }
   }
 
-  init();
+  waitForPrivacyChoice(init);
 })();
