@@ -158,7 +158,11 @@
   loadAppSettings();
   loadVisibility();
   loadAppHeaderModules();
-  loadIOSInstallPrompt();
+
+  if (window.FTS?.Features?.isEnabled("iosInstallPromptEnabled") === true) {
+    loadIOSInstallPrompt();
+  }
+
   loadAnalytics();
   showEnvironmentBadge();
   loadBottomNav();
