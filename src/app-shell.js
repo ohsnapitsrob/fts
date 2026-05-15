@@ -1,6 +1,10 @@
 (function () {
   const config = window.APP_CONFIG || {};
 
+  function getRuntimeConfig() {
+    return window.RUNTIME_CONFIG || {};
+  }
+
   function getSharedScriptBase() {
     const path = window.location.pathname.replace(/\/+$/, "");
     const routeNames = ["browse", "explore", "title", "stats", "national-trust", "privacy"];
@@ -109,7 +113,10 @@
   }
 
   function showEnvironmentBadge() {
-    if (config.ENVIRONMENT !== "staging") return;
+    const runtime = getRuntimeConfig();
+    const isStaging = runtime.environment === "staging" || (!runtime.environment && config.ENVIRONMENT === "staging");
+
+    if (!isStaging) return;
 
     onDomReady(() => {
       const label = config.ENVIRONMENT_LABEL || "STAGING";
