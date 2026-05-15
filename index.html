@@ -5,94 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Find That Scene</title>
 
-  <link rel="preconnect" href="https://images.pixieset.com">
-  <link rel="stylesheet" href="./home.css" />
-</head>
-<body>
-  <main class="home-shell">
-    <section class="hero">
-      <img
-        class="hero-logo"
-        src="https://images.pixieset.com/063553411/cfaf06b0cd6b6cf0468956939122a80b-xxlarge.PNG"
-        alt="Find That Scene"
-      />
+  <meta http-equiv="refresh" content="0; url=https://findthatscene.co.uk/" />
+  <link rel="canonical" href="https://findthatscene.co.uk/" />
 
-      <p class="hero-copy">
-        Exploring the real world locations behind films, TV, games and music videos. From filming spots to the places that inspired CGI worlds.
-      </p>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #f5f7f7;
+      color: #111827;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      text-align: center;
+    }
 
-      <nav class="hero-actions" aria-label="Main navigation">
-        <a class="btn btn-secondary" href="./browse/">
-          <span aria-hidden="true">⌕</span>
-          Browse
-        </a>
+    .card {
+      width: min(460px, 100%);
+      padding: 32px;
+      border-radius: 24px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.10);
+    }
 
-        <a class="btn btn-primary" href="./explore/">
-          <span aria-hidden="true">✦</span>
-          Map
-        </a>
-      </nav>
-    </section>
+    h1 {
+      margin: 0 0 12px;
+      font-size: 28px;
+      line-height: 1.05;
+    }
 
-    <section id="railsRoot" class="rails-root" aria-live="polite">
-      <div class="loading-card">Loading rails…</div>
-    </section>
+    p {
+      margin: 0;
+      color: #4b5563;
+      line-height: 1.5;
+    }
 
-
-    <section class="home-stats-section" style="display:none;">
-      <h2 class="rail-title">Project stats at a glance</h2>
-
-      <div id="homeStats" class="stats-grid" aria-live="polite">
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Scenes visited</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Titles</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Cities</div>
-        </article>
-
-        <article class="stat-card">
-          <div class="stat-value">—</div>
-          <div class="stat-label">Countries</div>
-        </article>
-      </div>
-    </section>
-
-    <a style="display:none;" class="more-stats" href="./stats/">View more stats</a>
-
-    <p class="hero-copy" style="font-size: 8px;max-width: 100%;line-height: 12px;">
-A personal project built from a love of film locations, photography, and discovering the real world places behind iconic scenes.
-
-Find That Scene is an independent fan project created to document and explore filming locations, inspiration locations, and places seen across film, television, music videos, and games.
-
-Posters, screenshots, logos, and related media remain the property of their respective owners and are used for identification, commentary, and educational purposes.
-
-This project is not affiliated with, endorsed by, or connected to any studio, publisher, streaming platform, or rights holder.
-
-If you are a rights holder and would like any content reviewed, credited differently, or removed, please get in touch at <a style="color: #5f5f5f; text-decoration: none;" href="mailto:robholdersnaps@gmail.com">robholdersnaps@gmail.com</a>.      </p>
-    
-  </main>
+    a {
+      color: #5A00E6;
+      font-weight: 700;
+    }
+  </style>
 
   <script>
-    (function () {
-      const params = new URLSearchParams(window.location.search);
-      const mapParams = ["q", "tab", "fk", "fl", "loc", "rm", "mlat", "mlng", "mz"];
-      const shouldRedirect = mapParams.some((key) => params.has(key));
-
-      if (shouldRedirect) {
-        window.location.replace("./explore/" + window.location.search);
-      }
-    })();
+    window.location.replace("https://findthatscene.co.uk/");
   </script>
-
-  <script src="./config.js"></script>
-  <script src="./home.js"></script>
+</head>
+<body>
+  <main class="card">
+    <h1>Find That Scene has moved</h1>
+    <p>
+      Redirecting to the new home of the project.<br><br>
+      <a href="https://findthatscene.co.uk/">Continue to findthatscene.co.uk</a>
+    </p>
+  </main>
 </body>
 </html>
