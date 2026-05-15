@@ -8,17 +8,17 @@ App.Data = (function () {
   function norm(s) { return (s || "").toString().trim(); }
 
   function getAccessValue(row) {
-  return norm(
-    row.access ||
-    row.Access ||
-    row.ACCESS ||
-    row["access "] ||
-    row["Access "] ||
-    row["No Access"] ||
-    row.noaccess ||
-    row.NOACCESS
-  );
-}
+    return norm(
+      row.access ||
+      row.Access ||
+      row.ACCESS ||
+      row["access "] ||
+      row["Access "] ||
+      row["No Access"] ||
+      row.noaccess ||
+      row.NOACCESS
+    );
+  }
   
   function normalizeComparable(s) {
     return norm(s).toLowerCase();
@@ -142,8 +142,6 @@ App.Data = (function () {
       aliases: splitPipe(row.aliases),
       images: splitPipe(row.images),
       rating: splitComma(row.rating),
-
-    //  access: norm(row.access),
       access: getAccessValue(row),
       exportFileName: norm(row["export-file-name"]),
       imdb: norm(row.imdb),
@@ -221,6 +219,75 @@ App.Data = (function () {
     return (markers || []).filter(markerIsVisible);
   }
 
+  function visibleLocations() {
+    return visibleMarkers(allMarkers)
+      .map((marker) => marker.__loc)
+      .filter(Boolean);
+  }
+
+  function addVisibleGroup(groups, kind, label, markers) {
+    const visible = visibleMarkers(markers);
+
+    if (!visible.length) return;
+
+    groups.push({ kind, label, count: visible.length });
+    groupsIndex.set(`${kind}::${label}`, visible);
+  }
+
+  function buildSearchIndexes() {
+    const searchLocations = visibleLocations();
+    const groups = [];
+
+    groupsIndex.clear();
+
+    const markersByTitle = new Map();
+    const markersBySeries = new Map();
+    const markersByCollection = new Map();
+    const markersByType = new Map();
+
+    allMarkers.forEach((marker) => {
+      const loc = marker.__loc;
+      if (!loc) return;
+
+      addToMapList(markersByTitle, loc.title, marker);
+      addToMapList(markersBySeries, loc.series, marker);
+      (loc.collections || []).forEach((c) => addToMapList(markersByCollection, c, marker));
+      addToMapList(markersByType, loc.type, marker);
+    });
+
+    markersByTitle.forEach((arr, title) => addVisibleGroup(groups, "Title", title, arr));
+    markersBySeries.forEach((arr, series) => addVisibleGroup(groups, "Series", series, arr));
+    markersByCollection.forEach((arr, col) => addVisibleGroup(groups, "Collection", col, arr));
+    markersByType.forEach((arr, type) => addVisibleGroup(groups, "Type", type, arr));
+
+    const fuseLocations = new Fuse(searchLocations, {
+      threshold: 0.35,
+      keys: [
+        { name: "title", weight: 3 },
+        { name: "collections", weight: 2.3 },
+        { name: "series", weight: 1.8 },
+        { name: "aliases", weight: 1.8 },
+        { name: "place", weight: 1.7 },
+        { name: "country", weight: 1.2 },
+        { name: "type", weight: 1.1 },
+        { name: "keywords", weight: 1.4 },
+        { name: "description", weight: 0.8 }
+      ]
+    });
+
+    const fuseGroups = new Fuse(groups, {
+      threshold: 0.35,
+      keys: ["label", "kind"]
+    });
+
+    App.Search.setData({
+      fuseLoc: fuseLocations,
+      fuseGrp: fuseGroups,
+      groupsIdx: groupsIndex,
+      allMk: visibleMarkers(allMarkers)
+    });
+  }
+
   async function init() {
     const cfg = window.APP_CONFIG || {};
     const sheets = cfg.SHEETS || {};
@@ -264,76 +331,20 @@ App.Data = (function () {
 
       App.Router.setLocationsIndex(ALL);
 
-      const markersByTitle = new Map();
-      const markersBySeries = new Map();
-      const markersByCollection = new Map();
-      const markersByType = new Map();
-
       allMarkers = [];
-      groupsIndex.clear();
 
       ALL.forEach((loc) => {
         const marker = { __loc: loc };
         loc.__marker = marker;
-
         allMarkers.push(marker);
-
-        addToMapList(markersByTitle, loc.title, marker);
-        addToMapList(markersBySeries, loc.series, marker);
-        (loc.collections || []).forEach((c) => addToMapList(markersByCollection, c, marker));
-        addToMapList(markersByType, loc.type, marker);
       });
 
       App.Map.rebuildCluster(allMarkers);
       App.State.clearFilter();
+      buildSearchIndexes();
 
-      const fuseLocations = new Fuse(ALL, {
-        threshold: 0.35,
-        keys: [
-          { name: "title", weight: 3 },
-          { name: "collections", weight: 2.3 },
-          { name: "series", weight: 1.8 },
-          { name: "aliases", weight: 1.8 },
-          { name: "place", weight: 1.7 },
-          { name: "country", weight: 1.2 },
-          { name: "type", weight: 1.1 },
-          { name: "keywords", weight: 1.4 },
-          { name: "description", weight: 0.8 }
-        ]
-      });
-
-      const groups = [];
-
-      markersByTitle.forEach((arr, title) => {
-        groups.push({ kind: "Title", label: title, count: visibleMarkers(arr).length });
-        groupsIndex.set(`Title::${title}`, arr);
-      });
-
-      markersBySeries.forEach((arr, series) => {
-        groups.push({ kind: "Series", label: series, count: visibleMarkers(arr).length });
-        groupsIndex.set(`Series::${series}`, arr);
-      });
-
-      markersByCollection.forEach((arr, col) => {
-        groups.push({ kind: "Collection", label: col, count: visibleMarkers(arr).length });
-        groupsIndex.set(`Collection::${col}`, arr);
-      });
-
-      markersByType.forEach((arr, type) => {
-        groups.push({ kind: "Type", label: type, count: visibleMarkers(arr).length });
-        groupsIndex.set(`Type::${type}`, arr);
-      });
-
-      const fuseGroups = new Fuse(groups, {
-        threshold: 0.35,
-        keys: ["label", "kind"]
-      });
-
-      App.Search.setData({
-        fuseLoc: fuseLocations,
-        fuseGrp: fuseGroups,
-        groupsIdx: groupsIndex,
-        allMk: allMarkers
+      window.addEventListener("fts:app-settings-updated", () => {
+        buildSearchIndexes();
       });
     } catch (err) {
       console.error(err);
