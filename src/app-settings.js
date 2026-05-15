@@ -5,7 +5,7 @@ FTS.AppSettings = (function () {
   const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
 
   const defaults = {
-    hideNoAccessScenes: false
+    hideNoAccessScenes: true
   };
 
   function load() {
