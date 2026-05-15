@@ -2,6 +2,7 @@ window.FTS = window.FTS || {};
 
 FTS.FeatureToggles = {
   headerLogoEnabled: true,
+  easterEggsEnabled: true,
   iosInstallPromptEnabled: false,
   privacyConsentEnabled: true,
   mediaEmbedsEnabled: true,
