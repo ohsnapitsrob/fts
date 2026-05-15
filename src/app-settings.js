@@ -330,7 +330,6 @@ FTS.AppSettings = (function () {
               <div class="fts-settings-row">
                 <div>
                   <div class="fts-settings-row-title">Hide scenes with no public access</div>
-                  <div class="fts-settings-row-copy">Hides scenes marked as no public access across search, browse, homepage rails, title pages, National Trust pages, and the map.</div>
                 </div>
                 ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
               </div>
