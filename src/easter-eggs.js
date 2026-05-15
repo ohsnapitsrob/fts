@@ -12,8 +12,8 @@ window.FTS = window.FTS || {};
   function logQuotes() {
     console.log(
       "%c Roads? Where we're going, we don't need roads. %c- Dr. Emmett Brown, Back to the Future (1985)",
-      "color: black; background: white; font-weight: bold;",
-      "color: #888888; background: white;"
+      "color: black; background: white; font-weight: bold; padding: 4px 0 4px 8px;",
+      "color: #888888; background: white; padding: 4px 8px 4px 0;"
     );
   }
 
