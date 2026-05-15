@@ -3,7 +3,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 function firstValue(...values) {
-  return values.find((value) => value && value !== "undefined" && value !== "null" && value !== "HEAD") || "";
+  return values.find((value) => value && value !== "undefined" && value !== "null" && value !== "HEAD" && value !== "local") || "";
 }
 
 function runGit(command) {
@@ -18,7 +18,7 @@ function runGit(command) {
 }
 
 function shortCommit(value) {
-  const commit = firstValue(value);
+  const commit = firstValue(value) || value;
   return commit ? commit.slice(0, 7) : "local";
 }
 
@@ -36,11 +36,26 @@ function inferBranchFromUrl(value) {
     const host = new URL(url).hostname;
     const firstPart = host.split(".")[0];
 
+    if (host === "findthatscene.co.uk" || host === "www.findthatscene.co.uk") {
+      return "main";
+    }
+
+    if (firstPart === "staging") {
+      return "staging";
+    }
+
     if (firstPart && firstPart !== "www") {
       return firstPart;
     }
   } catch (err) {}
 
+  return "";
+}
+
+function branchFromProjectName(value) {
+  const name = firstValue(value);
+  if (!name) return "";
+  if (name.toLowerCase().includes("staging")) return "staging";
   return "";
 }
 
@@ -58,8 +73,9 @@ const branch = firstValue(
   branchFromRef(process.env.GITHUB_REF),
   gitBranch,
   inferredBranch,
-  "local"
-);
+  branchFromProjectName(process.env.CF_PAGES_PROJECT_NAME),
+  branchFromProjectName(process.env.CLOUDFLARE_PAGES_PROJECT_NAME)
+) || "staging";
 
 const commit = shortCommit(
   process.env.CF_PAGES_COMMIT_SHA ||
