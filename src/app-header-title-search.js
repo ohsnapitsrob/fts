@@ -23,6 +23,44 @@ FTS.AppHeaderTitleSearch = (function () {
     return norm(value) || "Title";
   }
 
+  function normalizeComparable(value) {
+    return norm(value).toLowerCase();
+  }
+
+  function getAccessValue(row) {
+    return norm(
+      row.access ||
+      row.Access ||
+      row.ACCESS ||
+      row["access "] ||
+      row["Access "] ||
+      row["No Access"] ||
+      row.noaccess ||
+      row.NOACCESS
+    );
+  }
+
+  function hideNoAccessEnabled() {
+    if (window.FTS?.AppSettings?.getSettings) {
+      return window.FTS.AppSettings.getSettings().hideNoAccessScenes === true;
+    }
+
+    try {
+      return JSON.parse(localStorage.getItem("fts-app-settings") || "{}").hideNoAccessScenes === true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function sceneIsVisible(row) {
+    if (!hideNoAccessEnabled()) return true;
+
+    const helper = window.FTS?.Visibility;
+    if (helper?.shouldHideScene) return !helper.shouldHideScene(row);
+
+    return getAccessValue(row) === "";
+  }
+
   function parseCSV(text) {
     const rows = [];
     let row = [];
@@ -90,44 +128,33 @@ FTS.AppHeaderTitleSearch = (function () {
     return `${getRootPath()}title/?${params.toString()}`;
   }
 
-  async function loadTitleIndex() {
+  function configuredSources() {
     const config = window.APP_CONFIG || {};
-    const metadataUrl = config.TITLE_METADATA_CSV;
-
-    if (metadataUrl) {
-      try {
-        const response = await fetch(metadataUrl, { cache: "no-store" });
-        const rows = rowsToObjects(parseCSV(await response.text()));
-        const titles = rows.map((row) => ({
-          title: norm(row.title),
-          type: normaliseType(row.type)
-        })).filter((row) => row.title);
-
-        if (titles.length) return titles;
-      } catch (err) {
-        console.warn("Could not load title metadata for search", err);
-      }
-    }
-
     const sheets = config.SHEETS || {};
-    const sources = [
+
+    return [
       ["Movie", sheets.movies],
       ["TV Show", sheets.tv],
       ["Music Video", sheets.music_videos],
       ["Video Game", sheets.games],
       ["Title", sheets.misc]
     ].filter(([, url]) => Boolean(url));
+  }
 
+  async function loadSceneTitleIndex() {
     const map = new Map();
 
-    await Promise.all(sources.map(async ([fallbackType, url]) => {
+    await Promise.all(configuredSources().map(async ([fallbackType, url]) => {
       const response = await fetch(url, { cache: "no-store" });
       const rows = rowsToObjects(parseCSV(await response.text()));
 
       rows.forEach((row) => {
+        if (!sceneIsVisible(row)) return;
+
         const title = norm(row.title);
         if (!title) return;
-        const key = title.toLowerCase();
+
+        const key = normalizeComparable(title);
         if (!map.has(key)) {
           map.set(key, {
             title,
@@ -137,7 +164,45 @@ FTS.AppHeaderTitleSearch = (function () {
       });
     }));
 
-    return Array.from(map.values());
+    return map;
+  }
+
+  async function loadMetadataTitleIndex(visibleTitleMap) {
+    const config = window.APP_CONFIG || {};
+    const metadataUrl = config.TITLE_METADATA_CSV;
+
+    if (!metadataUrl) return [];
+
+    const response = await fetch(metadataUrl, { cache: "no-store" });
+    const rows = rowsToObjects(parseCSV(await response.text()));
+
+    return rows.map((row) => {
+      const title = norm(row.title);
+      const key = normalizeComparable(title);
+      const sceneTitle = visibleTitleMap.get(key);
+
+      return {
+        title,
+        type: normaliseType(row.type || sceneTitle?.type)
+      };
+    }).filter((row) => {
+      if (!row.title) return false;
+      if (!configuredSources().length) return true;
+      return visibleTitleMap.has(normalizeComparable(row.title));
+    });
+  }
+
+  async function loadTitleIndex() {
+    const visibleTitleMap = await loadSceneTitleIndex();
+
+    try {
+      const metadataTitles = await loadMetadataTitleIndex(visibleTitleMap);
+      if (metadataTitles.length) return metadataTitles;
+    } catch (err) {
+      console.warn("Could not load title metadata for search", err);
+    }
+
+    return Array.from(visibleTitleMap.values());
   }
 
   function addStyle() {
@@ -311,6 +376,16 @@ FTS.AppHeaderTitleSearch = (function () {
     close.addEventListener("click", closeModal);
     modal.addEventListener("click", (event) => {
       if (event.target === modal) closeModal();
+    });
+
+    window.addEventListener("fts:app-settings-updated", () => {
+      loaded = false;
+      index = [];
+      if (modal.classList.contains("open")) {
+        ensureLoaded().then(() => {
+          input.dispatchEvent(new Event("input"));
+        });
+      }
     });
 
     window.FTSHeaderSearch = {
