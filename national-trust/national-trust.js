@@ -13,6 +13,10 @@
 
   const contentEl = document.getElementById("ntContent");
 
+  function getVisibleRows(rows) {
+    return FTS.Visibility?.getVisibleScenes?.(rows) || rows;
+  }
+
   function previewOrder(rows) {
     const sorted = sortScenes(rows);
     const byTitle = new Map();
@@ -141,6 +145,7 @@
         rows: sortScenes(group.rows),
         productionCount: group.productionTitles.size
       }))
+      .filter((group) => group.rows.length > 0)
       .sort((a, b) => {
         return a.name.localeCompare(b.name, undefined, {
           sensitivity: "base"
@@ -174,7 +179,7 @@
 
   async function init() {
     try {
-      const rows = await loadAll({ nationalTrustOnly: true });
+      const rows = getVisibleRows(await loadAll({ nationalTrustOnly: true }));
       const groups = groupLocations(rows);
 
       if (!groups.length) {
