@@ -1,6 +1,5 @@
 // config.js
 window.APP_CONFIG = {
-  ENVIRONMENT: "staging",
   ENVIRONMENT_LABEL: "STAGING BUILD",
 
   SITE_NAME: "Find That Scene",
@@ -10,7 +9,7 @@ window.APP_CONFIG = {
   PLAUSIBLE_SCRIPT_URL: "https://plausible.io/js/pa-oOZwKrRSZ4iB9GYOB7KxN.js",
   PLAUSIBLE_TRACKED_PARAMS: ["q", "tab", "fk", "fl", "loc", "rm", "mlat", "mlng", "mz"],
 
-  MAPTILER_KEY: "lfDgDwVrhGWudpjiHOqx",
+  MAPTILER_KEY: "4iGDVzk2f6BFmiqgFyyU",
   MAP_STYLE: "streets",
   NT_ICON_URL: "https://images.pixieset.com/063553411/79737b7a99cf1e6442ac14468460ebc1-xxlarge.png",
   // Google Sheets tabs published as CSV:
