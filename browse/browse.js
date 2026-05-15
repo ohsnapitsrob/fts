@@ -149,9 +149,10 @@
   }
 
   function buildEntries(rows) {
+    const visibleRows = FTS.Visibility?.getVisibleScenes?.(rows) || rows;
     const grouped = new Map();
 
-    rows.forEach((location) => {
+    visibleRows.forEach((location) => {
       const key = `${location.title}|||${location.type}`;
 
       if (!grouped.has(key)) {
