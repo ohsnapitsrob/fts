@@ -121,9 +121,34 @@
     `;
   }
 
+  function renderNoVisibleScenes(title) {
+    document.title = `${title} | Find That Scene`;
+
+    contentEl.innerHTML = `
+      <div class="empty-card">
+        <div class="kicker">No public access</div>
+        <h1>${escapeHtml(title)}</h1>
+        <p class="meta">
+          This title currently has no publicly accessible scenes based on your visibility settings.
+        </p>
+      </div>
+
+      <div class="actions">
+        <a class="btn btn-primary" href="../browse/">Browse titles</a>
+        <a class="btn btn-secondary" href="../explore/">Open map</a>
+      </div>
+    `;
+  }
+
   function renderTitlePage(title, rows, metadata) {
-    const sortedRows = sortScenes(rows);
+    const visibleRows = FTS.Visibility?.getVisibleScenes?.(rows) || rows;
+    const sortedRows = sortScenes(visibleRows);
     const sceneCount = sortedRows.length;
+
+    if (!sceneCount) {
+      renderNoVisibleScenes(title);
+      return;
+    }
 
     const cities = new Set();
     const countries = new Set();
@@ -180,7 +205,6 @@
       <section class="scene-section">
         <div class="scene-section-head">
           <h2 class="scene-section-title">${labelForCount(sceneCount, "Scene", "Scenes")}</h2>
-          <p class="scene-section-copy">Newest visited first. Scenes with no public access are shown at the end.</p>
         </div>
 
         <div class="scene-grid">
