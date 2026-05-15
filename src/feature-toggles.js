@@ -2,7 +2,7 @@ window.FTS = window.FTS || {};
 
 FTS.FeatureToggles = {
   headerLogoEnabled: true,
-  iosInstallPromptEnabled: true,
+  iosInstallPromptEnabled: false,
   privacyConsentEnabled: true,
   mediaEmbedsEnabled: true,
   plausibleAnalyticsEnabled: false,
