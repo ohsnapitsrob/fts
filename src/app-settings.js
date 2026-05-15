@@ -40,6 +40,14 @@ FTS.AppSettings = (function () {
     return settings;
   }
 
+  function getVersionLabel() {
+    const runtime = window.RUNTIME_CONFIG || {};
+    const environment = runtime.environment || "local";
+    const commit = runtime.commit || "dev";
+
+    return `${environment}.${commit}`;
+  }
+
   function clearOptionalStorage() {
     try {
       Object.keys(localStorage).forEach((key) => {
@@ -210,6 +218,15 @@ FTS.AppSettings = (function () {
         text-underline-offset: 3px;
       }
 
+      .fts-settings-version {
+        padding: 0 22px 14px;
+        color: #9ca3af;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-align: center;
+      }
+
       .fts-settings-toggle {
         flex: 0 0 auto;
         position: relative;
@@ -252,7 +269,7 @@ FTS.AppSettings = (function () {
         bottom: 0;
         display: flex;
         gap: 10px;
-        padding: 16px 22px 22px;
+        padding: 16px 22px 12px;
         border-top: 1px solid #e5e7eb;
         background: #ffffff;
       }
@@ -357,6 +374,7 @@ FTS.AppSettings = (function () {
           <button class="fts-settings-cancel" type="button">Cancel</button>
           <button class="fts-settings-save" type="button">Save settings</button>
         </div>
+        <div class="fts-settings-version">${getVersionLabel()}</div>
       </div>
     `;
 
