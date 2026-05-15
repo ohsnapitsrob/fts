@@ -3,7 +3,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 function firstValue(...values) {
-  return values.find((value) => value && value !== "undefined" && value !== "null") || "";
+  return values.find((value) => value && value !== "undefined" && value !== "null" && value !== "HEAD") || "";
 }
 
 function runGit(command) {
@@ -46,6 +46,7 @@ function inferBranchFromUrl(value) {
 
 const gitBranch = runGit("git branch --show-current") || runGit("git rev-parse --abbrev-ref HEAD");
 const gitCommit = runGit("git rev-parse HEAD");
+const inferredBranch = inferBranchFromUrl(process.env.CF_PAGES_URL);
 
 const branch = firstValue(
   process.env.CF_PAGES_BRANCH,
@@ -56,7 +57,7 @@ const branch = firstValue(
   process.env.GITHUB_REF_NAME,
   branchFromRef(process.env.GITHUB_REF),
   gitBranch,
-  inferBranchFromUrl(process.env.CF_PAGES_URL),
+  inferredBranch,
   "local"
 );
 
