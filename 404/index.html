@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>404 | Find That Scene</title>
+
+  <script src="../runtime-config.js"></script>
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/app-shell.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      background: #f5f7f7;
+      color: #111827;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .error-shell {
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 48px 0 120px;
+    }
+
+    .error-card {
+      padding: 32px;
+      border-radius: 32px;
+      background: #ffffff;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .error-kicker {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+
+    .error-card h1 {
+      margin: 12px 0;
+      font-size: clamp(42px, 8vw, 72px);
+      line-height: 1;
+    }
+
+    .error-card p {
+      margin: 0;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    .error-quote {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 20px;
+      background: #f5f7f7;
+      font-weight: 700;
+    }
+
+    .error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .error-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      background: #111827;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .error-btn.secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+  </style>
+</head>
+<body>
+  <main class="error-shell">
+    <section class="error-card">
+      <div class="error-kicker">404</div>
+      <h1>Scene not found</h1>
+      <p>
+        The page you were looking for either does not exist, has moved, or is currently unavailable in this environment.
+      </p>
+
+      <div class="error-quote">
+        “Roads? Where we're going, we don't need roads.” — Dr. Emmett Brown, Back to the Future (1985)
+      </div>
+
+      <div class="error-actions">
+        <a class="error-btn" href="../">Homepage</a>
+        <a class="error-btn secondary" href="../browse/">Browse titles</a>
+        <a class="error-btn secondary" href="../explore/">Explore map</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
