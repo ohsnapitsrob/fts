@@ -287,18 +287,18 @@ body {
 
 .poster-card.thumbnail-card {
   width: auto;
-  height: 200px;
+  height: 160px;
 }
 
 .poster-card.thumbnail-card img {
   width: auto;
-  height: 200px;
+  height: 160px;
 }
 
 .poster-card.thumbnail-card .poster-fallback {
-  width: 280px;
-  height: 200px;
-  min-height: 200px;
+  width: 224px;
+  height: 160px;
+  min-height: 160px;
 }
 
 .loading-card {
