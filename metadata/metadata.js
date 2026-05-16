@@ -127,7 +127,7 @@
   function renderPopularRail(items) {
     return `
       <div class="meta-links meta-links-popular">
-        ${items.slice(0, 6).map(([name]) => `
+        ${items.slice(0, 10).map(([name]) => `
           <span class="meta-link">${name}</span>
         `).join("")}
       </div>
@@ -137,7 +137,7 @@
   function renderSection(title, items) {
     const popular = [...items]
       .sort((a, b) => b[1].length - a[1].length)
-      .slice(0, 6);
+      .slice(0, 10);
 
     return `
       <section class="meta-section">
