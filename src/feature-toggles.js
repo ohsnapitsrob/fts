@@ -19,7 +19,8 @@ FTS.FeatureToggles = {
   homeRailTVEnabled: true,
   homeRailMusicVideosEnabled: true,
   homeRailNationalTrustEnabled: true,
-  homeRailGamesEnabled: true
+  homeRailGamesEnabled: false,
+  homeGenreRailsEnabled: true
 };
 
 FTS.Features = (function () {
