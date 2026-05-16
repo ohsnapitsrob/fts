@@ -236,11 +236,26 @@
     return copy;
   }
 
+  function overlayBadgesForTitle(title, options = {}) {
+    if (!featureEnabled("homepagePosterOverlays")) return [];
+    if (options.suppressOverlays === true) return [];
+    if (options.variant === "thumbnail") return [];
+
+    const key = normalizeComparable(title);
+    const badges = [];
+
+    if (options.topTenTitles?.has(key)) badges.push({ label: "Top 10", type: "top" });
+    if (options.latestTitles?.has(key)) badges.push({ label: "New", type: "new" });
+
+    return badges;
+  }
+
   function posterHtml(title, imageUrl, variant = "poster", options = {}) {
     const src = safeUrl(imageUrl);
     const isThumbnail = variant === "thumbnail";
     const isRanked = options.ranked === true;
     const rank = options.rank;
+    const badges = overlayBadgesForTitle(title, { ...options, variant });
 
     return `
       <a class="poster-link ${isThumbnail ? "thumbnail-link" : ""} ${isRanked ? "ranked-link" : ""}" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
@@ -251,6 +266,7 @@
               ? `<img src="${escapeHtml(src)}" alt="${escapeHtml(title)}" loading="lazy" draggable="false">`
               : `<div class="poster-fallback">${escapeHtml(title)}</div>`
           }
+          ${badges.length ? `<div class="poster-badges">${badges.map((badge) => `<span class="poster-badge poster-badge-${escapeHtml(badge.type)}">${escapeHtml(badge.label)}</span>`).join("")}</div>` : ""}
         </div>
       </a>
     `;
@@ -283,7 +299,10 @@
           ${withImages
             .map((item, index) => posterHtml(item.title, item[imageField], variant, {
               ranked,
-              rank: index + 1
+              rank: index + 1,
+              suppressOverlays: options.suppressOverlays,
+              topTenTitles: options.topTenTitles,
+              latestTitles: options.latestTitles
             }))
             .join("")}
         </div>
@@ -505,6 +524,10 @@
     return featureEnabled(toggleKey) ? rail : null;
   }
 
+  function titleSet(items) {
+    return new Set((items || []).map((item) => normalizeComparable(item.title)));
+  }
+
   function buildRails(rows, metadataRows) {
     const entries = buildTitleEntries(rows, metadataRows);
 
@@ -530,6 +553,11 @@
       .filter((entry) => entry.ukCount > 0)
       .sort((a, b) => b.ukCount - a.ukCount || a.title.localeCompare(b.title))
       .slice(0, 10);
+
+    const overlayContext = {
+      latestTitles: titleSet(latestScenes),
+      topTenTitles: titleSet([...topFilmsUK, ...topSeriesUK])
+    };
 
     function orderedSeriesRail(seriesName, options = {}) {
       const direction = options.direction || "asc";
@@ -601,7 +629,8 @@
       maybeRail("homeRailLatestScenesEnabled", {
         title: "Latest",
         subHeader: latestSubHeader(latestScenes.length),
-        items: latestScenes
+        items: latestScenes,
+        suppressOverlays: true
       })
     ].filter(Boolean);
 
@@ -610,14 +639,16 @@
         title: "Top 10 Films in the UK",
         subHeader: "Top 10 titles based on number of scenes visited",
         items: topFilmsUK,
-        ranked: true
+        ranked: true,
+        suppressOverlays: true
       }),
 
       maybeRail("homeRailTopScenesEnabled", {
         title: "Top 10 Series in the UK",
         subHeader: "Top 10 titles based on number of scenes visited",
         items: topSeriesUK,
-        ranked: true
+        ranked: true,
+        suppressOverlays: true
       }),
 
       maybeRail("homeRailJamesBondEnabled", {
@@ -646,7 +677,8 @@
         title: "Music Videos",
         subHeader: selectionSubHeader(musicVideoThumbnailRail.length, musicVideoEntries.length),
         items: musicVideoThumbnailRail,
-        variant: "thumbnail"
+        variant: "thumbnail",
+        suppressOverlays: true
       }),
 
       maybeRail("homeRailNationalTrustEnabled", {
@@ -664,10 +696,10 @@
       }),
 
       ...buildGenreRails(entries)
-    ].filter(Boolean);
+    ].filter(Boolean).map((rail) => ({ ...overlayContext, ...rail }));
 
     return [
-      ...fixedRails,
+      ...fixedRails.map((rail) => ({ ...overlayContext, ...rail })),
       ...shuffle(randomRails)
     ];
   }
@@ -687,7 +719,10 @@
           href: rail.href,
           linkLabel: rail.linkLabel,
           subHeader: rail.subHeader,
-          ranked: rail.ranked
+          ranked: rail.ranked,
+          suppressOverlays: rail.suppressOverlays,
+          topTenTitles: rail.topTenTitles,
+          latestTitles: rail.latestTitles
         })
       )
       .filter(Boolean)
@@ -824,8 +859,7 @@
 
       statsEl.innerHTML = `
         <div class="loading-card">
-          Could not load stats.
-        </div>
+          Could not load stats.</div>
       `;
     }
   }
