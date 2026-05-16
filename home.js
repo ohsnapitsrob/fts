@@ -218,6 +218,11 @@
     return Number.isFinite(ts) ? ts : null;
   }
 
+  function isUKCountry(value) {
+    const country = normalizeComparable(value);
+    return country === "uk" || country === "united kingdom" || country === "england" || country === "scotland" || country === "wales" || country === "northern ireland";
+  }
+
   function shuffle(items) {
     const copy = [...items];
 
@@ -378,6 +383,7 @@
           type: row.type || meta.type,
           series: row.series,
           count: 0,
+          ukCount: 0,
           latestVisitedTs: null,
 
           railOrder: Number.isFinite(meta.railOrder)
@@ -394,6 +400,10 @@
       const entry = grouped.get(key);
 
       entry.count += 1;
+
+      if (isUKCountry(row.country)) {
+        entry.ukCount += 1;
+      }
 
       if (!entry.series && row.series) {
         entry.series = row.series;
@@ -475,9 +485,18 @@
       .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
       .slice(0, 12);
 
-    const topScenes = [...entries]
+    const topFilmsUK = [...entries]
       .filter(hasPoster)
-      .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title))
+      .filter((entry) => normalizeType(entry.type) === "Film")
+      .filter((entry) => entry.ukCount > 0)
+      .sort((a, b) => b.ukCount - a.ukCount || a.title.localeCompare(b.title))
+      .slice(0, 10);
+
+    const topSeriesUK = [...entries]
+      .filter(hasPoster)
+      .filter((entry) => normalizeType(entry.type) === "TV")
+      .filter((entry) => entry.ukCount > 0)
+      .sort((a, b) => b.ukCount - a.ukCount || a.title.localeCompare(b.title))
       .slice(0, 10);
 
     function orderedSeriesRail(seriesName, options = {}) {
@@ -544,9 +563,15 @@
 
     const randomRails = [
       maybeRail("homeRailTopScenesEnabled", {
-        title: "Most popular",
+        title: "Top 10 Films in the UK",
         subHeader: "Top 10 titles based on number of scenes visited",
-        items: topScenes
+        items: topFilmsUK
+      }),
+
+      maybeRail("homeRailTopScenesEnabled", {
+        title: "Top 10 Series in the UK",
+        subHeader: "Top 10 titles based on number of scenes visited",
+        items: topSeriesUK
       }),
 
       maybeRail("homeRailJamesBondEnabled", {
