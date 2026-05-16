@@ -32,7 +32,9 @@ window.FTS = window.FTS || {};
   }
 
   function redirectTo404() {
-    window.location.replace("/404.html");
+    const params = new URLSearchParams();
+    params.set("env-guard", currentPath());
+    window.location.replace(`/404.html?${params.toString()}`);
   }
 
   function init() {
