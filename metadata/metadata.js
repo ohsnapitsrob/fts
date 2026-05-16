@@ -6,6 +6,10 @@
     return (value || "").toString().trim();
   }
 
+  function normaliseKey(value) {
+    return normalise(value).toLowerCase();
+  }
+
   function slugTitle(title) {
     const params = new URLSearchParams();
     params.set("fl", title);
@@ -17,6 +21,16 @@
       .split(",")
       .map((item) => item.trim())
       .filter(Boolean);
+  }
+
+  function getValue(row, key) {
+    const target = normaliseKey(key);
+
+    const matchedKey = Object.keys(row).find((rowKey) => {
+      return normaliseKey(rowKey) === target;
+    });
+
+    return matchedKey ? row[matchedKey] : "";
   }
 
   function parseCSV(text) {
@@ -91,19 +105,22 @@
     const map = new Map();
 
     rows.forEach((row) => {
-      const title = normalise(row.title);
+      const title = normalise(getValue(row, "title"));
       if (!title) return;
 
-      splitList(row[column]).forEach((entry) => {
+      splitList(getValue(row, column)).forEach((entry) => {
         if (!map.has(entry)) {
           map.set(entry, []);
         }
 
-        map.get(entry).push(title);
+        if (!map.get(entry).includes(title)) {
+          map.get(entry).push(title);
+        }
       });
     });
 
     return Array.from(map.entries())
+      .filter(([name]) => Boolean(name))
       .sort((a, b) => a[0].localeCompare(b[0]));
   }
 
