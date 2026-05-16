@@ -6,5 +6,7 @@ FTS.EnvironmentRules = {
     "/stats/"
   ],
 
-  blockedOnStaging: []
+  blockedOnStaging: [
+    "/stats/"
+  ]
 };
