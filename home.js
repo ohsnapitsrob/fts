@@ -399,7 +399,7 @@
   }
 
   function randomSelectionSubHeader(count) {
-    return `A random selection of ${count} titles with scenes visited`;
+    return `A random selection of ${count} ${count === 1 ? "title" : "titles"} with scenes visited`;
   }
 
   function buildRails(rows, metadataRows) {
