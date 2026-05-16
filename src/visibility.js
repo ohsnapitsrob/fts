@@ -1,15 +1,20 @@
 window.FTS = window.FTS || {};
 
 FTS.Visibility = (function () {
+  const DEFAULT_SETTINGS = {
+    hideNoAccessScenes: true
+  };
+
   function getSettings() {
     if (window.FTS?.AppSettings?.getSettings) {
       return window.FTS.AppSettings.getSettings();
     }
 
     try {
-      return JSON.parse(localStorage.getItem("fts-app-settings") || "{}");
+      const stored = JSON.parse(localStorage.getItem("fts-app-settings") || "{}");
+      return { ...DEFAULT_SETTINGS, ...stored };
     } catch (err) {
-      return {};
+      return { ...DEFAULT_SETTINGS };
     }
   }
 
