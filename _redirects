@@ -1,1 +1,2 @@
-/* /404.html 200
+# Disabled: catch-all rewrites intercept valid static routes on Cloudflare Pages.
+# Unknown-route handling will be handled separately.
