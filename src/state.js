@@ -2,7 +2,7 @@ window.App = window.App || {};
 
 App.State = (function () {
   let currentFilter = null;
-  let hideNoAccess = false;
+  let hideNoAccess = true;
 
   function getSavedHideNoAccessSetting() {
     if (window.FTS?.AppSettings?.getSettings) {
@@ -11,11 +11,11 @@ App.State = (function () {
 
     try {
       const raw = localStorage.getItem("fts-app-settings");
-      if (!raw) return false;
+      if (!raw) return true;
 
-      return JSON.parse(raw).hideNoAccessScenes === true;
+      return JSON.parse(raw).hideNoAccessScenes !== false;
     } catch (err) {
-      return false;
+      return true;
     }
   }
 
