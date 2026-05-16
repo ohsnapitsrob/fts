@@ -234,12 +234,15 @@
     return copy;
   }
 
-  function posterHtml(title, imageUrl, variant = "poster") {
+  function posterHtml(title, imageUrl, variant = "poster", options = {}) {
     const src = safeUrl(imageUrl);
     const isThumbnail = variant === "thumbnail";
+    const isRanked = options.ranked === true;
+    const rank = options.rank;
 
     return `
-      <a class="poster-link ${isThumbnail ? "thumbnail-link" : ""}" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
+      <a class="poster-link ${isThumbnail ? "thumbnail-link" : ""} ${isRanked ? "ranked-link" : ""}" href="${titleUrl(title)}" aria-label="${escapeHtml(title)}">
+        ${isRanked ? `<span class="ranked-number" aria-hidden="true">${escapeHtml(rank)}</span>` : ""}
         <div class="poster-card ${isThumbnail ? "thumbnail-card" : ""}">
           ${
             src
@@ -254,13 +257,14 @@
   function railHtml(title, items, options = {}) {
     const variant = options.variant || "poster";
     const imageField = variant === "thumbnail" ? "thumbnail" : "poster";
+    const ranked = options.ranked === true && featureEnabled("homeRailTopTenStyleEnabled");
 
     const withImages = items.filter((item) => safeUrl(item[imageField]));
 
     if (!withImages.length) return "";
 
     return `
-      <section class="rail">
+      <section class="rail ${ranked ? "rail-ranked" : ""}">
         <div class="rail-header">
           <div>
             <h2 class="rail-title">${escapeHtml(title)}</h2>
@@ -273,9 +277,12 @@
           }
         </div>
 
-        <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""}">
+        <div class="poster-row ${variant === "thumbnail" ? "thumbnail-row" : ""} ${ranked ? "ranked-row" : ""}">
           ${withImages
-            .map((item) => posterHtml(item.title, item[imageField], variant))
+            .map((item, index) => posterHtml(item.title, item[imageField], variant, {
+              ranked,
+              rank: index + 1
+            }))
             .join("")}
         </div>
       </section>
@@ -565,13 +572,15 @@
       maybeRail("homeRailTopScenesEnabled", {
         title: "Top 10 Films in the UK",
         subHeader: "Top 10 titles based on number of scenes visited",
-        items: topFilmsUK
+        items: topFilmsUK,
+        ranked: true
       }),
 
       maybeRail("homeRailTopScenesEnabled", {
         title: "Top 10 Series in the UK",
         subHeader: "Top 10 titles based on number of scenes visited",
-        items: topSeriesUK
+        items: topSeriesUK,
+        ranked: true
       }),
 
       maybeRail("homeRailJamesBondEnabled", {
@@ -639,7 +648,8 @@
           variant: rail.variant,
           href: rail.href,
           linkLabel: rail.linkLabel,
-          subHeader: rail.subHeader
+          subHeader: rail.subHeader,
+          ranked: rail.ranked
         })
       )
       .filter(Boolean)
