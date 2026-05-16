@@ -3,8 +3,12 @@
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
 
+  function featureEnabled(key) {
+    return window.FTS?.Features?.isEnabled(key) !== false;
+  }
+
   function privacyConsentFeatureEnabled() {
-    return window.FTS?.Features?.isEnabled("privacyConsentEnabled") !== false;
+    return featureEnabled("privacyConsentEnabled");
   }
 
   function savedPrivacyChoiceExists() {
@@ -188,6 +192,13 @@
     } catch (err) {}
 
     return "";
+  }
+
+  function splitComma(value) {
+    return norm(value)
+      .split(",")
+      .map((item) => norm(item))
+      .filter(Boolean);
   }
 
   function titleUrl(title) {
@@ -375,7 +386,8 @@
 
           poster: meta.poster || "",
           thumbnail: meta.thumbnail || row.thumbnail || "",
-          nt: norm(meta.nt)
+          nt: norm(meta.nt),
+          genres: splitComma(meta.genres)
         });
       }
 
@@ -400,6 +412,47 @@
 
   function randomSelectionSubHeader(count) {
     return `A random selection of ${count} ${count === 1 ? "title" : "titles"} with scenes visited`;
+  }
+
+  function buildGenreRails(entries) {
+    if (!featureEnabled("homeGenreRailsEnabled")) return [];
+
+    const genreMap = new Map();
+
+    entries.forEach((entry) => {
+      if (!safeUrl(entry.poster)) return;
+
+      (entry.genres || []).forEach((genre) => {
+        const key = normalizeComparable(genre);
+        if (!key) return;
+
+        if (!genreMap.has(key)) {
+          genreMap.set(key, {
+            title: genre,
+            entries: []
+          });
+        }
+
+        genreMap.get(key).entries.push(entry);
+      });
+    });
+
+    return Array.from(genreMap.values())
+      .map((genre) => ({
+        title: genre.title,
+        items: shuffle(genre.entries).slice(0, 12),
+        total: genre.entries.length
+      }))
+      .filter((rail) => rail.total >= 12)
+      .map((rail) => ({
+        title: rail.title,
+        subHeader: randomSelectionSubHeader(rail.items.length),
+        items: rail.items
+      }));
+  }
+
+  function maybeRail(toggleKey, rail) {
+    return featureEnabled(toggleKey) ? rail : null;
   }
 
   function buildRails(rows, metadataRows) {
@@ -473,56 +526,76 @@
     const tvShows = typeRail("TV");
     const games = typeRail("Video Game");
 
-    return [
-      { title: "Latest scenes found", items: latestScenes },
+    const fixedRails = [
+      maybeRail("homeRailLatestScenesEnabled", {
+        title: "Latest scenes found",
+        items: latestScenes
+      })
+    ].filter(Boolean);
 
-      { title: "Top 10 most scenes", items: topScenes },
+    const randomRails = [
+      maybeRail("homeRailTopScenesEnabled", {
+        title: "Top 10 most scenes",
+        items: topScenes
+      }),
 
-      {
+      maybeRail("homeRailJamesBondEnabled", {
         title: "James Bond",
         items: orderedSeriesRail("James Bond", { direction: "desc" })
-      },
+      }),
 
-      {
+      maybeRail("homeRailHarryPotterEnabled", {
         title: "Harry Potter",
         items: orderedSeriesRail("Harry Potter")
-      },
+      }),
 
-      {
+      maybeRail("homeRailMoviesEnabled", {
         title: "Movies",
         subHeader: randomSelectionSubHeader(movies.length),
         items: movies
-      },
+      }),
 
-      {
+      maybeRail("homeRailTVEnabled", {
         title: "TV Shows",
         subHeader: randomSelectionSubHeader(tvShows.length),
         items: tvShows
-      },
+      }),
 
-      {
+      maybeRail("homeRailMusicVideosEnabled", {
         title: "Music Videos",
         subHeader: randomSelectionSubHeader(musicVideoThumbnailRail.length),
         items: musicVideoThumbnailRail,
         variant: "thumbnail"
-      },
+      }),
 
-      {
+      maybeRail("homeRailNationalTrustEnabled", {
         title: "National Trust On Screen",
         items: nationalTrustRail,
         href: "./national-trust/",
         linkLabel: "Explore National Trust locations"
-      },
+      }),
 
-      {
+      maybeRail("homeRailGamesEnabled", {
         title: "Games",
         subHeader: randomSelectionSubHeader(games.length),
         items: games
-      }
+      }),
+
+      ...buildGenreRails(entries)
+    ].filter(Boolean);
+
+    return [
+      ...fixedRails,
+      ...shuffle(randomRails)
     ];
   }
 
   function renderRails(rows, metadataRows) {
+    if (!featureEnabled("homeRailsEnabled")) {
+      railsEl.innerHTML = "";
+      return;
+    }
+
     const rails = buildRails(rows, metadataRows);
 
     const html = rails
@@ -566,6 +639,7 @@
           trailer: norm(row.trailer),
           thumbnail: norm(row.thumbnail),
           nt: norm(row.NT),
+          genres: norm(row.Genres || row.genres || row.genre || row.Genre),
           railOrder: coerceNumber(row["set-rail-order"])
         }))
         .filter((row) => row.title);
