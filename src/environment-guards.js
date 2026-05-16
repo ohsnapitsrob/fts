@@ -32,10 +32,7 @@ window.FTS = window.FTS || {};
   }
 
   function redirectTo404() {
-    const pathDepth = currentPath().split("/").filter(Boolean).length;
-    const prefix = pathDepth > 0 ? "../" : "./";
-
-    window.location.replace(`${prefix}404/`);
+    window.location.replace("/404.html");
   }
 
   function init() {
