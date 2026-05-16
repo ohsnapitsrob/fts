@@ -26,6 +26,17 @@
     return norm(params.get("fl") || params.get("title") || params.get("q"));
   }
 
+  function redirectTo404(reason, value = "") {
+    const params = new URLSearchParams();
+    params.set("title-error", reason);
+
+    if (value) {
+      params.set("value", value);
+    }
+
+    window.location.replace(`../404.html?${params.toString()}`);
+  }
+
   function metadataHasContent(metadata) {
     if (!metadata) return false;
 
@@ -99,25 +110,6 @@
             : ""
         }
       </section>
-    `;
-  }
-
-  function renderNotFound(requestedTitle) {
-    document.title = "Title not found | Find That Scene";
-
-    contentEl.innerHTML = `
-      <div class="empty-card">
-        <div class="kicker">Title not found</div>
-        <h1>No match found</h1>
-        <p class="meta">
-          Could not find a title matching “${escapeHtml(requestedTitle || "unknown")}”.
-        </p>
-      </div>
-
-      <div class="actions">
-        <a class="btn btn-primary" href="../browse/">Browse titles</a>
-        <a class="btn btn-secondary" href="../explore/">Open map</a>
-      </div>
     `;
   }
 
@@ -218,7 +210,7 @@
     const requestedTitle = getRequestedTitle();
 
     if (!requestedTitle) {
-      renderNotFound("");
+      redirectTo404("missing-fl");
       return;
     }
 
@@ -233,7 +225,7 @@
       });
 
       if (!matches.length) {
-        renderNotFound(requestedTitle);
+        redirectTo404("title-not-found", requestedTitle);
         return;
       }
 
