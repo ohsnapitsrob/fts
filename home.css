@@ -126,12 +126,6 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.poster-row::before,
-.poster-row::after {
-  content: "";
-  width: 0;
-}
-
 .poster-row::-webkit-scrollbar {
   display: none;
 }
