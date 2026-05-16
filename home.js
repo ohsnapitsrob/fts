@@ -246,7 +246,10 @@
     return `
       <section class="rail">
         <div class="rail-header">
-          <h2 class="rail-title">${escapeHtml(title)}</h2>
+          <div>
+            <h2 class="rail-title">${escapeHtml(title)}</h2>
+            ${options.subHeader ? `<p class="rail-subtitle">${escapeHtml(options.subHeader)}</p>` : ""}
+          </div>
           ${
             options.href
               ? `<a class="rail-link" href="${escapeHtml(options.href)}">${escapeHtml(options.linkLabel || "View more")}</a>`
@@ -395,6 +398,10 @@
     return Array.from(grouped.values());
   }
 
+  function randomSelectionSubHeader(count) {
+    return `A random selection of ${count} titles with scenes visited`;
+  }
+
   function buildRails(rows, metadataRows) {
     const entries = buildTitleEntries(rows, metadataRows);
 
@@ -405,7 +412,7 @@
       .filter(hasPoster)
       .filter((entry) => Number.isFinite(entry.latestVisitedTs))
       .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
-      .slice(0, 6);
+      .slice(0, 12);
 
     const topScenes = [...entries]
       .filter(hasPoster)
@@ -462,6 +469,10 @@
       })
     );
 
+    const movies = typeRail("Film");
+    const tvShows = typeRail("TV");
+    const games = typeRail("Video Game");
+
     return [
       { title: "Latest scenes found", items: latestScenes },
 
@@ -478,17 +489,20 @@
       },
 
       {
-        title: "A selection of Movies",
-        items: typeRail("Film")
+        title: "Movies",
+        subHeader: randomSelectionSubHeader(movies.length),
+        items: movies
       },
 
       {
-        title: "A selection of TV Shows",
-        items: typeRail("TV")
+        title: "TV Shows",
+        subHeader: randomSelectionSubHeader(tvShows.length),
+        items: tvShows
       },
 
       {
-        title: "A selection of Music Videos",
+        title: "Music Videos",
+        subHeader: randomSelectionSubHeader(musicVideoThumbnailRail.length),
         items: musicVideoThumbnailRail,
         variant: "thumbnail"
       },
@@ -501,8 +515,9 @@
       },
 
       {
-        title: "A selection of Games",
-        items: typeRail("Video Game")
+        title: "Games",
+        subHeader: randomSelectionSubHeader(games.length),
+        items: games
       }
     ];
   }
@@ -515,7 +530,8 @@
         railHtml(rail.title, rail.items, {
           variant: rail.variant,
           href: rail.href,
-          linkLabel: rail.linkLabel
+          linkLabel: rail.linkLabel,
+          subHeader: rail.subHeader
         })
       )
       .filter(Boolean)
