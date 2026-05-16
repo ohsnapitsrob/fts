@@ -116,12 +116,20 @@ body {
   gap: 16px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 2px 2px 12px;
+  margin-left: -18px;
+  margin-right: -18px;
+  padding: 2px 18px 12px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   cursor: grab;
   user-select: none;
   -webkit-overflow-scrolling: touch;
+}
+
+.poster-row::before,
+.poster-row::after {
+  content: "";
+  width: 0;
 }
 
 .poster-row::-webkit-scrollbar {
@@ -228,7 +236,8 @@ body {
 .ranked-row {
   grid-auto-columns: clamp(164px, 15vw, 204px);
   gap: clamp(14px, 2vw, 22px);
-  padding: 8px 2px 16px;
+  padding-top: 8px;
+  padding-bottom: 16px;
 }
 
 .poster-link.ranked-link {
@@ -383,11 +392,6 @@ body {
 
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .poster-row {
-    margin-right: -18px;
-    padding-right: 18px;
   }
 
   .ranked-row {
