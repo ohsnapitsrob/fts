@@ -165,6 +165,45 @@ body {
   -webkit-user-drag: none;
 }
 
+.poster-badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.poster-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  border: 1px solid rgba(255,255,255,0.28);
+  box-shadow: 0 6px 14px rgba(17, 17, 17, 0.18);
+}
+
+.poster-badge-top {
+  background: rgba(17, 17, 17, 0.78);
+  color: #ffffff;
+}
+
+.poster-badge-new {
+  background: rgba(90, 0, 230, 0.88);
+  color: #ffffff;
+}
+
 .poster-fallback {
   width: 140px;
   min-height: 210px;
