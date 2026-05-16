@@ -5,7 +5,8 @@ FTS.AppSettings = (function () {
   const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
 
   const defaults = {
-    hideNoAccessScenes: true
+    hideNoAccessScenes: true,
+    hideHomepageTags: false
   };
 
   function load() {
@@ -319,6 +320,7 @@ FTS.AppSettings = (function () {
     addStyles();
 
     const mapSettingsEnabled = window.FTS?.Features?.isEnabled("settingsMapSectionEnabled") !== false;
+    const homepagePosterOverlaysEnabled = window.FTS?.Features?.isEnabled("homepagePosterOverlays") !== false;
 
     const originalAppSettings = load();
     const originalPrivacySettings = window.FTS?.Privacy?.getSettings?.() || { mediaEmbeds: false };
@@ -327,6 +329,26 @@ FTS.AppSettings = (function () {
     const stagedPrivacySettings = {
       mediaEmbeds: originalPrivacySettings.mediaEmbeds === true
     };
+
+    const visibilityRows = `
+      ${mapSettingsEnabled ? `
+        <div class="fts-settings-row">
+          <div>
+            <div class="fts-settings-row-title">Hide scenes with no public access</div>
+          </div>
+          ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
+        </div>
+      ` : ""}
+
+      ${homepagePosterOverlaysEnabled ? `
+        <div class="fts-settings-row">
+          <div>
+            <div class="fts-settings-row-title">Hide homepage tags</div>
+          </div>
+          ${toggleButton(stagedAppSettings.hideHomepageTags, "Toggle hiding homepage tags", "hideHomepageTags")}
+        </div>
+      ` : ""}
+    `;
 
     const overlay = document.createElement("div");
     overlay.className = "fts-settings-overlay";
@@ -341,15 +363,10 @@ FTS.AppSettings = (function () {
         </div>
 
         <div class="fts-settings-body">
-          ${mapSettingsEnabled ? `
+          ${visibilityRows.trim() ? `
             <section class="fts-settings-section">
-              <h3 class="fts-settings-section-title">Scene visibility</h3>
-              <div class="fts-settings-row">
-                <div>
-                  <div class="fts-settings-row-title">Hide scenes with no public access</div>
-                </div>
-                ${toggleButton(stagedAppSettings.hideNoAccessScenes, "Toggle hiding scenes with no public access", "hideNoAccessScenes")}
-              </div>
+              <h3 class="fts-settings-section-title">Visibility</h3>
+              ${visibilityRows}
             </section>
           ` : ""}
 
@@ -389,6 +406,11 @@ FTS.AppSettings = (function () {
     overlay.querySelector('[data-setting-toggle="hideNoAccessScenes"]')?.addEventListener("click", (event) => {
       stagedAppSettings.hideNoAccessScenes = !stagedAppSettings.hideNoAccessScenes;
       syncToggle(event.currentTarget, stagedAppSettings.hideNoAccessScenes);
+    });
+
+    overlay.querySelector('[data-setting-toggle="hideHomepageTags"]')?.addEventListener("click", (event) => {
+      stagedAppSettings.hideHomepageTags = !stagedAppSettings.hideHomepageTags;
+      syncToggle(event.currentTarget, stagedAppSettings.hideHomepageTags);
     });
 
     overlay.querySelector('[data-setting-toggle="mediaEmbeds"]')?.addEventListener("click", (event) => {

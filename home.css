@@ -75,6 +75,15 @@ body {
   font-weight: 850;
 }
 
+.rail-subtitle {
+  margin: 7px 0 0;
+  color: #9ca3af;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
 .rail-link,
 .rail-title-link {
   flex-shrink: 0;
@@ -107,7 +116,11 @@ body {
   gap: 16px;
   overflow-x: auto;
   overflow-y: hidden;
-  padding: 2px 2px 12px;
+  margin-left: -18px;
+  margin-right: -18px;
+  padding: 2px 18px 12px;
+  scroll-padding-left: 18px;
+  scroll-padding-right: 18px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   cursor: grab;
@@ -156,6 +169,49 @@ body {
   -webkit-user-drag: none;
 }
 
+.poster-badges {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  width: calc(100% - 16px);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.poster-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  width: 100%;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(90, 0, 230, 0.2);
+  color: #ffffff;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+  /* border: 1px solid rgba(255,255,255,0.32); */
+  box-shadow: 0 8px 18px rgba(17, 17, 17, 0.24);
+}
+
+.poster-badge-top,
+.poster-badge-new {
+  background: rgba(90, 0, 230, 0.2);
+}
+
+.poster-badge-no-access {
+  background: rgba(220, 38, 38, 0.2);
+}
+
 .poster-fallback {
   width: 140px;
   min-height: 210px;
@@ -169,6 +225,63 @@ body {
   line-height: 1.1;
 }
 
+.rail-ranked {
+  gap: 10px;
+}
+
+.ranked-row {
+  grid-auto-columns: clamp(164px, 15vw, 204px);
+  gap: clamp(14px, 2vw, 22px);
+  padding-top: 8px;
+  padding-bottom: 16px;
+}
+
+.poster-link.ranked-link {
+  --rank-poster-width: clamp(118px, 10vw, 142px);
+  --rank-number-size: calc(var(--rank-poster-width) * 1.5);
+  --rank-offset: calc(var(--rank-poster-width) * 0.46);
+
+  position: relative;
+  width: clamp(164px, 15vw, 204px);
+  min-height: calc(var(--rank-poster-width) * 1.56);
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-left: var(--rank-offset);
+  overflow: visible;
+}
+
+.poster-link.ranked-link:hover {
+  transform: translateY(-2px);
+}
+
+.poster-link.ranked-link .poster-card {
+  width: var(--rank-poster-width);
+  z-index: 1;
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(17, 17, 17, 0.24);
+}
+
+.poster-link.ranked-link .poster-card img {
+  width: var(--rank-poster-width);
+}
+
+.ranked-number {
+  position: absolute;
+  left: calc(var(--rank-offset) * -0.78);
+  bottom: calc(var(--rank-poster-width) * -0.05);
+  z-index: 0;
+  color: transparent;
+  -webkit-text-stroke: max(2px, calc(var(--rank-poster-width) * 0.022)) rgba(17, 17, 17, 0.48);
+  text-stroke: max(2px, calc(var(--rank-poster-width) * 0.022)) rgba(17, 17, 17, 0.48);
+  font-size: var(--rank-number-size);
+  font-weight: 950;
+  letter-spacing: -0.16em;
+  line-height: 0.78;
+  pointer-events: none;
+  user-select: none;
+}
+
 .poster-row.thumbnail-row {
   grid-auto-columns: auto;
 }
@@ -179,18 +292,18 @@ body {
 
 .poster-card.thumbnail-card {
   width: auto;
-  height: 200px;
+  height: 160px;
 }
 
 .poster-card.thumbnail-card img {
   width: auto;
-  height: 200px;
+  height: 160px;
 }
 
 .poster-card.thumbnail-card .poster-fallback {
-  width: 280px;
-  height: 200px;
-  min-height: 200px;
+  width: 224px;
+  height: 160px;
+  min-height: 160px;
 }
 
 .loading-card {
@@ -277,9 +390,14 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .poster-row {
-    margin-right: -18px;
-    padding-right: 18px;
+  .ranked-row {
+    grid-auto-columns: 190px;
+    gap: 18px;
+  }
+
+  .poster-link.ranked-link {
+    --rank-poster-width: 130px;
+    width: 190px;
   }
 }
 
@@ -306,5 +424,15 @@ body {
 
   .stat-card {
     min-height: 104px;
+  }
+
+  .ranked-row {
+    grid-auto-columns: 180px;
+    gap: 14px;
+  }
+
+  .poster-link.ranked-link {
+    --rank-poster-width: 122px;
+    width: 180px;
   }
 }

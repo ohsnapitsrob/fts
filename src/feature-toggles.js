@@ -13,13 +13,16 @@ FTS.FeatureToggles = {
   homeRailsEnabled: true,
   homeRailLatestScenesEnabled: true,
   homeRailTopScenesEnabled: true,
+  homeRailTopTenStyleEnabled: false,
+  homepagePosterOverlays: true,
   homeRailJamesBondEnabled: true,
   homeRailHarryPotterEnabled: true,
-  homeRailMoviesEnabled: true,
-  homeRailTVEnabled: true,
+  homeRailMoviesEnabled: false,
+  homeRailTVEnabled: false,
   homeRailMusicVideosEnabled: true,
   homeRailNationalTrustEnabled: true,
-  homeRailGamesEnabled: true
+  homeRailGamesEnabled: false,
+  homeGenreRailsEnabled: true
 };
 
 FTS.Features = (function () {
