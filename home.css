@@ -119,6 +119,8 @@ body {
   margin-left: -18px;
   margin-right: -18px;
   padding: 2px 18px 12px;
+  scroll-padding-left: 18px;
+  scroll-padding-right: 18px;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   cursor: grab;
