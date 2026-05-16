@@ -179,23 +179,27 @@ body {
 }
 
 .rail-ranked {
-  gap: 6px;
+  gap: 10px;
 }
 
 .ranked-row {
-  grid-auto-columns: 214px;
-  gap: 22px;
-  padding: 8px 2px 18px;
+  grid-auto-columns: clamp(164px, 15vw, 204px);
+  gap: clamp(14px, 2vw, 22px);
+  padding: 8px 2px 16px;
 }
 
 .poster-link.ranked-link {
+  --rank-poster-width: clamp(118px, 10vw, 142px);
+  --rank-number-size: calc(var(--rank-poster-width) * 1.5);
+  --rank-offset: calc(var(--rank-poster-width) * 0.46);
+
   position: relative;
-  width: 214px;
-  min-height: 232px;
+  width: clamp(164px, 15vw, 204px);
+  min-height: calc(var(--rank-poster-width) * 1.56);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
-  padding-left: 74px;
+  padding-left: var(--rank-offset);
   overflow: visible;
 }
 
@@ -203,25 +207,31 @@ body {
   transform: translateY(-2px);
 }
 
+.poster-link.ranked-link .poster-card {
+  width: var(--rank-poster-width);
+  z-index: 1;
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(17, 17, 17, 0.24);
+}
+
+.poster-link.ranked-link .poster-card img {
+  width: var(--rank-poster-width);
+}
+
 .ranked-number {
   position: absolute;
-  left: -12px;
-  bottom: -10px;
+  left: calc(var(--rank-offset) * -0.78);
+  bottom: calc(var(--rank-poster-width) * -0.05);
   z-index: 0;
   color: transparent;
-  -webkit-text-stroke: 4px rgba(17, 17, 17, 0.58);
-  text-stroke: 4px rgba(17, 17, 17, 0.58);
-  font-size: 210px;
+  -webkit-text-stroke: max(2px, calc(var(--rank-poster-width) * 0.022)) rgba(17, 17, 17, 0.48);
+  text-stroke: max(2px, calc(var(--rank-poster-width) * 0.022)) rgba(17, 17, 17, 0.48);
+  font-size: var(--rank-number-size);
   font-weight: 950;
   letter-spacing: -0.16em;
   line-height: 0.78;
   pointer-events: none;
   user-select: none;
-}
-
-.ranked-link .poster-card {
-  z-index: 1;
-  box-shadow: 0 16px 36px rgba(17, 17, 17, 0.24);
 }
 
 .poster-row.thumbnail-row {
@@ -338,22 +348,13 @@ body {
   }
 
   .ranked-row {
-    grid-auto-columns: 198px;
+    grid-auto-columns: 190px;
     gap: 18px;
   }
 
   .poster-link.ranked-link {
-    width: 198px;
-    min-height: 222px;
-    padding-left: 66px;
-  }
-
-  .ranked-number {
-    left: -14px;
-    bottom: -6px;
-    font-size: 194px;
-    -webkit-text-stroke-width: 3.5px;
-    text-stroke-width: 3.5px;
+    --rank-poster-width: 130px;
+    width: 190px;
   }
 }
 
@@ -383,18 +384,12 @@ body {
   }
 
   .ranked-row {
-    grid-auto-columns: 188px;
+    grid-auto-columns: 180px;
     gap: 14px;
   }
 
   .poster-link.ranked-link {
-    width: 188px;
-    min-height: 216px;
-    padding-left: 60px;
-  }
-
-  .ranked-number {
-    left: -16px;
-    font-size: 184px;
+    --rank-poster-width: 122px;
+    width: 180px;
   }
 }
