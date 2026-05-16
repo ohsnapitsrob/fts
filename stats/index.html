@@ -7,6 +7,17 @@
 
   <link rel="preconnect" href="https://images.pixieset.com">
   <link rel="stylesheet" href="./stats.css" />
+
+  <script src="../runtime-config.js"></script>
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/environment-rules.js"></script>
+  <script src="../src/environment-guards.js"></script>
+  <script>
+    window.FTS?.EnvironmentGuards?.init?.();
+  </script>
+  <script src="../src/app-shell.js"></script>
 </head>
 <body>
   <noscript>
@@ -37,8 +48,6 @@
     <div id="statsRoot" style="display:none;"></div>
   </main>
 
-  <script src="../config.js"></script>
-  <script src="../src/environment-badge.js"></script>
   <script src="./stats.js"></script>
 </body>
 </html>
