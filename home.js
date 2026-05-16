@@ -410,8 +410,16 @@
     return Array.from(grouped.values());
   }
 
+  function titleCountLabel(count) {
+    return `${count} ${count === 1 ? "title" : "titles"}`;
+  }
+
   function randomSelectionSubHeader(count) {
-    return `A random selection of ${count} ${count === 1 ? "title" : "titles"} with scenes visited`;
+    return `A random selection of ${titleCountLabel(count)} with scenes visited`;
+  }
+
+  function latestSubHeader(count) {
+    return `${titleCountLabel(count)} with new scenes added`;
   }
 
   function buildGenreRails(entries) {
@@ -528,14 +536,16 @@
 
     const fixedRails = [
       maybeRail("homeRailLatestScenesEnabled", {
-        title: "Latest scenes found",
+        title: "Latest",
+        subHeader: latestSubHeader(latestScenes.length),
         items: latestScenes
       })
     ].filter(Boolean);
 
     const randomRails = [
       maybeRail("homeRailTopScenesEnabled", {
-        title: "Top 10 most scenes",
+        title: "Most popular",
+        subHeader: "Top 10 titles based on number of scenes visited",
         items: topScenes
       }),
 
