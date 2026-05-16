@@ -13,6 +13,7 @@ FTS.FeatureToggles = {
   homeRailsEnabled: true,
   homeRailLatestScenesEnabled: true,
   homeRailTopScenesEnabled: true,
+  homeRailTopTenStyleEnabled: true,
   homeRailJamesBondEnabled: true,
   homeRailHarryPotterEnabled: true,
   homeRailMoviesEnabled: true,
