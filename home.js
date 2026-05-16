@@ -71,6 +71,10 @@
     return norm(t);
   }
 
+  function normalizeAccess(value) {
+    return norm(value).toUpperCase();
+  }
+
   function coerceNumber(x) {
     const n = Number((x ?? "").toString().trim());
     return Number.isFinite(n) ? n : null;
@@ -242,12 +246,12 @@
     if (options.variant === "thumbnail") return [];
 
     const key = normalizeComparable(title);
-    const badges = [];
 
-    if (options.topTenTitles?.has(key)) badges.push({ label: "Top 10", type: "top" });
-    if (options.latestTitles?.has(key)) badges.push({ label: "New", type: "new" });
+    if (options.noAccessTitles?.has(key)) return [{ label: "No access", type: "no-access" }];
+    if (options.topTenTitles?.has(key)) return [{ label: "Top 10", type: "top" }];
+    if (options.latestTitles?.has(key)) return [{ label: "New", type: "new" }];
 
-    return badges;
+    return [];
   }
 
   function posterHtml(title, imageUrl, variant = "poster", options = {}) {
@@ -302,7 +306,8 @@
               rank: index + 1,
               suppressOverlays: options.suppressOverlays,
               topTenTitles: options.topTenTitles,
-              latestTitles: options.latestTitles
+              latestTitles: options.latestTitles,
+              noAccessTitles: options.noAccessTitles
             }))
             .join("")}
         </div>
@@ -411,6 +416,8 @@
           type: row.type || meta.type,
           series: row.series,
           count: 0,
+          visibleCount: 0,
+          noAccessCount: 0,
           ukCount: 0,
           latestVisitedTs: null,
 
@@ -426,8 +433,15 @@
       }
 
       const entry = grouped.get(key);
+      const access = normalizeAccess(row.access);
 
       entry.count += 1;
+
+      if (access === "NOACCESS") {
+        entry.noAccessCount += 1;
+      } else {
+        entry.visibleCount += 1;
+      }
 
       if (isUKCountry(row.country)) {
         entry.ukCount += 1;
@@ -445,7 +459,10 @@
       }
     });
 
-    return Array.from(grouped.values());
+    return Array.from(grouped.values()).map((entry) => ({
+      ...entry,
+      onlyNoAccess: entry.count > 0 && entry.visibleCount === 0 && entry.noAccessCount > 0
+    }));
   }
 
   function titleCountLabel(count) {
@@ -556,7 +573,8 @@
 
     const overlayContext = {
       latestTitles: titleSet(latestScenes),
-      topTenTitles: titleSet([...topFilmsUK, ...topSeriesUK])
+      topTenTitles: titleSet([...topFilmsUK, ...topSeriesUK]),
+      noAccessTitles: titleSet(entries.filter((entry) => entry.onlyNoAccess))
     };
 
     function orderedSeriesRail(seriesName, options = {}) {
@@ -722,7 +740,8 @@
           ranked: rail.ranked,
           suppressOverlays: rail.suppressOverlays,
           topTenTitles: rail.topTenTitles,
-          latestTitles: rail.latestTitles
+          latestTitles: rail.latestTitles,
+          noAccessTitles: rail.noAccessTitles
         })
       )
       .filter(Boolean)
