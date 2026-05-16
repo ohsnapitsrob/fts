@@ -14,6 +14,7 @@ FTS.FeatureToggles = {
   homeRailLatestScenesEnabled: true,
   homeRailTopScenesEnabled: true,
   homeRailTopTenStyleEnabled: false,
+  homepagePosterOverlays: true,
   homeRailJamesBondEnabled: true,
   homeRailHarryPotterEnabled: true,
   homeRailMoviesEnabled: false,
