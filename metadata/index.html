@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Metadata Explorer | Find That Scene</title>
+
+  <link rel="stylesheet" href="./metadata.css" />
+
+  <script src="../runtime-config.js"></script>
+  <script src="../config.js"></script>
+  <script src="../src/feature-toggles.js"></script>
+  <script src="../src/site-content.js"></script>
+  <script src="../src/environment-rules.js"></script>
+  <script src="../src/environment-guards.js"></script>
+  <script>
+    window.FTS?.EnvironmentGuards?.init?.();
+  </script>
+  <script src="../src/app-shell.js"></script>
+</head>
+<body>
+  <main class="meta-shell">
+    <section class="meta-hero">
+      <div class="meta-kicker">Metadata explorer</div>
+      <h1>People, genres, and title metadata</h1>
+      <p>
+        Explore stars, directors, genres, ratings, and other metadata connected to titles in the Find That Scene archive.
+      </p>
+    </section>
+
+    <section id="metadataContent" class="meta-content">
+      <div class="meta-loading">Loading metadata…</div>
+    </section>
+  </main>
+
+  <script src="./metadata.js"></script>
+</body>
+</html>

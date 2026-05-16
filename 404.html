@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>404 | Find That Scene</title>
+
+  <script src="./runtime-config.js"></script>
+  <script src="./config.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f5f7f7;
+      color: #111827;
+      font-family: Inter, system-ui, sans-serif;
+    }
+
+    .error-shell {
+      width: min(760px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 56px 0 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .error-logo-link {
+      display: inline-flex;
+      justify-content: center;
+      margin-bottom: 18px;
+    }
+
+    .error-logo {
+      display: block;
+      max-height: 52px;
+      width: auto;
+    }
+
+    .error-card {
+      padding: 32px;
+      border-radius: 32px;
+      background: #ffffff;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+    }
+
+    .error-kicker {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #6b7280;
+    }
+
+    .error-card h1 {
+      margin: 12px 0;
+      font-size: clamp(42px, 8vw, 72px);
+      line-height: 1;
+    }
+
+    .error-card p {
+      margin: 0 auto;
+      max-width: 540px;
+      color: #4b5563;
+      line-height: 1.7;
+    }
+
+    .error-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .error-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      background: #111827;
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .error-btn.secondary {
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .error-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 12px;
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .error-footer a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+  </style>
+</head>
+<body>
+  <main class="error-shell">
+    <section class="error-card">
+      <a class="error-logo-link" href="./" aria-label="Find That Scene home">
+        <img id="errorLogo" class="error-logo" src="" alt="Find That Scene">
+      </a>
+
+      <div class="error-kicker">404</div>
+      <h1>Great Scott!</h1>
+      <p>
+        We’ve generated 1.21 gigawatts but we still can’t power up this page. We need to go back!
+      </p>
+
+      <div class="error-actions">
+        <a class="error-btn" href="./">Homepage</a>
+        <a class="error-btn secondary" href="./browse/">Browse titles</a>
+        <a class="error-btn secondary" href="./explore/">Explore map</a>
+      </div>
+    </section>
+
+    <footer class="error-footer">
+      <a href="./privacy/">Privacy policy</a>
+      <span id="errorVersion">local.dev</span>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const config = window.APP_CONFIG || {};
+      const runtime = window.RUNTIME_CONFIG || {};
+      const logo = document.getElementById("errorLogo");
+      const version = document.getElementById("errorVersion");
+
+      if (logo && config.SITE_LOGO_URL) {
+        logo.src = config.SITE_LOGO_URL;
+      }
+
+      if (version) {
+        version.textContent = `${runtime.environment || "local"}.${runtime.commit || "dev"}`;
+      }
+    })();
+  </script>
+</body>
+</html>
