@@ -120,6 +120,26 @@
       text-decoration: underline;
       text-underline-offset: 3px;
     }
+
+    .fts-env-badge {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 99999;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(17, 24, 39, 0.88);
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      pointer-events: none;
+      user-select: none;
+    }
   </style>
 </head>
 <body>
@@ -159,6 +179,7 @@
       const guard = document.getElementById("errorGuard");
       const params = new URLSearchParams(window.location.search);
       const envGuard = params.get("env-guard");
+      const isStaging = runtime.environment === "staging";
 
       if (logo && config.SITE_LOGO_URL) {
         logo.src = config.SITE_LOGO_URL;
@@ -168,9 +189,16 @@
         version.textContent = `${runtime.environment || "local"}.${runtime.commit || "dev"}`;
       }
 
-      if (guard && envGuard) {
+      if (guard && envGuard && isStaging) {
         guard.textContent = `Blocked route: ${envGuard}`;
         guard.classList.add("visible");
+      }
+
+      if (isStaging) {
+        const badge = document.createElement("div");
+        badge.className = "fts-env-badge";
+        badge.textContent = config.ENVIRONMENT_LABEL || "STAGING";
+        document.body.appendChild(badge);
       }
     })();
   </script>
