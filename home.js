@@ -3,6 +3,7 @@
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
   const MIN_GENRE_RAIL_ITEMS = 8;
+  const MAX_RAIL_ITEMS = 12;
 
   function featureEnabled(key) {
     return window.FTS?.Features?.isEnabled(key) !== false;
@@ -432,8 +433,16 @@
     return `${count} ${count === 1 ? "title" : "titles"}`;
   }
 
-  function randomSelectionSubHeader(count) {
-    return `A random selection of ${titleCountLabel(count)} with scenes visited`;
+  function visitedSubHeader(count) {
+    return `${titleCountLabel(count)} with scenes visited`;
+  }
+
+  function selectionSubHeader(visibleCount, totalCount) {
+    if (visibleCount >= totalCount) {
+      return visitedSubHeader(totalCount);
+    }
+
+    return `A random selection of ${titleCountLabel(visibleCount)} with scenes visited`;
   }
 
   function latestSubHeader(count) {
@@ -474,15 +483,20 @@
     });
 
     return Array.from(genreMap.values())
-      .map((genre) => ({
-        title: genre.title,
-        items: shuffle(genre.entries).slice(0, 12),
-        total: genre.entries.length
-      }))
+      .map((genre) => {
+        const items = shuffle(genre.entries).slice(0, MAX_RAIL_ITEMS);
+
+        return {
+          title: genre.title,
+          subHeader: selectionSubHeader(items.length, genre.entries.length),
+          items,
+          total: genre.entries.length
+        };
+      })
       .filter((rail) => rail.total >= MIN_GENRE_RAIL_ITEMS)
       .map((rail) => ({
         title: rail.title,
-        subHeader: randomSelectionSubHeader(rail.items.length),
+        subHeader: rail.subHeader,
         items: rail.items
       }));
   }
@@ -501,7 +515,7 @@
       .filter(hasPoster)
       .filter((entry) => Number.isFinite(entry.latestVisitedTs))
       .sort((a, b) => b.latestVisitedTs - a.latestVisitedTs)
-      .slice(0, 12);
+      .slice(0, MAX_RAIL_ITEMS);
 
     const topFilmsUK = [...entries]
       .filter(hasPoster)
@@ -542,7 +556,7 @@
 
           return a.title.localeCompare(b.title);
         })
-        .slice(0, 12);
+        .slice(0, MAX_RAIL_ITEMS);
     }
 
     const typeRail = (typeName) => {
@@ -550,22 +564,34 @@
         entries
           .filter(hasPoster)
           .filter((entry) => normalizeType(entry.type) === typeName)
-      ).slice(0, 12);
+      ).slice(0, MAX_RAIL_ITEMS);
     };
 
-    const musicVideoThumbnailRail = shuffle(
-      entries
-        .filter(hasThumbnail)
-        .filter((entry) => normalizeType(entry.type) === "Music Video")
-    ).slice(0, 12);
+    const musicVideoEntries = entries
+      .filter(hasThumbnail)
+      .filter((entry) => normalizeType(entry.type) === "Music Video");
 
-    const nationalTrustRail = shuffle(
-      entries.filter((entry) => {
-        if (!hasPoster(entry)) return false;
+    const musicVideoThumbnailRail = shuffle(musicVideoEntries).slice(0, MAX_RAIL_ITEMS);
 
-        return norm(entry.nt) !== "";
-      })
-    );
+    const nationalTrustEntries = entries.filter((entry) => {
+      if (!hasPoster(entry)) return false;
+
+      return norm(entry.nt) !== "";
+    });
+
+    const nationalTrustRail = shuffle(nationalTrustEntries).slice(0, MAX_RAIL_ITEMS);
+
+    const moviesEntries = entries
+      .filter(hasPoster)
+      .filter((entry) => normalizeType(entry.type) === "Film");
+
+    const tvShowEntries = entries
+      .filter(hasPoster)
+      .filter((entry) => normalizeType(entry.type) === "TV");
+
+    const gamesEntries = entries
+      .filter(hasPoster)
+      .filter((entry) => normalizeType(entry.type) === "Video Game");
 
     const movies = typeRail("Film");
     const tvShows = typeRail("TV");
@@ -606,25 +632,26 @@
 
       maybeRail("homeRailMoviesEnabled", {
         title: "Movies",
-        subHeader: randomSelectionSubHeader(movies.length),
+        subHeader: selectionSubHeader(movies.length, moviesEntries.length),
         items: movies
       }),
 
       maybeRail("homeRailTVEnabled", {
         title: "TV Shows",
-        subHeader: randomSelectionSubHeader(tvShows.length),
+        subHeader: selectionSubHeader(tvShows.length, tvShowEntries.length),
         items: tvShows
       }),
 
       maybeRail("homeRailMusicVideosEnabled", {
         title: "Music Videos",
-        subHeader: randomSelectionSubHeader(musicVideoThumbnailRail.length),
+        subHeader: selectionSubHeader(musicVideoThumbnailRail.length, musicVideoEntries.length),
         items: musicVideoThumbnailRail,
         variant: "thumbnail"
       }),
 
       maybeRail("homeRailNationalTrustEnabled", {
         title: "National Trust On Screen",
+        subHeader: selectionSubHeader(nationalTrustRail.length, nationalTrustEntries.length),
         items: nationalTrustRail,
         href: "./national-trust/",
         linkLabel: "Explore National Trust locations"
@@ -632,7 +659,7 @@
 
       maybeRail("homeRailGamesEnabled", {
         title: "Games",
-        subHeader: randomSelectionSubHeader(games.length),
+        subHeader: selectionSubHeader(games.length, gamesEntries.length),
         items: games
       }),
 
