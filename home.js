@@ -2,6 +2,7 @@
   const PRIVACY_STORAGE_KEY = "fts-privacy-settings";
   const statsEl = document.getElementById("homeStats");
   const railsEl = document.getElementById("railsRoot");
+  const MIN_GENRE_RAIL_ITEMS = 8;
 
   function featureEnabled(key) {
     return window.FTS?.Features?.isEnabled(key) !== false;
@@ -439,6 +440,10 @@
     return `${titleCountLabel(count)} with new scenes added`;
   }
 
+  function genreRailTitle(genre, type) {
+    return `${genre} ${type === "Film" ? "Films" : "Series"}`;
+  }
+
   function buildGenreRails(entries) {
     if (!featureEnabled("homeGenreRailsEnabled")) return [];
 
@@ -447,13 +452,19 @@
     entries.forEach((entry) => {
       if (!safeUrl(entry.poster)) return;
 
+      const type = normalizeType(entry.type);
+
+      if (type !== "Film" && type !== "TV") return;
+
       (entry.genres || []).forEach((genre) => {
-        const key = normalizeComparable(genre);
-        if (!key) return;
+        const genreKey = normalizeComparable(genre);
+        if (!genreKey) return;
+
+        const key = `${genreKey}::${type}`;
 
         if (!genreMap.has(key)) {
           genreMap.set(key, {
-            title: genre,
+            title: genreRailTitle(genre, type),
             entries: []
           });
         }
@@ -468,7 +479,7 @@
         items: shuffle(genre.entries).slice(0, 12),
         total: genre.entries.length
       }))
-      .filter((rail) => rail.total >= 12)
+      .filter((rail) => rail.total >= MIN_GENRE_RAIL_ITEMS)
       .map((rail) => ({
         title: rail.title,
         subHeader: randomSelectionSubHeader(rail.items.length),
