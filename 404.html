@@ -19,19 +19,17 @@
 
     .error-shell {
       width: min(760px, calc(100% - 32px));
-      min-height: 100vh;
       margin: 0 auto;
-      padding: 32px 0;
+      padding: 56px 0 32px;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       gap: 18px;
     }
 
     .error-logo-link {
       display: inline-flex;
-      align-self: center;
-      margin-bottom: 2px;
+      justify-content: center;
+      margin-bottom: 18px;
     }
 
     .error-logo {
@@ -114,11 +112,11 @@
 </head>
 <body>
   <main class="error-shell">
-    <a class="error-logo-link" href="./" aria-label="Find That Scene home">
-      <img id="errorLogo" class="error-logo" src="" alt="Find That Scene">
-    </a>
-
     <section class="error-card">
+      <a class="error-logo-link" href="./" aria-label="Find That Scene home">
+        <img id="errorLogo" class="error-logo" src="" alt="Find That Scene">
+      </a>
+
       <div class="error-kicker">404</div>
       <h1>Great Scott!</h1>
       <p>
