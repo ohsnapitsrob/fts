@@ -124,10 +124,25 @@
       .sort((a, b) => a[0].localeCompare(b[0]));
   }
 
+  function renderPopularRail(items) {
+    return `
+      <div class="meta-links meta-links-popular">
+        ${items.slice(0, 6).map(([name]) => `
+          <span class="meta-link">${name}</span>
+        `).join("")}
+      </div>
+    `;
+  }
+
   function renderSection(title, items) {
+    const popular = [...items]
+      .sort((a, b) => b[1].length - a[1].length)
+      .slice(0, 6);
+
     return `
       <section class="meta-section">
         <h2>${title}</h2>
+        ${renderPopularRail(popular)}
         <div class="meta-group-grid">
           ${items.map(([name, titles]) => `
             <article class="meta-group">
@@ -150,16 +165,18 @@
   try {
     const rows = await loadMetadata();
 
-    const stars = buildMap(rows, "stars");
-    const directors = buildMap(rows, "directors");
-    const genres = buildMap(rows, "genre");
-    const ratings = buildMap(rows, "uk rating");
+    const stars = buildMap(rows, "Stars");
+    const directors = buildMap(rows, "Director");
+    const genres = buildMap(rows, "Genres");
+    const ratings = buildMap(rows, "UK Rating");
+    const runtimes = buildMap(rows, "Runtime");
 
     container.innerHTML = [
       renderSection("Stars", stars),
       renderSection("Directors", directors),
       renderSection("Genres", genres),
-      renderSection("UK Ratings", ratings)
+      renderSection("UK Ratings", ratings),
+      renderSection("Runtime", runtimes)
     ].join("");
   } catch (error) {
     console.error(error);
