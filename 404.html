@@ -67,6 +67,18 @@
       line-height: 1.7;
     }
 
+    .error-guard {
+      display: none;
+      margin-top: 18px;
+      color: #9ca3af;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .error-guard.visible {
+      display: block;
+    }
+
     .error-actions {
       display: flex;
       flex-wrap: wrap;
@@ -123,6 +135,8 @@
         We’ve generated 1.21 gigawatts but we still can’t power up this page. We need to go back!
       </p>
 
+      <div id="errorGuard" class="error-guard"></div>
+
       <div class="error-actions">
         <a class="error-btn" href="./">Homepage</a>
         <a class="error-btn secondary" href="./browse/">Browse titles</a>
@@ -142,6 +156,9 @@
       const runtime = window.RUNTIME_CONFIG || {};
       const logo = document.getElementById("errorLogo");
       const version = document.getElementById("errorVersion");
+      const guard = document.getElementById("errorGuard");
+      const params = new URLSearchParams(window.location.search);
+      const envGuard = params.get("env-guard");
 
       if (logo && config.SITE_LOGO_URL) {
         logo.src = config.SITE_LOGO_URL;
@@ -149,6 +166,11 @@
 
       if (version) {
         version.textContent = `${runtime.environment || "local"}.${runtime.commit || "dev"}`;
+      }
+
+      if (guard && envGuard) {
+        guard.textContent = `Blocked route: ${envGuard}`;
+        guard.classList.add("visible");
       }
     })();
   </script>
